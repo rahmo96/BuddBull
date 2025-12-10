@@ -1,0 +1,25 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Environment variables (Security)
+.env
+
+# IDE / Editor specific files
+.idea/
+.vscode/
+*.iml
+*.swp
+
+# OS System files
+.DS_Store
+Thumbs.db
+
+# Flutter (If not handled by the nested gitignore)
+# Note: Using **/ allows it to match inside subdirectories
+**/.dart_tool/
+**/build/
+**/android/.gradle/
+**/ios/.symlinks/
+**/ios/Pods/
