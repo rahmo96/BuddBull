@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "577177214284",
+    "project_id": "budbull-app",
+    "storage_bucket": "budbull-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:577177214284:android:5e80b080db0c297ac4c3e9",
+        "android_client_info": {
+          "package_name": "com.example.buddbull"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7IronnJICfvWrMS12OqsyB1Zhp7gIL5E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
