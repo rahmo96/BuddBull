@@ -10,7 +10,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('BudBull Home'),
+        title: const Text('BudBull'),
         actions: [
           // Logout button to test the flow
           IconButton(
