@@ -20,48 +20,71 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
+      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(controller: _emailController, decoration: const InputDecoration(labelText: 'Email')),
-            TextField(controller: _passwordController, decoration: const InputDecoration(labelText: 'Password'), obscureText: true),
+            Image.asset(
+              'assets/images/Ex_logo.png',
+              height: 200,
+              fit: BoxFit.cover,
+            ),
+            TextField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.email],
+              decoration: const InputDecoration(labelText: 'Email'),
+            ),
+            TextField(
+              controller: _passwordController,
+              decoration: const InputDecoration(labelText: 'Password'),
+              obscureText: true,
+            ),
             const SizedBox(height: 20),
 
             // Step 2: Show the spinner if _isLoading is true, otherwise show the button
-            _isLoading 
-              ? const CircularProgressIndicator() 
-              : ElevatedButton(
-                  onPressed: () async {
-                    // Step 3: Start loading
-                    setState(() => _isLoading = true);
+            _isLoading
+                ? const CircularProgressIndicator()
+                : ElevatedButton(
+                    onPressed: () async {
+                      // Step 3: Start loading
+                      setState(() => _isLoading = true);
 
-                    try {
-                      await _authService.signInWithEmail(
-                        _emailController.text.trim(), 
-                        _passwordController.text.trim()
-                      );
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+                      try {
+                        await _authService.signInWithEmail(
+                          _emailController.text.trim(),
+                          _passwordController.text.trim(),
                         );
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(e.toString()),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      } finally {
+                        // Step 4: Stop loading regardless of success or failure
+                        if (mounted) {
+                          setState(() => _isLoading = false);
+                        }
                       }
-                    } finally {
-                      // Step 4: Stop loading regardless of success or failure
-                      if (mounted) {
-                        setState(() => _isLoading = false);
-                      }
-                    }
-                  },
-                  child: const Text('Login'),
-                ),
-            
+                    },
+                    child: const Text('Login'),
+                  ),
+
             TextButton(
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterScreen())),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const RegisterScreen()),
+              ),
               child: const Text("New user? Register here"),
-            )
+            ),
           ],
         ),
       ),

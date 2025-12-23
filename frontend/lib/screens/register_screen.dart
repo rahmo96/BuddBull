@@ -20,6 +20,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
               controller: _emailController,
