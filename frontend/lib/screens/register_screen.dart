@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart'; 
+import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:form_builder_validators/form_builder_validators.dart';
+import '../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -9,8 +11,8 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormBuilderState>();
+
   final AuthService _authService = AuthService();
 
   @override
@@ -19,63 +21,89 @@ class _RegisterScreenState extends State<RegisterScreen> {
       appBar: AppBar(title: const Text('Create Account')),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
-            ),
-            const SizedBox(height: 15),
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Password'),
-              obscureText: true, 
-            ),
-            const SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: () async {
-                // Step 1: Use try-catch to handle potential errors from Firebase
-                try {
-                  final user = await _authService.signUpWithEmail(
-                    _emailController.text.trim(),
-                    _passwordController.text.trim(),
-                  );
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Center(
+                child: Image.asset(
+                  'assets/images/Ex_logo.png',
+                  height: 200,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              FormBuilder(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    FormBuilderTextField(
+                      name: 'email', // המפתח לשליפה
+                      validator: FormBuilderValidators.compose([
+                        FormBuilderValidators.required(),
+                        FormBuilderValidators.email(),
+                      ]),
+                      decoration: const InputDecoration(labelText: 'Email'),
+                    ),
+                    const SizedBox(height: 15),
+                    FormBuilderTextField(
+                      name: 'password', // המפתח לשליפה
+                      validator: FormBuilderValidators.compose([
+                        FormBuilderValidators.required(),
+                        FormBuilderValidators.minLength(8),
+                      ]),
+                      decoration: const InputDecoration(labelText: 'Password'),
+                      obscureText: true,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: () async {
+                  if (_formKey.currentState?.saveAndValidate() ?? false) {
+                    try {
+                      final formData = _formKey.currentState?.value;
+                      final email = formData?['email'];
+                      final password = formData?['password'];
 
-                  if (user != null) {
-                    // Step 2: Sign out immediately so the Wrapper stays on LoginScreen
-                    await _authService.signOut();
-
-                    if (mounted) {
-                      // Step 3: Show success message to the user
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Account created! Please login.'),
-                          backgroundColor: Colors.green,
-                        ),
+                      final user = await _authService.signUpWithEmail(
+                        email,
+                        password,
                       );
-                      
-                      // Step 4: Go back to the previous screen (LoginScreen)
-                      Navigator.pop(context);
+
+                      if (user != null) {
+                        await _authService.signOut();
+
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Account created! Please login.'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                          Navigator.pop(context);
+                        }
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(e.toString()),
+                            backgroundColor: Colors.red,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
                     }
+                  } else {
+                    debugPrint("Validation failed");
                   }
-                } catch (e) {
-                  // Step 5: Catch the error thrown by AuthService and show it in a SnackBar
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(e.toString()),
-                        backgroundColor: Colors.red,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  }
-                }
-              },
-              child: const Text('Register'),
-            ),
-          ],
+                },
+                child: const Text('Register'),
+              ),
+            ],
+          ),
         ),
       ),
     );
