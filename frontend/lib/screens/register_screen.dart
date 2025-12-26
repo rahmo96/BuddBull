@@ -47,13 +47,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 15),
                     FormBuilderTextField(
-                      name: 'password', // המפתח לשליפה
+                      name: 'password',
                       validator: FormBuilderValidators.compose([
                         FormBuilderValidators.required(),
                         FormBuilderValidators.minLength(8),
                       ]),
                       decoration: const InputDecoration(labelText: 'Password'),
                       obscureText: true,
+                    ),
+                    const SizedBox(height: 15),
+                    FormBuilderTextField(
+                      name: 'firstName',
+                      validator: FormBuilderValidators.compose([
+                        FormBuilderValidators.required(),
+                      ]),
+                      decoration: const InputDecoration(
+                        labelText: 'First Name',
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    FormBuilderTextField(
+                      name: 'lastName',
+                      validator: FormBuilderValidators.compose([
+                        FormBuilderValidators.required(),
+                      ]),
+                      decoration: const InputDecoration(labelText: 'Last Name'),
                     ),
                   ],
                 ),

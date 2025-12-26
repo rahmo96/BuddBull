@@ -8,8 +8,8 @@ class AuthService {
   Future<User?> signUpWithEmail(String email, String password) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
-        email: email, 
-        password: password
+        email: email,
+        password: password,
       );
       return result.user;
     } on FirebaseAuthException catch (e) {
@@ -29,13 +29,15 @@ class AuthService {
   Future<User?> signInWithEmail(String email, String password) async {
     try {
       UserCredential result = await _auth.signInWithEmailAndPassword(
-        email: email, 
-        password: password
+        email: email,
+        password: password,
       );
       return result.user;
     } on FirebaseAuthException catch (e) {
       // Handling common Login errors
-      if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
+      if (e.code == 'user-not-found' ||
+          e.code == 'wrong-password' ||
+          e.code == 'invalid-credential') {
         throw 'Invalid email or password.';
       } else if (e.code == 'user-disabled') {
         throw 'This user has been disabled.';
