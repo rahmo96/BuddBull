@@ -1,7 +1,7 @@
 import 'package:buddbull/screens/login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../screens/home_screen.dart';
+import '../screens/main_layout.dart';
 
 
 class MainWrapper extends StatelessWidget {
@@ -16,7 +16,7 @@ class MainWrapper extends StatelessWidget {
       builder: (context, snapshot) {
         // If the snapshot has data, it means a user is already logged in
         if (snapshot.hasData) {
-          return const HomeScreen();
+          return const MainLayout();
         }
         // If there is no data, it means no one is logged in, show Register
         return const LoginScreen();

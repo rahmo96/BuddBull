@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
+import 'home.dart';    // הייבוא למסך הבית הריק שיצרנו בשלב 2
+import 'profile.dart'; // הייבוא למסך הפרופיל שיצרנו בשלב 1
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class MainLayout extends StatefulWidget {
+  const MainLayout({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<MainLayout> createState() => _MainLayoutState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
 
+  
   final List<Widget> _screens = const [
-    Center(child: Text('Home')),
+    HomeScreen(),       
     Center(child: Text('Find')),
     Center(child: Text('Add')),
     Center(child: Text('Stats')),
-    Center(child: Text('Profile')),
+    ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -32,12 +35,9 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.green,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-        onPressed: () {
-          _onItemTapped(2);
-        },
+        onPressed: () => _onItemTapped(2),
         child: const Icon(Icons.add, size: 32),
       ),
-
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
 
       bottomNavigationBar: BottomAppBar(
@@ -62,20 +62,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildNavItem(IconData icon, String label, int index) {
     final isSelected = _selectedIndex == index;
-
     return InkWell(
       onTap: () => _onItemTapped(index),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: isSelected ? Colors.blue : Colors.grey),
-          Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? Colors.blue : Colors.grey,
-              fontSize: 12,
-            ),
-          ),
+          Text(label, style: TextStyle(color: isSelected ? Colors.blue : Colors.grey, fontSize: 12)),
         ],
       ),
     );
