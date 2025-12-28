@@ -21,10 +21,10 @@ class _SplashScreenState extends State<SplashScreen> {
       ..initialize().then((_) {
         setState(() {});
         _controller.play();
-        _controller.setLooping(true); // שמתי על True כדי שהסרטון לא ייעצר אם הוא קצר מ-5 שניות
+        _controller.setLooping(true); 
       });
 
-    // שיניתי כאן ל-5 שניות (Seconds: 5)
+    
     Timer(const Duration(seconds: 5), () {
       if (mounted) {
         Navigator.pushReplacement(
@@ -47,11 +47,10 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // כאן קורה הקסם של המתיחה
           SizedBox.expand(
             child: _controller.value.isInitialized
                 ? FittedBox(
-                    fit: BoxFit.cover, // זה גורם לווידאו למלא את כל המסך
+                    fit: BoxFit.cover, 
                     child: SizedBox(
                       width: _controller.value.size.width,
                       height: _controller.value.size.height,

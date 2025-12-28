@@ -3,6 +3,7 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import '../services/auth_service.dart';
 import 'register_screen.dart';
+import '../router/main_wrapper.dart'; // <--- 1. הוספתי את הייבוא הזה (חשוב!)
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,6 +16,62 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
   final AuthService _authService = AuthService();
   bool _isLoading = false;
+
+  void _showForgotPasswordDialog(BuildContext context) {
+    final TextEditingController resetController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Reset Password"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Enter your email to receive a reset link:"),
+            const SizedBox(height: 10),
+            TextField(
+              controller: resetController,
+              decoration: const InputDecoration(
+                hintText: "email@example.com",
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (resetController.text.isEmpty) return;
+              
+              try {
+                await _authService.resetPassword(resetController.text);
+                if (mounted) {
+                  Navigator.pop(context); 
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Reset link sent! Check your email."),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+                  );
+                }
+              }
+            },
+            child: const Text("Send"),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +117,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       obscureText: true,
                     ),
+                    
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => _showForgotPasswordDialog(context),
+                        child: const Text(
+                          "Forgot Password?",
+                          style: TextStyle(color: Colors.blue),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -77,6 +145,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           try {
                             await _authService.signInWithEmail(email, password);
+                            
+                            if (mounted) {
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                  builder: (context) => const MainWrapper(), 
+                                ),
+                              );
+                            }
+                            
                           } catch (e) {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(

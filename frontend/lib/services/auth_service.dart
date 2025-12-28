@@ -56,8 +56,17 @@ class AuthService {
       throw 'An unexpected error occurred.';
     }
   }
+  //  Password Reset
+  Future<void> resetPassword(String email) async {
+  try {
+    await _auth.sendPasswordResetEmail(email: email.trim());
+  } on FirebaseAuthException catch (e) {
+    // כאן כדאי לטפל בשגיאות כמו מייל לא תקין או משתמש שלא קיים
+    throw e.message ?? "אירעה שגיאה בשליחת המייל";
+  }
+}
 
-  // 3. Sign Out
+  //  Sign Out
   Future<void> signOut() async {
     try {
       await _auth.signOut();
