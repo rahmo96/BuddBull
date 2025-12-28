@@ -100,7 +100,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               backgroundColor: Colors.green,
                             ),
                           );
-                          Navigator.pop(context);
+                          Navigator.pushReplacementNamed(
+                            context,
+                            'form_fill_screen',
+                            arguments: {'initialEmail': email},
+                          );
                         }
                       }
                     } catch (e) {

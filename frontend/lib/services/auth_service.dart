@@ -1,8 +1,17 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:dio/dio.dart';
 
 class AuthService {
   // Instance of Firebase Auth to interact with the service
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: 'http://localhost:3000/api',
+      connectTimeout: const Duration(seconds: 5),
+      receiveTimeout: const Duration(seconds: 3),
+      headers: {'Content-Type': 'application/json'},
+    ),
+  );
 
   // 1. Sign Up (Create new user)
   Future<User?> signUpWithEmail(String email, String password) async {
@@ -55,5 +64,19 @@ class AuthService {
     } catch (e) {
       print("Error signing out: $e");
     }
+  }
+
+  Future<bool> saveUserToMongo(Map<String, dynamic> userData) async {
+    try {
+      final response = await _dio.post('/users/register', data: userData);
+      return response.statusCode == 201 || response.statusCode == 200;
+    } catch (e) {
+      print("Mongo Saving Error: $e");
+      return false;
+    }
+  }
+
+  User? getCurrentUser() {
+    return _auth.currentUser;
   }
 }
