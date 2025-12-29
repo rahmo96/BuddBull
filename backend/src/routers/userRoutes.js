@@ -12,7 +12,7 @@ router.post("/register", async (req, res) => {
     }
 });
 
-router.get("/test", async (req, res) => {
+router.get("/budbull_db", async (req, res) => {
     res.json({ message: "User route is working!" });
 });
 

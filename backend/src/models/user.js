@@ -2,29 +2,56 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
     {
-        email: { type: String, required: true, unique: true },
+        firebaseUid: { type: String, required: true, unique: true },
 
-        firstName: { type: String, required: true },
-        lastName: { type: String, required: true },
+        personalInfo: {
+            firstName: { type: String, required: true },
+            lastName: { type: String, required: true },
+            email: { type: String, required: true, unique: true },
+            phone: { type: String },
+            dateOfBirth: { type: Date },
+            gender: { type: String, enum: ["male", "female", "other"] }
+        },
 
-        roles: {
-            isPlayer: { type: Boolean, default: true },
-            isOrganizer: { type: Boolean, default: false },
-            isAdmin: { type: Boolean, default: false },
+        bio: {
+            aboutMe: { type: String, maxlength: 500 },
+            goals: { type: String }
+        },
+
+        profileImage: { type: String },
+
+        sportsInterests: [{ type: String }],
+        skillLevels: {
+            type: Map,
+            of: String
         },
 
         location: {
-            area: String,
-            radiusKm: { type: Number, default: 5 },
+            neighborhood: String,
+            coordinates: {
+                type: { type: String, default: "Point" },
+                coordinates: [Number],
+            }
         },
+
+        systemRole: {
+            type: String,
+            enum: ["user", "admin"],
+            default: "user"
+        },
+
+        streaks: { type: Number, default: 0 },
 
         status: {
             type: String,
             enum: ["active", "blocked", "deleted"],
-            default: "active",
-        },
+            default: "active"
+        }
     },
     { timestamps: true }
 );
+
+// יצירת אינדקס גיאוגרפי לחיפוש שותפים בקרבת מקום [cite: 49, 83]
+userSchema.index({ "location.coordinates": "2dsphere" });
 
 export const User = mongoose.model("User", userSchema);

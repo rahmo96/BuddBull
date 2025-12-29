@@ -6,7 +6,7 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: 'http://localhost:3000/api',
+      baseUrl: 'http://10.0.2.2:3000/api',
       connectTimeout: const Duration(seconds: 5),
       receiveTimeout: const Duration(seconds: 3),
       headers: {'Content-Type': 'application/json'},
@@ -56,15 +56,16 @@ class AuthService {
       throw 'An unexpected error occurred.';
     }
   }
+
   //  Password Reset
   Future<void> resetPassword(String email) async {
-  try {
-    await _auth.sendPasswordResetEmail(email: email.trim());
-  } on FirebaseAuthException catch (e) {
-    // כאן כדאי לטפל בשגיאות כמו מייל לא תקין או משתמש שלא קיים
-    throw e.message ?? "אירעה שגיאה בשליחת המייל";
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+    } on FirebaseAuthException catch (e) {
+      // כאן כדאי לטפל בשגיאות כמו מייל לא תקין או משתמש שלא קיים
+      throw e.message ?? "אירעה שגיאה בשליחת המייל";
+    }
   }
-}
 
   //  Sign Out
   Future<void> signOut() async {
