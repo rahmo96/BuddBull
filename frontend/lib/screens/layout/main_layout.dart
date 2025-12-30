@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'home.dart';    // הייבוא למסך הבית הריק שיצרנו בשלב 2
-import 'profile.dart'; // הייבוא למסך הפרופיל שיצרנו בשלב 1
+import '../main/home.dart';
+import '../main/profile.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import '../services/auth_service.dart';
+import '../../services/auth_service.dart';
 import 'register_screen.dart';
-import '../router/main_wrapper.dart'; // <--- 1. הוספתי את הייבוא הזה (חשוב!)
+import '../../router/main_wrapper.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

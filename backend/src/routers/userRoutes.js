@@ -12,8 +12,30 @@ router.post("/register", async (req, res) => {
     }
 });
 
-router.get("/budbull_db", async (req, res) => {
-    res.json({ message: "User route is working!" });
+router.put("/profile", async (req, res) => {
+    try {
+        const { firebaseUid, personalInfo } = req.body;
+
+        if (!firebaseUid) {
+            return res.status(400).json({ message: "firebaseUid is required" });
+        }
+
+        const updatedUser = await User.findOneAndUpdate(
+            { firebaseUid },
+            { $set: { personalInfo } },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json(updatedUser);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
 });
+
+
 
 export default router;

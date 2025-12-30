@@ -51,7 +51,6 @@ const userSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-// יצירת אינדקס גיאוגרפי לחיפוש שותפים בקרבת מקום [cite: 49, 83]
 userSchema.index({ "location.coordinates": "2dsphere" });
 
 export const User = mongoose.model("User", userSchema);

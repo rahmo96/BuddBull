@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:dio/dio.dart';
-import '../services/api_client.dart';
-import '../services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/api_client.dart';
+import '../../services/auth_service.dart';
+import '../onboarding/introduction_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -156,56 +158,83 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       // 2. Register in Firebase Auth first
-      final user = await _authService.signUpWithEmail(
-        values['email'],
-        values['password'],
-      );
+      User? user;
+      try {
+        user = await _authService.signUpWithEmail(
+          values['email'],
+          values['password'],
+        );
+      } catch (firebaseError) {
+        // Firebase registration failed - show the error and stop
+        _showError(firebaseError.toString() + " Firebase registration failed");
+        return;
+      }
 
-      if (user != null) {
-        // 3. Prepare payload for the backend API
-        // Added the nested location structure required by your Mongoose schema
-        final payload = {
-          "firebaseUid": user.uid,
-          "personalInfo": {
-            "firstName": (values["firstName"] ?? "").toString().trim(),
-            "lastName": (values["lastName"] ?? "").toString().trim(),
-            "email": values['email'],
-            "gender": values["gender"],
-          },
-          "location": {
-            "neighborhood": "Default", // You can add a field for this later
-            "coordinates": {
-              "type": "Point",
-              "coordinates": [34.7818, 32.0853], // [Longitude, Latitude]
-            },
-          },
-          "status": "active",
-        };
+      if (user == null) {
+        _showError('Failed to create Firebase account. Please try again.');
+        return;
+      }
 
+      // Store user.uid in a local variable for null safety
+      final userUid = user.uid;
+
+      // 3. Prepare payload for the backend API
+      // Added the nested location structure required by your Mongoose schema
+      final payload = {
+        "firebaseUid": userUid,
+        "personalInfo": {
+          "firstName": (values["firstName"] ?? "").toString().trim(),
+          "lastName": (values["lastName"] ?? "").toString().trim(),
+          "email": values['email'],
+          "gender": values["gender"],
+        },
+        "location": {
+          "neighborhood": "Default", // You can add a field for this later
+          "coordinates": {
+            "type": "Point",
+            "coordinates": [34.7818, 32.0853], // [Longitude, Latitude]
+          },
+        },
+        "status": "active",
+      };
+
+      try {
         // 4. Send to Backend immediately
         await _dio.post('/users/register', data: payload);
 
-        // 5. Sign out and navigate back
-        await _authService.signOut();
-
+        // 5. Navigate to introduction screen to complete profile
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Success! Account and profile created.'),
+              content: Text('Account created! Now complete your profile.'),
               backgroundColor: Colors.green,
             ),
           );
-          Navigator.pushReplacementNamed(context, 'login_screen');
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => IntroductionScreen(
+                initialEmail: values['email'],
+                initialUid: userUid,
+                initialPersonalInfo: Map<String, dynamic>.from(
+                  payload['personalInfo'] as Map,
+                ),
+              ),
+            ),
+          );
         }
+      } on DioException catch (e) {
+        // If backend fails, sign out from Firebase to clean up
+        await _authService.signOut();
+
+        // Improved error parsing to show exactly what the backend rejected
+        final backendError = e.response?.data is Map
+            ? e.response?.data['message']
+            : e.response?.data;
+        _showError("Backend Error: ${backendError ?? e.message}");
       }
-    } on DioException catch (e) {
-      // Improved error parsing to show exactly what the backend rejected
-      final backendError = e.response?.data is Map
-          ? e.response?.data['message']
-          : e.response?.data;
-      _showError("Profile Error: ${backendError ?? e.message}");
     } catch (e) {
-      _showError(e.toString());
+      // Handle Firebase Auth errors
+      _showError("Registration Error: ${e.toString()}");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
