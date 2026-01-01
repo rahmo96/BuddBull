@@ -3,6 +3,7 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
+import 'package:geolocator/geolocator.dart'; // <--- הוספנו את זה
 import '../../services/api_client.dart';
 import '../../services/auth_service.dart';
 import '../../router/main_wrapper.dart';
@@ -25,29 +26,19 @@ class IntroductionScreen extends StatefulWidget {
 class _IntroductionScreenState extends State<IntroductionScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
   final Dio _dio = ApiClient.instance;
+  
   bool _isLoading = false;
+  
+  // משתנים חדשים לניהול מיקום
+  bool _isLocationLoading = false;
+  Position? _currentPosition;
+
   DateTime? _selectedBirthday;
 
-  // List of popular sports for selection
   final List<String> _sportsOptions = [
-    'Football',
-    'Basketball',
-    'Tennis',
-    'Soccer',
-    'Baseball',
-    'Volleyball',
-    'Swimming',
-    'Running',
-    'Cycling',
-    'Gym/Fitness',
-    'Yoga',
-    'Martial Arts',
-    'Golf',
-    'Hiking',
-    'Rock Climbing',
-    'Surfing',
-    'Skateboarding',
-    'Other',
+    'Football', 'Basketball', 'Tennis', 'Soccer', 'Baseball', 'Volleyball',
+    'Swimming', 'Running', 'Cycling', 'Gym/Fitness', 'Yoga', 'Martial Arts',
+    'Golf', 'Hiking', 'Rock Climbing', 'Surfing', 'Skateboarding', 'Other',
   ];
 
   @override
@@ -70,7 +61,6 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header Section
                 const Text(
                   "Complete Your Profile",
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
@@ -84,7 +74,7 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                 ),
                 const SizedBox(height: 30),
 
-                // Birthday Section
+                // --- Birthday Section ---
                 const Text(
                   "Birthday",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -93,9 +83,7 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                 FormBuilderField<DateTime>(
                   name: 'birthday',
                   validator: FormBuilderValidators.compose([
-                    FormBuilderValidators.required(
-                      errorText: 'Birthday is required',
-                    ),
+                    FormBuilderValidators.required(errorText: 'Birthday is required'),
                   ]),
                   builder: (FormFieldState<DateTime> field) {
                     return InputDecorator(
@@ -110,14 +98,10 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                         onTap: () async {
                           final DateTime? picked = await showDatePicker(
                             context: context,
-                            initialDate:
-                                _selectedBirthday ??
-                                DateTime.now().subtract(
-                                  const Duration(days: 365 * 18),
-                                ),
+                            initialDate: _selectedBirthday ??
+                                DateTime.now().subtract(const Duration(days: 365 * 18)),
                             firstDate: DateTime(1950),
                             lastDate: DateTime.now(),
-                            helpText: 'Select your birthday',
                           );
                           if (picked != null && picked != _selectedBirthday) {
                             setState(() {
@@ -128,9 +112,7 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                         },
                         child: Text(
                           _selectedBirthday != null
-                              ? DateFormat(
-                                  'yyyy-MM-dd',
-                                ).format(_selectedBirthday!)
+                              ? DateFormat('yyyy-MM-dd').format(_selectedBirthday!)
                               : 'Tap to select date',
                           style: TextStyle(
                             color: _selectedBirthday != null
@@ -144,43 +126,89 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                 ),
                 const SizedBox(height: 25),
 
-                // Sports Interests Section
+                // --- Location Section (NEW!) ---
+                const Text(
+                  "Living Area",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: FormBuilderTextField(
+                        name: 'neighborhood',
+                        decoration: const InputDecoration(
+                          labelText: 'Neighborhood / City',
+                          hintText: 'e.g. Tel Aviv Center',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.location_city),
+                        ),
+                        // השדה הזה אופציונלי, אבל מומלץ
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // כפתור המיקום
+                    Container(
+                      height: 56, // גובה תואם לשדה הטקסט
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(4),
+                        color: _currentPosition != null ? Colors.green[50] : null,
+                      ),
+                      child: IconButton(
+                        icon: _isLocationLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : Icon(
+                                _currentPosition != null
+                                    ? Icons.my_location
+                                    : Icons.location_searching,
+                                color: _currentPosition != null
+                                    ? Colors.green
+                                    : Colors.grey[700],
+                              ),
+                        onPressed: _getCurrentLocation,
+                        tooltip: 'Use Current Location',
+                      ),
+                    ),
+                  ],
+                ),
+                if (_currentPosition != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 5.0),
+                    child: Text(
+                      "Location captured! (Latitude: ${_currentPosition!.latitude.toStringAsFixed(2)})",
+                      style: TextStyle(color: Colors.green[700], fontSize: 12),
+                    ),
+                  ),
+                const SizedBox(height: 25),
+
+                // --- Sports Interests Section ---
                 const Text(
                   "Sports Interests",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  "Select all that apply",
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-                const SizedBox(height: 15),
                 FormBuilderCheckboxGroup<String>(
                   name: 'sportsInterests',
                   decoration: const InputDecoration(border: InputBorder.none),
                   options: _sportsOptions
-                      .map(
-                        (sport) => FormBuilderFieldOption(
-                          value: sport,
-                          child: Text(sport),
-                        ),
-                      )
+                      .map((sport) => FormBuilderFieldOption(value: sport, child: Text(sport)))
                       .toList(),
                   validator: FormBuilderValidators.compose([
-                    FormBuilderValidators.required(
-                      errorText: 'Please select at least one sport',
-                    ),
-                    FormBuilderValidators.minLength(
-                      1,
-                      errorText: 'Please select at least one sport',
-                    ),
+                    FormBuilderValidators.required(errorText: 'Select at least one sport'),
+                    FormBuilderValidators.minLength(1, errorText: 'Select at least one sport'),
                   ]),
                   wrapSpacing: 8,
                   wrapRunSpacing: 8,
                 ),
                 const SizedBox(height: 25),
 
-                // About Yourself Section
+                // --- About Yourself Section ---
                 const Text(
                   "About Yourself",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -191,28 +219,19 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                   maxLines: 5,
                   decoration: const InputDecoration(
                     labelText: 'Tell us about yourself',
-                    hintText:
-                        'Share your interests, hobbies, or what you\'re looking for...',
+                    hintText: 'Share your interests...',
                     border: OutlineInputBorder(),
                     alignLabelWithHint: true,
                   ),
                   validator: FormBuilderValidators.compose([
-                    FormBuilderValidators.required(
-                      errorText: 'Please tell us about yourself',
-                    ),
-                    FormBuilderValidators.minLength(
-                      10,
-                      errorText: 'Please write at least 10 characters',
-                    ),
-                    FormBuilderValidators.maxLength(
-                      500,
-                      errorText: 'Maximum 500 characters',
-                    ),
+                    FormBuilderValidators.required(errorText: 'Required'),
+                    FormBuilderValidators.minLength(10, errorText: 'At least 10 characters'),
+                    FormBuilderValidators.maxLength(500, errorText: 'Max 500 characters'),
                   ]),
                 ),
                 const SizedBox(height: 40),
 
-                // Submit Button
+                // --- Submit Button ---
                 _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : ElevatedButton(
@@ -235,6 +254,51 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
     );
   }
 
+  // --- פונקציה חדשה להשגת מיקום ---
+  Future<void> _getCurrentLocation() async {
+    setState(() => _isLocationLoading = true);
+    try {
+      // 1. בדיקה אם השירות דלוק
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        throw 'Location services are disabled. Please enable GPS.';
+      }
+
+      // 2. בדיקת הרשאות
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          throw 'Location permissions are denied';
+        }
+      }
+      
+      if (permission == LocationPermission.deniedForever) {
+        throw 'Location permissions are permanently denied, we cannot request permissions.';
+      }
+
+      // 3. השגת המיקום
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high // דיוק גבוה (השרת יעשה את הטישטוש)
+      );
+
+      setState(() {
+        _currentPosition = position;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location acquired successfully!')),
+        );
+      }
+
+    } catch (e) {
+      _showError(e.toString());
+    } finally {
+      setState(() => _isLocationLoading = false);
+    }
+  }
+
   Future<void> _handleSubmit() async {
     if (!(_formKey.currentState?.saveAndValidate() ?? false)) return;
 
@@ -242,27 +306,21 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Get current user
       final authService = AuthService();
       final user = authService.getCurrentUser();
-      if (user == null) {
-        throw 'User not authenticated';
-      }
+      if (user == null) throw 'User not authenticated';
 
-      // Format birthday
       final birthday = values['birthday'] as DateTime?;
       final birthdayString = birthday != null
           ? DateFormat('yyyy-MM-dd').format(birthday)
           : null;
 
-      // Get initial personal info from registration
-      final firstName =
-          widget.initialPersonalInfo?['firstName'] as String? ?? '';
+      final firstName = widget.initialPersonalInfo?['firstName'] as String? ?? '';
       final lastName = widget.initialPersonalInfo?['lastName'] as String? ?? '';
       final email = widget.initialEmail ?? '';
       final gender = widget.initialPersonalInfo?['gender'] as String?;
 
-      // Prepare payload for the backend API
+      // בניית ה-JSON לשליחה לשרת
       final payload = {
         "firebaseUid": widget.initialUid ?? user.uid,
         "personalInfo": {
@@ -274,9 +332,17 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
           "sportsInterests": values['sportsInterests'] as List<String>? ?? [],
           "about": values['about'] as String? ?? '',
         },
+        // --- כאן אנחנו מוסיפים את המיקום החדש ---
+        "location": {
+          "neighborhood": values['neighborhood'] ?? '',
+          // שולחים קואורדינטות רק אם השגנו אותן
+          if (_currentPosition != null) ...{
+            "latitude": _currentPosition!.latitude,
+            "longitude": _currentPosition!.longitude,
+          }
+        }
       };
 
-      // Send to Backend
       await _dio.put('/users/profile', data: payload);
 
       if (mounted) {
@@ -286,8 +352,6 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
             backgroundColor: Colors.green,
           ),
         );
-
-        // Navigate to main app
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const MainWrapper()),
         );
