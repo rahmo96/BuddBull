@@ -336,10 +336,10 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
         "location": {
           "neighborhood": values['neighborhood'] ?? '',
           // שולחים קואורדינטות רק אם השגנו אותן
-          if (_currentPosition != null) ...{
-            "latitude": _currentPosition!.latitude,
-            "longitude": _currentPosition!.longitude,
-          }
+          "coordinates": _currentPosition != null ? {
+            "type": "Point",
+            "coordinates": [_currentPosition!.longitude, _currentPosition!.latitude]
+          } : null
         }
       };
 

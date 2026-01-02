@@ -14,7 +14,7 @@ router.post("/register", async (req, res) => {
 
 router.put("/profile", async (req, res) => {
     try {
-        const { firebaseUid, personalInfo } = req.body;
+        const { firebaseUid, personalInfo, location } = req.body;
         if (!firebaseUid) return res.status(400).json({ message: "firebaseUid is required" });
 
         const update = {
@@ -25,6 +25,7 @@ router.put("/profile", async (req, res) => {
             "personalInfo.dateOfBirth": personalInfo?.birthday ? new Date(personalInfo.birthday) : undefined,
             "sportsInterests": personalInfo?.sportsInterests ?? [],
             "bio.aboutMe": personalInfo?.about ?? "",
+            "location": location
         };
 
         // להוריד שדות שהם undefined כדי שלא ימחקו/יעשו בעיות
