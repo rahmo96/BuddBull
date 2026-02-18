@@ -26,9 +26,9 @@ class IntroductionScreen extends StatefulWidget {
 class _IntroductionScreenState extends State<IntroductionScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
   final Dio _dio = ApiClient.instance;
-  
+
   bool _isLoading = false;
-  
+
   // משתנים חדשים לניהול מיקום
   bool _isLocationLoading = false;
   Position? _currentPosition;
@@ -36,9 +36,24 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
   DateTime? _selectedBirthday;
 
   final List<String> _sportsOptions = [
-    'Football', 'Basketball', 'Tennis', 'Soccer', 'Baseball', 'Volleyball',
-    'Swimming', 'Running', 'Cycling', 'Gym/Fitness', 'Yoga', 'Martial Arts',
-    'Golf', 'Hiking', 'Rock Climbing', 'Surfing', 'Skateboarding', 'Other',
+    'Football',
+    'Basketball',
+    'Tennis',
+    'Soccer',
+    'Baseball',
+    'Volleyball',
+    'Swimming',
+    'Running',
+    'Cycling',
+    'Gym/Fitness',
+    'Yoga',
+    'Martial Arts',
+    'Golf',
+    'Hiking',
+    'Rock Climbing',
+    'Surfing',
+    'Skateboarding',
+    'Other',
   ];
 
   @override
@@ -83,7 +98,9 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                 FormBuilderField<DateTime>(
                   name: 'birthday',
                   validator: FormBuilderValidators.compose([
-                    FormBuilderValidators.required(errorText: 'Birthday is required'),
+                    FormBuilderValidators.required(
+                      errorText: 'Birthday is required',
+                    ),
                   ]),
                   builder: (FormFieldState<DateTime> field) {
                     return InputDecorator(
@@ -98,8 +115,11 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                         onTap: () async {
                           final DateTime? picked = await showDatePicker(
                             context: context,
-                            initialDate: _selectedBirthday ??
-                                DateTime.now().subtract(const Duration(days: 365 * 18)),
+                            initialDate:
+                                _selectedBirthday ??
+                                DateTime.now().subtract(
+                                  const Duration(days: 365 * 18),
+                                ),
                             firstDate: DateTime(1950),
                             lastDate: DateTime.now(),
                           );
@@ -112,7 +132,9 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                         },
                         child: Text(
                           _selectedBirthday != null
-                              ? DateFormat('yyyy-MM-dd').format(_selectedBirthday!)
+                              ? DateFormat(
+                                  'yyyy-MM-dd',
+                                ).format(_selectedBirthday!)
                               : 'Tap to select date',
                           style: TextStyle(
                             color: _selectedBirthday != null
@@ -154,14 +176,18 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey),
                         borderRadius: BorderRadius.circular(4),
-                        color: _currentPosition != null ? Colors.green[50] : null,
+                        color: _currentPosition != null
+                            ? Colors.green[50]
+                            : null,
                       ),
                       child: IconButton(
                         icon: _isLocationLoading
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : Icon(
                                 _currentPosition != null
@@ -197,11 +223,21 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                   name: 'sportsInterests',
                   decoration: const InputDecoration(border: InputBorder.none),
                   options: _sportsOptions
-                      .map((sport) => FormBuilderFieldOption(value: sport, child: Text(sport)))
+                      .map(
+                        (sport) => FormBuilderFieldOption(
+                          value: sport,
+                          child: Text(sport),
+                        ),
+                      )
                       .toList(),
                   validator: FormBuilderValidators.compose([
-                    FormBuilderValidators.required(errorText: 'Select at least one sport'),
-                    FormBuilderValidators.minLength(1, errorText: 'Select at least one sport'),
+                    FormBuilderValidators.required(
+                      errorText: 'Select at least one sport',
+                    ),
+                    FormBuilderValidators.minLength(
+                      1,
+                      errorText: 'Select at least one sport',
+                    ),
                   ]),
                   wrapSpacing: 8,
                   wrapRunSpacing: 8,
@@ -225,8 +261,14 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                   ),
                   validator: FormBuilderValidators.compose([
                     FormBuilderValidators.required(errorText: 'Required'),
-                    FormBuilderValidators.minLength(10, errorText: 'At least 10 characters'),
-                    FormBuilderValidators.maxLength(500, errorText: 'Max 500 characters'),
+                    FormBuilderValidators.minLength(
+                      10,
+                      errorText: 'At least 10 characters',
+                    ),
+                    FormBuilderValidators.maxLength(
+                      500,
+                      errorText: 'Max 500 characters',
+                    ),
                   ]),
                 ),
                 const SizedBox(height: 40),
@@ -272,14 +314,18 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
           throw 'Location permissions are denied';
         }
       }
-      
+
       if (permission == LocationPermission.deniedForever) {
         throw 'Location permissions are permanently denied, we cannot request permissions.';
       }
 
-      // 3. השגת המיקום
+      final LocationSettings locationSettings = LocationSettings(
+        accuracy: LocationAccuracy.high, // דיוק גבוה
+        distanceFilter: 10, // עדכון מיקום רק אם המשתמש זז 10 מטרים (אופציונלי)
+      );
+
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high // דיוק גבוה (השרת יעשה את הטישטוש)
+        locationSettings: locationSettings,
       );
 
       setState(() {
@@ -291,7 +337,6 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
           const SnackBar(content: Text('Location acquired successfully!')),
         );
       }
-
     } catch (e) {
       _showError(e.toString());
     } finally {
@@ -315,7 +360,8 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
           ? DateFormat('yyyy-MM-dd').format(birthday)
           : null;
 
-      final firstName = widget.initialPersonalInfo?['firstName'] as String? ?? '';
+      final firstName =
+          widget.initialPersonalInfo?['firstName'] as String? ?? '';
       final lastName = widget.initialPersonalInfo?['lastName'] as String? ?? '';
       final email = widget.initialEmail ?? '';
       final gender = widget.initialPersonalInfo?['gender'] as String?;
@@ -336,11 +382,16 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
         "location": {
           "neighborhood": values['neighborhood'] ?? '',
           // שולחים קואורדינטות רק אם השגנו אותן
-          "coordinates": _currentPosition != null ? {
-            "type": "Point",
-            "coordinates": [_currentPosition!.longitude, _currentPosition!.latitude]
-          } : null
-        }
+          "coordinates": _currentPosition != null
+              ? {
+                  "type": "Point",
+                  "coordinates": [
+                    _currentPosition!.longitude,
+                    _currentPosition!.latitude,
+                  ],
+                }
+              : null,
+        },
       };
 
       await _dio.put('/users/profile', data: payload);
