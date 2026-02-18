@@ -1,0 +1,71 @@
+name: BuddBull CI/CD Flow
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # שלב 1: בדיקת תקינות הקוד (Lint)
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          
+      - name: Install dependencies
+        run: cd frontend && flutter pub get
+        
+      - name: Run Flutter Analyze
+        run: cd frontend && flutter analyze # כאן נתפסות טעויות ה-BuildContext
+
+  # שלב 2: טסטים ל-Frontend (תלוי ב-Lint)
+  test-frontend:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+      - name: Run Flutter Tests
+        run: cd frontend && flutter test
+
+  # שלב 3: טסטים ל-Backend (תלוי ב-Lint)
+  # מניח שימוש ב-Python כפי שצוין בפרויקטים אחרים שלך
+  test-backend:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Run Backend Tests
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          pytest
+
+  # שלב 4: Build ל-Frontend (תלוי בטסטים של ה-Frontend)
+  build-frontend:
+    needs: test-frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+      - name: Build APK
+        run: cd frontend && flutter build apk --release
+
+  # שלב 5: Build ל-Backend ודחיפה ל-Docker (תלוי בטסטים של ה-Backend)
+  build-backend-docker:
+    needs: test-backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker Image
+        run: docker build -t buddbull-backend ./backend
