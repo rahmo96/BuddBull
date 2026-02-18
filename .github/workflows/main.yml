@@ -58,6 +58,9 @@ jobs:
       - name: Install dependencies
         working-directory: backend
         run: npm ci
+      - name: fix permissions
+        working-directory: backend
+        run: chmod -R +x node_modules/.bin/vitest
       - name: Run Backend Tests
         working-directory: backend
         run: npm run test
