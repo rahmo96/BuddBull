@@ -60,7 +60,7 @@ jobs:
         run: npm ci
       - name: fix permissions
         working-directory: backend
-        run: chmod -R +x node_modules/.bin/vitest
+        run: chmod -R +x node_modules/.bin
       - name: Run Backend Tests
         working-directory: backend
         run: npm run test
