@@ -74,7 +74,7 @@ class AuthService {
     try {
       await _auth.signOut();
     } catch (e) {
-      print("Error signing out: $e");
+      throw "An error occurred while signing out";
     }
   }
 
@@ -83,8 +83,7 @@ class AuthService {
       final response = await _dio.post('/users/register', data: userData);
       return response.statusCode == 201 || response.statusCode == 200;
     } catch (e) {
-      print("Mongo Saving Error: $e");
-      return false;
+      throw "An error occurred while saving user to MongoDB";
     }
   }
 
