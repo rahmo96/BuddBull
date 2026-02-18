@@ -6,12 +6,8 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-<<<<<<< HEAD
-    "test": "node -e \"console.log('Backend OK')\""
-=======
     "test": "vitest run",
     "test:watch": "vitest"
->>>>>>> origin/haim-updates
   },
   "dependencies": {
     "cors": "^2.8.5",
