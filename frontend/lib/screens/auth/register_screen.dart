@@ -175,7 +175,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
       } catch (firebaseError) {
         // Firebase registration failed - show the error and stop
-        _showError(firebaseError.toString() + " Firebase registration failed");
+        _showError("$firebaseError Firebase registration failed");
         return;
       }
 
