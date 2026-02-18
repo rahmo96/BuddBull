@@ -47,8 +47,9 @@ void main() {
       await tester.pumpAndSettle();
 
       final hasValidationError = find.text('Birthday is required').evaluate().isNotEmpty ||
-          find.text('Please select at least one sport').evaluate().isNotEmpty ||
-          find.text('Please tell us about yourself').evaluate().isNotEmpty;
+          find.text('Select at least one sport').evaluate().isNotEmpty ||
+          find.text('Required').evaluate().isNotEmpty ||
+          find.text('At least 10 characters').evaluate().isNotEmpty;
       expect(hasValidationError, isTrue);
     });
 
@@ -77,7 +78,10 @@ void main() {
         ),
       );
 
-      expect(find.text('Select all that apply'), findsOneWidget);
+      await tester.ensureVisible(find.text('Sports Interests'));
+      expect(find.text('Sports Interests'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('Football'));
       expect(find.text('Football'), findsOneWidget);
       expect(find.text('Basketball'), findsOneWidget);
     });
