@@ -3,7 +3,9 @@ import 'package:dio/dio.dart';
 
 class AuthService {
   // Instance of Firebase Auth to interact with the service
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  // Optional [auth] parameter for testing with mocks
+  AuthService({FirebaseAuth? auth}) : _auth = auth ?? FirebaseAuth.instance;
+  final FirebaseAuth _auth;
   final Dio _dio = Dio(
     BaseOptions(
       baseUrl: 'http://10.0.2.2:3000/api',

@@ -6,7 +6,10 @@ import 'register_screen.dart';
 import '../../router/main_wrapper.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.authService});
+
+  /// Optional AuthService for testing. When null, uses default.
+  final AuthService? authService;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -14,7 +17,13 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
-  final AuthService _authService = AuthService();
+  late final AuthService _authService;
+
+  @override
+  void initState() {
+    super.initState();
+    _authService = widget.authService ?? AuthService();
+  }
   bool _isLoading = false;
 
   void _showForgotPasswordDialog(BuildContext context) {
@@ -176,7 +185,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const RegisterScreen(),
+                    builder: (context) => RegisterScreen(
+                      authService: _authService,
+                    ),
                   ),
                 ),
                 child: const Text("New user? Register here"),

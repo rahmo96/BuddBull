@@ -3,7 +3,12 @@ import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({super.key, this.authService});
+
+  /// Optional AuthService for testing. When null, uses default.
+  final AuthService? authService;
+
+  AuthService get _authService => authService ?? AuthService();
 
   /// Shows the bottom sheet menu (Settings, Logout, etc.)
   void _showSettingsMenu(BuildContext context) {
@@ -83,7 +88,7 @@ class ProfileScreen extends StatelessWidget {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
             onPressed: () async {
               Navigator.pop(context);
-              await AuthService().signOut();
+              await _authService.signOut();
               if (context.mounted) {
                 Navigator.pushAndRemoveUntil(
                   context,

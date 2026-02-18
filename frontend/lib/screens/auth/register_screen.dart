@@ -8,7 +8,10 @@ import '../../services/auth_service.dart';
 import '../onboarding/introduction_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  const RegisterScreen({super.key, this.authService});
+
+  /// Optional AuthService for testing. When null, uses default.
+  final AuthService? authService;
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -16,7 +19,13 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
-  final AuthService _authService = AuthService();
+  late final AuthService _authService;
+
+  @override
+  void initState() {
+    super.initState();
+    _authService = widget.authService ?? AuthService();
+  }
   final Dio _dio = ApiClient.instance;
   bool _isLoading = false;
 
