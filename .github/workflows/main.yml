@@ -58,12 +58,9 @@ jobs:
       - name: Install dependencies
         working-directory: backend
         run: npm ci
-      - name: fix permissions
-        working-directory: backend
-        run: chmod -R +x node_modules/.bin
       - name: Run Backend Tests
         working-directory: backend
-        run: npm run test
+        run: chmod -R +x node_modules/.bin && npm run test
 
   # שלב 4: Build ל-Frontend (תלוי בטסטים של ה-Frontend)
   build-frontend:
