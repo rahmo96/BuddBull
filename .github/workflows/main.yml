@@ -17,12 +17,13 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          
+          cache: true
       - name: Install dependencies
-        run: cd frontend && flutter pub get
-        
+        working-directory: frontend
+        run: flutter pub get
       - name: Run Flutter Analyze
-        run: cd frontend && flutter analyze # כאן נתפסות טעויות ה-BuildContext
+        working-directory: frontend
+        run: flutter analyze
 
   # שלב 2: טסטים ל-Frontend (תלוי ב-Lint)
   test-frontend:
@@ -30,26 +31,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+      - name: Install dependencies
+        working-directory: frontend
+        run: flutter pub get
       - name: Run Flutter Tests
-        run: cd frontend && flutter test
+        working-directory: frontend
+        run: flutter test test/
 
   # שלב 3: טסטים ל-Backend (תלוי ב-Lint)
-  # מניח שימוש ב-Python כפי שצוין בפרויקטים אחרים שלך
   test-backend:
     needs: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.9'
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
       - name: Run Backend Tests
-        run: |
-          cd backend
-          pip install -r requirements.txt
-          pytest
+        working-directory: backend
+        run: npm run test
 
   # שלב 4: Build ל-Frontend (תלוי בטסטים של ה-Frontend)
   build-frontend:
@@ -57,9 +68,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+      - name: Install dependencies
+        working-directory: frontend
+        run: flutter pub get
+      - name: Accept Android licenses
+        working-directory: frontend
+        run: yes | flutter doctor --android-licenses || true
       - name: Build APK
-        run: cd frontend && flutter build apk --release
+        working-directory: frontend
+        run: flutter build apk --release
 
   # שלב 5: Build ל-Backend ודחיפה ל-Docker (תלוי בטסטים של ה-Backend)
   build-backend-docker:
