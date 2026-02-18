@@ -2,6 +2,9 @@
     
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    
     <!-- 2. הוספת אישור לתקשורת HTTP (Cleartext) -->
     <application
         android:label="buddbull"
