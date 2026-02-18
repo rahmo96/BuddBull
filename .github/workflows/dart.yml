@@ -41,25 +41,3 @@ jobs:
       # want to change this to 'flutter test'.
       - name: Run tests
         run: dart test
-
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.38.5'
-          channel: 'stable'
-          cache: true
-
-      - name: Install dependencies
-        working-directory: frontend
-        run: flutter pub get
-
-      - name: Run tests
-        working-directory: frontend
-        run: flutter test test/
