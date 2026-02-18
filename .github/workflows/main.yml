@@ -60,7 +60,7 @@ jobs:
         run: npm ci
       - name: Run Backend Tests
         working-directory: backend
-        run: chmod -R +x node_modules/.bin && npm run test
+        run: sudo chmod -R +x node_modules/.bin && npm run test
 
   # שלב 4: Build ל-Frontend (תלוי בטסטים של ה-Frontend)
   build-frontend:
