@@ -1,9 +1,4 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-name: Dart
+name: Flutter CI
 
 on:
   push:
@@ -13,29 +8,29 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
+      # 1. התקנת Flutter במקום Dart בלבד
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          # כאן אפשר להוסיף flutter-version: '3.19.0' אם תרצה גרסה ספציפית
 
-      - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
-
+      # 2. התקנת חבילות
       - name: Install dependencies
         working-directory: frontend
         run: flutter pub get
 
-      # Uncomment this step to verify the use of 'dart format' on each commit.
-      # - name: Verify formatting
-      #   run: dart format --output=none --set-exit-if-changed .
-
-      # Consider passing '--fatal-infos' for slightly stricter analysis.
+      # 3. ניתוח הקוד (Linter)
       - name: Analyze project source
-        run: dart analyze
+        working-directory: frontend
+        run: flutter analyze
 
-      # Your project will need to have tests in test/ and a dependency on
-      # package:test for this step to succeed. Note that Flutter projects will
-      # want to change this to 'flutter test'.
+      # 4. הרצת טסטים (בצורה של Flutter)
       - name: Run tests
-        run: dart test
+        working-directory: frontend
+        run: flutter test
