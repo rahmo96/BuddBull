@@ -32,6 +32,19 @@ router.post("/register", async (req, res) => {
     }
 });
 
+router.get("/profile", async (req, res) => {
+    try {
+        const { firebaseUid } = req.query;
+        if (!firebaseUid) return res.status(400).json({ message: "firebaseUid is required" });
+
+        const user = await User.findOne({ firebaseUid }).lean();
+        if (!user) return res.status(404).json({ message: "User not found" });
+        res.json(user);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
 router.put("/profile", async (req, res) => {
     try {
         const { firebaseUid, personalInfo, location } = req.body;
