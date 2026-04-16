@@ -1,4 +1,4 @@
-# buddbull
+# frontend
 
 A new Flutter project.
 

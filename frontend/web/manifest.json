@@ -1,6 +1,6 @@
 {
-    "name": "buddbull",
-    "short_name": "buddbull",
+    "name": "frontend",
+    "short_name": "frontend",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
