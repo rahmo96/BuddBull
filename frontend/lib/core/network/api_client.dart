@@ -41,17 +41,10 @@ class ApiClient {
 
   // ── HTTP helpers ─────────────────────────────────────────────
   Future<Map<String, dynamic>> get(
-<<<<<<< HEAD
-      String path, {
-        Map<String, dynamic>? queryParams,
-        Options? options,
-      }) async {
-=======
     String path, {
     Map<String, dynamic>? queryParams,
     Options? options,
   }) async {
->>>>>>> origin/haim-updates
     try {
       final res = await _dio.get<Map<String, dynamic>>(
         path,
@@ -65,19 +58,11 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> post(
-<<<<<<< HEAD
-      String path, {
-        dynamic data,
-        Map<String, dynamic>? queryParams,
-        Options? options,
-      }) async {
-=======
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParams,
     Options? options,
   }) async {
->>>>>>> origin/haim-updates
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         path,
@@ -92,17 +77,10 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> put(
-<<<<<<< HEAD
-      String path, {
-        dynamic data,
-        Map<String, dynamic>? queryParams,
-      }) async {
-=======
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParams,
   }) async {
->>>>>>> origin/haim-updates
     try {
       final res = await _dio.put<Map<String, dynamic>>(
         path,
@@ -116,15 +94,9 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> patch(
-<<<<<<< HEAD
-      String path, {
-        dynamic data,
-      }) async {
-=======
     String path, {
     dynamic data,
   }) async {
->>>>>>> origin/haim-updates
     try {
       final res = await _dio.patch<Map<String, dynamic>>(path, data: data);
       return _unwrap(res);
@@ -142,15 +114,9 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> postMultipart(
-<<<<<<< HEAD
-      String path,
-      FormData formData,
-      ) async {
-=======
     String path,
     FormData formData,
   ) async {
->>>>>>> origin/haim-updates
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         path,
@@ -202,11 +168,7 @@ class ApiClient {
     final body = e.response?.data;
     final String? message = _extractErrorMessage(body);
     final String? validationMessage =
-<<<<<<< HEAD
-    statusCode == 422 ? _extractValidationMessage(body) ?? message : null;
-=======
         statusCode == 422 ? _extractValidationMessage(body) ?? message : null;
->>>>>>> origin/haim-updates
 
     return switch (statusCode) {
       400 => AppException.badRequest(message),
@@ -231,11 +193,7 @@ class _AuthInterceptor extends Interceptor {
   final void Function()? _onSessionExpired;
   bool _isRefreshing = false;
   final List<({RequestOptions options, ErrorInterceptorHandler handler})>
-<<<<<<< HEAD
-  _pendingQueue = [];
-=======
       _pendingQueue = [];
->>>>>>> origin/haim-updates
 
   void _sessionExpired() {
     final callback = _onSessionExpired;
@@ -246,15 +204,9 @@ class _AuthInterceptor extends Interceptor {
 
   @override
   Future<void> onRequest(
-<<<<<<< HEAD
-      RequestOptions options,
-      RequestInterceptorHandler handler,
-      ) async {
-=======
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
->>>>>>> origin/haim-updates
     final token = await _storage.getAccessToken();
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
@@ -264,15 +216,9 @@ class _AuthInterceptor extends Interceptor {
 
   @override
   Future<void> onError(
-<<<<<<< HEAD
-      DioException err,
-      ErrorInterceptorHandler handler,
-      ) async {
-=======
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
->>>>>>> origin/haim-updates
     if (err.response?.statusCode != 401) {
       handler.next(err);
       return;
@@ -317,11 +263,7 @@ class _AuthInterceptor extends Interceptor {
       for (final pending in _pendingQueue) {
         pending.options.headers['Authorization'] = 'Bearer $newAccess';
         _dio.fetch<dynamic>(pending.options).then(
-<<<<<<< HEAD
-              (r) => pending.handler.resolve(r),
-=======
           (r) => pending.handler.resolve(r),
->>>>>>> origin/haim-updates
           onError: pending.handler.reject,
         );
       }
