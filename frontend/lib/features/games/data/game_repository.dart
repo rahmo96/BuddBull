@@ -21,15 +21,93 @@ class GameRepository {
     );
     // Backend returns { success, games, pagination }, not data.games
     final list = (body['games'] as List<dynamic>?) ?? [];
-    return list
-        .map((e) => GameModel.fromJson(e as Map<String, dynamic>))
-        .toList();
+
+    // TEMP DEBUG (remove later)
+    // ignore: avoid_print
+    print('[BB][searchGames] raw list=$list');
+
+    final games = <GameModel>[];
+    for (var i = 0; i < list.length; i++) {
+      final raw = list[i];
+      // ignore: avoid_print
+      print(
+          '[BB][searchGames] index=$i raw.runtimeType=${raw.runtimeType} raw=$raw');
+
+      if (raw is Map<String, dynamic>) {
+        final id = raw['_id'] ?? raw['id'];
+        final organizer = raw['organizer'];
+        final location = raw['location'];
+        final groupChat = raw['groupChat'];
+        final sport = raw['sport'];
+
+        // ignore: avoid_print
+        print('[BB][searchGames] game[$i] id=$id');
+        // ignore: avoid_print
+        print(
+            '[BB][searchGames] game[$i] organizer.runtimeType=${organizer.runtimeType} value=$organizer');
+        // ignore: avoid_print
+        print(
+            '[BB][searchGames] game[$i] location.runtimeType=${location.runtimeType} value=$location');
+        // ignore: avoid_print
+        print(
+            '[BB][searchGames] game[$i] groupChat.runtimeType=${groupChat.runtimeType} value=$groupChat');
+        // ignore: avoid_print
+        print(
+            '[BB][searchGames] game[$i] sport.runtimeType=${sport.runtimeType} value=$sport');
+      } else {
+        // ignore: avoid_print
+        print(
+            '[BB][searchGames] game[$i] is not a Map, skipping field-level debug');
+      }
+
+      try {
+        games.add(GameModel.fromJson(raw as Map<String, dynamic>));
+      } catch (e, st) {
+        // ignore: avoid_print
+        print('[BB][searchGames] ERROR parsing game[$i]: $e\n$st');
+        rethrow;
+      }
+    }
+
+    return games;
   }
 
   // ── Get single game ───────────────────────────────────────
   Future<GameModel> getGame(String id) async {
     final body = await _api.get(ApiEndpoints.game(id));
     final data = body['data'] as Map<String, dynamic>;
+
+    // TEMP DEBUG (remove later)
+    final rawGame = data['game'];
+
+    // runtimeType of raw response + raw response data
+    // ignore: avoid_print
+    print('[BB][getGame] rawGame.runtimeType=${rawGame.runtimeType}');
+    // ignore: avoid_print
+    print('[BB][getGame] rawGame=$rawGame');
+
+    // runtimeType and value of sport, groupChat, organizer, location, result
+    final sport = (rawGame is Map) ? rawGame['sport'] : null;
+    final groupChat = (rawGame is Map) ? rawGame['groupChat'] : null;
+    final organizer = (rawGame is Map) ? rawGame['organizer'] : null;
+    final location = (rawGame is Map) ? rawGame['location'] : null;
+    final result = (rawGame is Map) ? rawGame['result'] : null;
+
+    // ignore: avoid_print
+    print('[BB][getGame] sport.runtimeType=${sport.runtimeType} value=$sport');
+    // ignore: avoid_print
+    print(
+        '[BB][getGame] groupChat.runtimeType=${groupChat.runtimeType} value=$groupChat');
+    // ignore: avoid_print
+    print(
+        '[BB][getGame] organizer.runtimeType=${organizer.runtimeType} value=$organizer');
+    // ignore: avoid_print
+    print(
+        '[BB][getGame] location.runtimeType=${location.runtimeType} value=$location');
+    // ignore: avoid_print
+    print(
+        '[BB][getGame] result.runtimeType=${result.runtimeType} value=$result');
+
     return GameModel.fromJson(data['game'] as Map<String, dynamic>);
   }
 
@@ -61,16 +139,14 @@ class GameRepository {
   }
 
   // ── Update ────────────────────────────────────────────────
-  Future<GameModel> updateGame(
-      String id, Map<String, dynamic> updates) async {
+  Future<GameModel> updateGame(String id, Map<String, dynamic> updates) async {
     final body = await _api.patch(ApiEndpoints.game(id), data: updates);
     final data = body['data'] as Map<String, dynamic>;
     return GameModel.fromJson(data['game'] as Map<String, dynamic>);
   }
 
   // ── Cancel ────────────────────────────────────────────────
-  Future<void> cancelGame(String id) =>
-      _api.post(ApiEndpoints.cancelGame(id));
+  Future<void> cancelGame(String id) => _api.post(ApiEndpoints.cancelGame(id));
 
   // ── Join ──────────────────────────────────────────────────
   Future<GameModel> joinGame(String id) async {
@@ -107,8 +183,7 @@ class GameRepository {
   }
 
   // ── Complete ──────────────────────────────────────────────
-  Future<GameModel> completeGame(
-      String id, Map<String, dynamic> result) async {
+  Future<GameModel> completeGame(String id, Map<String, dynamic> result) async {
     final body = await _api.post(
       ApiEndpoints.completeGame(id),
       data: result,
@@ -119,8 +194,7 @@ class GameRepository {
 
   // ── Pending requests ──────────────────────────────────────
   Future<List<GamePlayer>> getPendingRequests(String gameId) async {
-    final body =
-        await _api.get(ApiEndpoints.gamePendingRequests(gameId));
+    final body = await _api.get(ApiEndpoints.gamePendingRequests(gameId));
     final data = body['data'] as Map<String, dynamic>;
     final list = data['players'] as List<dynamic>;
     return list

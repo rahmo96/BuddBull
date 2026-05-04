@@ -1,0 +1,190 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'production'
+        type: choice
+        options: [production, staging]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false   # never cancel an in-flight deploy
+
+env:
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+  IMAGE_NAME: buddbull-api
+
+jobs:
+  # ── Guard: CI must pass first ─────────────────────────────────────────────
+  guard:
+    name: Require CI to pass
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify CI succeeded
+        run: echo "Deploying commit ${{ github.sha }}"
+
+  # ── Build & push Docker image to ECR ─────────────────────────────────────
+  build-and-push:
+    name: Build & Push API image
+    runs-on: ubuntu-latest
+    needs: guard
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      image_digest: ${{ steps.push.outputs.digest }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=git-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push production image
+        id: push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          target: production
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── Deploy to EC2 via SSH ─────────────────────────────────────────────────
+  deploy-api:
+    name: Deploy API to EC2
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: ${{ github.event.inputs.environment || 'production' }}
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+
+            # Pull latest image
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+              docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+
+            docker pull ${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+            # Zero-downtime replacement
+            docker stop buddbull_api_old 2>/dev/null || true
+            docker rename buddbull_api buddbull_api_old 2>/dev/null || true
+
+            docker run -d \
+              --name buddbull_api \
+              --restart unless-stopped \
+              --env-file /opt/buddbull/.env \
+              -p 5000:5000 \
+              -v /opt/buddbull/uploads:/app/uploads \
+              ${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+            # Health check before removing old container
+            sleep 10
+            if wget -qO- http://localhost:5000/health; then
+              docker rm -f buddbull_api_old 2>/dev/null || true
+              echo "✅ Deployment successful"
+            else
+              docker stop buddbull_api
+              docker rename buddbull_api_old buddbull_api
+              docker start buddbull_api
+              echo "❌ Health check failed — rolled back"
+              exit 1
+            fi
+
+  # ── Build Flutter APK (release artefact) ─────────────────────────────────
+  build-flutter:
+    name: Build Flutter APK
+    runs-on: ubuntu-latest
+    needs: guard
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter 3.24
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        working-directory: frontend
+        run: flutter pub get
+
+      - name: Build release APK
+        working-directory: frontend
+        run: |
+          flutter build apk --release \
+            --dart-define=API_BASE_URL=${{ secrets.API_BASE_URL }}
+
+      - name: Upload APK artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: buddbull-release-apk
+          path: frontend/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14
+
+      - name: Upload to Firebase App Distribution
+        if: ${{ secrets.FIREBASE_APP_ID != '' }}
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          groups: internal-testers
+          file: frontend/build/app/outputs/flutter-apk/app-release.apk
+          releaseNotes: "Build from ${{ github.sha }}"
+
+  # ── Notify Slack on completion ────────────────────────────────────────────
+  notify:
+    name: Slack notification
+    runs-on: ubuntu-latest
+    needs: [deploy-api, build-flutter]
+    if: always()
+
+    steps:
+      - name: Post result to Slack
+        if: ${{ secrets.SLACK_WEBHOOK != '' }}
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "${{ needs.deploy-api.result == 'success' && '✅' || '❌' }} BuddBull deploy *${{ needs.deploy-api.result }}* — <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

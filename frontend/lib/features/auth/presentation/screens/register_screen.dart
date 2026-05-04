@@ -6,7 +6,6 @@ import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/router/app_router.dart';
-import 'package:buddbull/features/auth/presentation/screens/login_screen.dart';
 import 'package:buddbull/features/auth/presentation/widgets/password_strength_indicator.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';

@@ -39,10 +39,8 @@ class GameModel {
   final DateTime? createdAt;
 
   // ── Computed ──────────────────────────────────────────────
-  int get approvedCount =>
-      players.where((p) => p.status == 'approved').length;
-  int get pendingCount =>
-      players.where((p) => p.status == 'pending').length;
+  int get approvedCount => players.where((p) => p.status == 'approved').length;
+  int get pendingCount => players.where((p) => p.status == 'pending').length;
   int get availableSlots => maxPlayers - approvedCount;
   bool get isFull => availableSlots <= 0;
   bool get isOpen => status == 'open';
@@ -50,11 +48,9 @@ class GameModel {
   bool get isInProgress => status == 'in_progress';
   bool get isCompleted => status == 'completed';
   bool get isCancelled => status == 'cancelled';
-  DateTime get endTime =>
-      scheduledAt.add(Duration(minutes: durationMinutes));
+  DateTime get endTime => scheduledAt.add(Duration(minutes: durationMinutes));
 
-  String get formattedDate =>
-      DateFormat('EEE, d MMM y').format(scheduledAt);
+  String get formattedDate => DateFormat('EEE, d MMM y').format(scheduledAt);
   String get formattedTime => DateFormat('HH:mm').format(scheduledAt);
   String get formattedDuration {
     final h = durationMinutes ~/ 60;
@@ -64,8 +60,7 @@ class GameModel {
     return '${h}h ${m}min';
   }
 
-  bool hasPlayer(String userId) =>
-      players.any((p) => p.userId == userId);
+  bool hasPlayer(String userId) => players.any((p) => p.userId == userId);
 
   GamePlayer? getPlayer(String userId) {
     final matches = players.where((p) => p.userId == userId).toList();
@@ -73,45 +68,40 @@ class GameModel {
   }
 
   // ── Serialisation ─────────────────────────────────────────
-  static String? _parseGroupChatId(dynamic value) {
-    if (value == null) return null;
-    if (value is String) return value;
-    if (value is Map) {
-      final id = value['_id'] ?? value['id'];
-      return id is String ? id : id?.toString();
-    }
-    return null;
-  }
-
   factory GameModel.fromJson(Map<String, dynamic> json) {
     return GameModel(
       id: json['_id'] as String? ?? json['id'] as String,
       title: json['title'] as String,
       description: json['description'] as String?,
       sport: json['sport'] as String,
-      organizer: GameOrganizer.fromJson(
-          json['organizer'] as Map<String, dynamic>),
-      scheduledAt:
-          DateTime.parse(json['scheduledAt'] as String),
+      organizer: (json['organizer'] is Map<String, dynamic>)
+          ? GameOrganizer.fromJson(json['organizer'] as Map<String, dynamic>)
+          : const GameOrganizer(
+              id: '',
+              username: 'unknown',
+              firstName: 'Unknown',
+              lastName: 'Organizer',
+              profilePicture: null,
+            ),
+      scheduledAt: DateTime.parse(json['scheduledAt'] as String),
       durationMinutes: json['durationMinutes'] as int? ?? 60,
-      location: GameLocation.fromJson(
-          json['location'] as Map<String, dynamic>),
+      location: GameLocation.fromJson(json['location'] as Map<String, dynamic>),
       maxPlayers: json['maxPlayers'] as int,
       players: (json['players'] as List<dynamic>?)
-              ?.map((e) =>
-                  GamePlayer.fromJson(e as Map<String, dynamic>))
+              ?.map((e) => GamePlayer.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      requiredSkillLevel:
-          json['requiredSkillLevel'] as String? ?? 'any',
+      requiredSkillLevel: json['requiredSkillLevel'] as String? ?? 'any',
       status: json['status'] as String? ?? 'open',
-      groupChatId: _parseGroupChatId(json['groupChat']),
-      tags: (json['tags'] as List<dynamic>?)
-              ?.cast<String>() ??
-          [],
+      groupChatId: json['groupChat'] is String
+          ? (json['groupChat'] as String)
+          : (json['groupChat'] is Map
+              ? ((json['groupChat'] as Map)['_id']?.toString() ??
+                  (json['groupChat'] as Map)['id']?.toString())
+              : null),
+      tags: (json['tags'] as List<dynamic>?)?.cast<String>() ?? [],
       result: json['result'] != null
-          ? GameResult.fromJson(
-              json['result'] as Map<String, dynamic>)
+          ? GameResult.fromJson(json['result'] as Map<String, dynamic>)
           : null,
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'] as String)
@@ -154,8 +144,7 @@ class GameModel {
       location: location ?? this.location,
       maxPlayers: maxPlayers ?? this.maxPlayers,
       players: players ?? this.players,
-      requiredSkillLevel:
-          requiredSkillLevel ?? this.requiredSkillLevel,
+      requiredSkillLevel: requiredSkillLevel ?? this.requiredSkillLevel,
       status: status ?? this.status,
       groupChatId: groupChatId,
       tags: tags,
@@ -165,8 +154,7 @@ class GameModel {
   }
 
   @override
-  bool operator ==(Object other) =>
-      other is GameModel && other.id == id;
+  bool operator ==(Object other) => other is GameModel && other.id == id;
 
   @override
   int get hashCode => id.hashCode;
@@ -190,8 +178,7 @@ class GameOrganizer {
 
   String get fullName => '$firstName $lastName';
 
-  factory GameOrganizer.fromJson(Map<String, dynamic> json) =>
-      GameOrganizer(
+  factory GameOrganizer.fromJson(Map<String, dynamic> json) => GameOrganizer(
         id: json['_id'] as String? ?? json['id'] as String,
         username: json['username'] as String,
         firstName: json['firstName'] as String,
@@ -219,8 +206,7 @@ class GameLocation {
     return parts.join(', ');
   }
 
-  factory GameLocation.fromJson(Map<String, dynamic> json) =>
-      GameLocation(
+  factory GameLocation.fromJson(Map<String, dynamic> json) => GameLocation(
         city: json['city'] as String,
         neighborhood: json['neighborhood'] as String?,
         venueName: json['venueName'] as String?,
@@ -255,22 +241,18 @@ class GamePlayer {
   bool get isApproved => status == 'approved';
   bool get isPending => status == 'pending';
 
-  String get displayName =>
-      (firstName != null && lastName != null)
-          ? '$firstName $lastName'
-          : username;
+  String get displayName => (firstName != null && lastName != null)
+      ? '$firstName $lastName'
+      : username;
 
   factory GamePlayer.fromJson(Map<String, dynamic> json) {
     final userRaw = json['user'];
-    final Map<String, dynamic>? user = userRaw is Map<String, dynamic>
-        ? userRaw
-        : null;
+    final Map<String, dynamic>? user =
+        userRaw is Map<String, dynamic> ? userRaw : null;
     // Backend may send user as String (e.g. id reference) or as populated map
     final String userId = user != null
         ? (user['_id'] as String? ?? user['id'] as String? ?? '')
-        : (userRaw is String
-            ? userRaw
-            : (json['userId'] as String? ?? ''));
+        : (userRaw is String ? userRaw : (json['userId'] as String? ?? ''));
     final String username =
         user?['username'] as String? ?? json['username'] as String? ?? '';
 
@@ -301,8 +283,7 @@ class GameResult {
   final String? notes;
   final DateTime? completedAt;
 
-  factory GameResult.fromJson(Map<String, dynamic> json) =>
-      GameResult(
+  factory GameResult.fromJson(Map<String, dynamic> json) => GameResult(
         winner: json['winner'] as String?,
         score: json['score'] as String?,
         notes: json['notes'] as String?,
@@ -376,6 +357,5 @@ class GameSearchParams {
       other.page == page;
 
   @override
-  int get hashCode =>
-      Object.hash(sport, city, skillLevel, status, page);
+  int get hashCode => Object.hash(sport, city, skillLevel, status, page);
 }

@@ -21,7 +21,7 @@
  *   error           { message }
  */
 
-const jwt = require('jsonwebtoken');
+const admin = require('firebase-admin');
 
 const User = require('../models/User.model');
 const Chat = require('../models/Chat.model');
@@ -29,6 +29,24 @@ const Message = require('../models/Message.model');
 const logger = require('../utils/logger');
 
 const SENDER_FIELDS = 'firstName lastName username profilePicture';
+
+const getFirebaseAuth = () => {
+  if (!admin.apps.length) {
+    const { FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY } = process.env;
+    if (FIREBASE_PROJECT_ID && FIREBASE_CLIENT_EMAIL && FIREBASE_PRIVATE_KEY) {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: FIREBASE_PROJECT_ID,
+          clientEmail: FIREBASE_CLIENT_EMAIL,
+          privateKey: FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        }),
+      });
+    } else {
+      admin.initializeApp({ credential: admin.credential.applicationDefault() });
+    }
+  }
+  return admin.auth();
+};
 
 // ── Auth middleware for socket connections ─────────────────────────────────────
 const socketAuthMiddleware = async (socket, next) => {
@@ -39,13 +57,13 @@ const socketAuthMiddleware = async (socket, next) => {
 
     if (!token) return next(new Error('Authentication required'));
 
-    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    const decodedToken = await getFirebaseAuth().verifyIdToken(token);
 
-    const user = await User.findById(decoded.userId)
-      .select('_id firstName lastName username profilePicture isActive isDeleted')
+    const user = await User.findOne({ firebaseUid: decodedToken.uid })
+      .select('_id firstName lastName username profilePicture isActive deletedAt isBanned banReason')
       .lean();
 
-    if (!user || !user.isActive || user.isDeleted) {
+    if (!user || !user.isActive || user.deletedAt || user.isBanned) {
       return next(new Error('User not found or inactive'));
     }
 

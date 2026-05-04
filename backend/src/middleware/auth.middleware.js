@@ -1,7 +1,30 @@
 const User = require('../models/User.model');
 const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
-const { verifyAccessToken } = require('../utils/token');
+const admin = require('firebase-admin');
+
+const getFirebaseAuth = () => {
+  if (!admin.apps.length) {
+    // Prefer Application Default Credentials (GOOGLE_APPLICATION_CREDENTIALS),
+    // but allow explicit service account env vars similar to notification.service.js.
+    const { FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY } = process.env;
+    if (FIREBASE_PROJECT_ID && FIREBASE_CLIENT_EMAIL && FIREBASE_PRIVATE_KEY) {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: FIREBASE_PROJECT_ID,
+          clientEmail: FIREBASE_CLIENT_EMAIL,
+          privateKey: FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        }),
+      });
+    } else {
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+      });
+    }
+  }
+
+  return admin.auth();
+};
 
 // ─────────────────────────────────────────────
 //  protect  — verifies JWT and attaches req.user
@@ -30,27 +53,34 @@ const protect = catchAsync(async (req, res, next) => {
     return next(new AppError('You are not logged in. Please authenticate to continue.', 401));
   }
 
-  // 2. Verify signature + expiry
-  const decoded = await verifyAccessToken(token);
+  // 2. Verify Firebase ID token
+  let decodedToken;
+  try {
+    decodedToken = await getFirebaseAuth().verifyIdToken(token);
+  } catch (_err) {
+    return next(new AppError('Invalid or expired token. Please authenticate again.', 401));
+  }
 
-  // 3. Confirm the user still exists and is in a healthy state
-  const user = await User.findById(decoded.id)
-    .select('+passwordChangedAt')
-    .active()
-    .notBanned();
+  // 3. Find user by Firebase UID and ensure account is healthy
+  const user = await User.findOne({ firebaseUid: decodedToken.uid }).active().notBanned();
 
+  // Allow first-time users to hit the auth sync endpoint even if the Mongo user
+  // row doesn't exist yet (it will be created via upsert in AuthService.syncUser).
   if (!user) {
-    return next(new AppError('The account associated with this token no longer exists.', 401));
+    const isAuthSync = req.baseUrl === '/api/v1/auth' && req.path === '/sync';
+    if (!isAuthSync) {
+      return next(new AppError('The account associated with this token no longer exists.', 401));
+    }
   }
 
-  // 4. Reject tokens issued before a password change
-  if (user.passwordChangedAfter(decoded.iat)) {
-    return next(new AppError('Your password was recently changed. Please log in again.', 401));
-  }
-
-  // 5. Attach user and token metadata to the request
-  req.user = user;
-  req.tokenPayload = decoded;
+  // 4. Attach user and token metadata to the request
+  req.user =
+    user ||
+    ({
+      firebaseUid: decodedToken.uid,
+      email: decodedToken.email,
+    });
+  req.tokenPayload = decodedToken;
 
   return next();
 });
@@ -101,11 +131,11 @@ const optionalAuth = catchAsync(async (req, res, next) => {
   if (!token) return next();
 
   try {
-    const decoded = await verifyAccessToken(token);
-    const user = await User.findById(decoded.id).active().notBanned();
-    if (user && !user.passwordChangedAfter(decoded.iat)) {
+    const decodedToken = await getFirebaseAuth().verifyIdToken(token);
+    const user = await User.findOne({ firebaseUid: decodedToken.uid }).active().notBanned();
+    if (user) {
       req.user = user;
-      req.tokenPayload = decoded;
+      req.tokenPayload = decodedToken;
     }
   } catch (_err) {
     // Token invalid — proceed as unauthenticated (do not error)

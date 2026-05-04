@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
 // ─────────────────────────────────────────────
@@ -102,12 +101,13 @@ const userSchema = new mongoose.Schema(
       match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please provide a valid email address'],
     },
 
-    // ── Auth ─────────────────────────────────────────────────
-    password: {
+    // ── Auth (Firebase) ──────────────────────────────────────
+    firebaseUid: {
       type: String,
-      required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'],
-      select: false, // never returned by default queries
+      required: [true, 'Firebase UID is required'],
+      unique: true,
+      index: true,
+      trim: true,
     },
     role: {
       type: String,
@@ -180,12 +180,8 @@ const userSchema = new mongoose.Schema(
     isBanned: { type: Boolean, default: false },
     banReason: { type: String },
 
-    // ── Tokens (hidden from normal selects) ───────────────────
-    verificationToken: { type: String, select: false },
-    verificationTokenExpiry: { type: Date, select: false },
     resetPasswordToken: { type: String, select: false },
     resetPasswordExpiry: { type: Date, select: false },
-    refreshTokenHash: { type: String, select: false },
 
     // ── Notification preferences ──────────────────────────────
     notificationPreferences: { type: notificationPrefsSchema, default: () => ({}) },
@@ -203,8 +199,6 @@ const userSchema = new mongoose.Schema(
 
     // ── Soft delete ───────────────────────────────────────────
     deletedAt: { type: Date, default: null },
-
-    lastLoginAt: { type: Date },
   },
   {
     timestamps: true,
@@ -252,39 +246,8 @@ userSchema.index({ username: 'text', firstName: 'text', lastName: 'text', bio: '
 userSchema.index({ 'stats.averageRating': -1, 'stats.gamesPlayed': -1 });
 
 // ─────────────────────────────────────────────
-//  Pre-save Hooks
-// ─────────────────────────────────────────────
-
-userSchema.pre('save', async function (next) {
-  // Only re-hash if the password field was modified
-  if (!this.isModified('password')) return next();
-
-  // Track when the password was last changed (skip on first save)
-  if (!this.isNew) {
-    // Subtract 1s to avoid edge cases where the token iat === passwordChangedAt
-    this.passwordChangedAt = new Date(Date.now() - 1000);
-  }
-
-  try {
-    const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS) || 12;
-    this.password = await bcrypt.hash(this.password, saltRounds);
-    return next();
-  } catch (err) {
-    return next(err);
-  }
-});
-
-// ─────────────────────────────────────────────
 //  Instance Methods
 // ─────────────────────────────────────────────
-
-/**
- * Compares a plaintext candidate password with the stored hash.
- * Used during login.
- */
-userSchema.methods.comparePassword = async function (candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
-};
 
 /**
  * Generates a cryptographically secure password-reset token,
@@ -295,16 +258,6 @@ userSchema.methods.createPasswordResetToken = function () {
   const rawToken = crypto.randomBytes(32).toString('hex');
   this.resetPasswordToken = crypto.createHash('sha256').update(rawToken).digest('hex');
   this.resetPasswordExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
-  return rawToken;
-};
-
-/**
- * Generates an email verification token (same pattern as reset token).
- */
-userSchema.methods.createVerificationToken = function () {
-  const rawToken = crypto.randomBytes(32).toString('hex');
-  this.verificationToken = crypto.createHash('sha256').update(rawToken).digest('hex');
-  this.verificationTokenExpiry = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
   return rawToken;
 };
 

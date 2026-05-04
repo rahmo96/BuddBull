@@ -1,8 +1,8 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:buddbull/core/network/api_endpoints.dart';
-import 'package:buddbull/core/storage/secure_storage.dart';
 import 'package:buddbull/features/chat/data/models/chat_model.dart';
 
 // ── Event data types ──────────────────────────────────────────────────────────
@@ -37,7 +37,6 @@ enum SocketStatus { disconnected, connecting, connected, error }
 // ── SocketService ─────────────────────────────────────────────────────────────
 class SocketService {
   io.Socket? _socket;
-  final SecureStorage _storage;
 
   // ── Broadcast streams ──────────────────────────────────────────────────────
   final _messageController = StreamController<MessageModel>.broadcast();
@@ -55,13 +54,13 @@ class SocketService {
   SocketStatus _status = SocketStatus.disconnected;
   SocketStatus get status => _status;
 
-  SocketService(this._storage);
+  SocketService();
 
   // ── Connect ───────────────────────────────────────────────────────────────
   Future<void> connect() async {
     if (_socket?.connected == true) return;
 
-    final token = await _storage.getAccessToken();
+    final token = await FirebaseAuth.instance.currentUser?.getIdToken();
     if (token == null) return;
 
     _setStatus(SocketStatus.connecting);
@@ -92,8 +91,10 @@ class SocketService {
       })
       ..on('receive_message', (data) {
         try {
-          final msgRaw = (data is Map) ? data['message'] as Map<String, dynamic>? : null;
-          if (msgRaw != null) _messageController.add(MessageModel.fromJson(msgRaw));
+          final msgRaw =
+              (data is Map) ? data['message'] as Map<String, dynamic>? : null;
+          if (msgRaw != null)
+            _messageController.add(MessageModel.fromJson(msgRaw));
         } catch (_) {}
       })
       ..on('typing', (data) {
@@ -121,19 +122,22 @@ class SocketService {
       ..on('message_deleted', (data) {
         try {
           final d = data as Map;
-          _deletedController.add(MessageDeletedEvent(d['messageId'].toString()));
+          _deletedController
+              .add(MessageDeletedEvent(d['messageId'].toString()));
         } catch (_) {}
       })
       ..on('message_pinned', (data) {
         try {
           final d = data as Map;
-          _pinnedController.add(MessagePinnedEvent(d['messageId'].toString(), isPinned: true));
+          _pinnedController.add(
+              MessagePinnedEvent(d['messageId'].toString(), isPinned: true));
         } catch (_) {}
       })
       ..on('message_unpinned', (data) {
         try {
           final d = data as Map;
-          _pinnedController.add(MessagePinnedEvent(d['messageId'].toString(), isPinned: false));
+          _pinnedController.add(
+              MessagePinnedEvent(d['messageId'].toString(), isPinned: false));
         } catch (_) {}
       });
 
@@ -145,7 +149,8 @@ class SocketService {
   void leaveChat(String chatId) => _emit('leave_chat', {'chatId': chatId});
 
   // ── Messaging ─────────────────────────────────────────────────────────────
-  void sendMessage(String chatId, String content, {String type = 'text', String? replyToId}) {
+  void sendMessage(String chatId, String content,
+      {String type = 'text', String? replyToId}) {
     _emit('send_message', {
       'chatId': chatId,
       'content': content,
@@ -196,8 +201,7 @@ class SocketService {
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 final socketServiceProvider = Provider<SocketService>((ref) {
-  final storage = ref.watch(secureStorageProvider);
-  final service = SocketService(storage);
+  final service = SocketService();
   ref.onDispose(service.dispose);
   return service;
 });

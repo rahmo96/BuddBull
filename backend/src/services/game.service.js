@@ -44,46 +44,29 @@ const notify = (type, payload) => {
  * @returns {Document} Populated game document
  */
 const createGame = async (organizerId, dto) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  const game = new Game({
+    ...dto,
+    organizer: organizerId,
+    players: [{ user: organizerId, status: 'approved', role: 'co-organizer', joinedAt: new Date() }],
+  });
 
-  try {
-    // Create the game document
-    const game = new Game({
-      ...dto,
-      organizer: organizerId,
-      players: [{ user: organizerId, status: 'approved', role: 'co-organizer', joinedAt: new Date() }],
-    });
+  await game.save();
 
-    // Auto-provision the group chat
-    const chat = await Chat.create(
-      [
-        {
-          type: 'group',
-          name: `${dto.title} — Chat`,
-          game: game._id,
-          participants: [{ user: organizerId, isAdmin: true }],
-        },
-      ],
-      { session },
-    );
+  const chat = await Chat.create({
+    type: 'group',
+    name: `${dto.title} — Chat`,
+    game: game._id,
+    participants: [{ user: organizerId, isAdmin: true }],
+  });
 
-    game.groupChat = chat[0]._id;
-    await game.save({ session });
-    await session.commitTransaction();
+  game.groupChat = chat._id;
+  await game.save();
 
-    // Increment organizer's gamesOrganized stat
-    await User.findByIdAndUpdate(organizerId, { $inc: { 'stats.gamesOrganized': 1 } });
+  await User.findByIdAndUpdate(organizerId, { $inc: { 'stats.gamesOrganized': 1 } });
 
-    logger.info(`Game created: ${game._id} by organizer ${organizerId}`);
+  logger.info(`Game created: ${game._id} by organizer ${organizerId}`);
 
-    return game.populate('organizer', 'username firstName lastName profilePicture');
-  } catch (err) {
-    await session.abortTransaction();
-    throw err;
-  } finally {
-    session.endSession();
-  }
+  return game.populate('organizer', 'username firstName lastName profilePicture');
 };
 
 // ─────────────────────────────────────────────

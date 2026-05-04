@@ -1,12 +1,8 @@
-version: '3.9'
-
 # ─────────────────────────────────────────────────────────────────────────────
 #  BuddBull — Local development docker-compose
 #
 #  Services:
 #    api       — Node.js Express backend (hot-reload via nodemon)
-#    mongo     — MongoDB 6 with volume persistence
-#    mongo-ui  — Mongo Express admin UI at http://localhost:8081
 #    redis     — (optional) Redis for session caching / rate-limit store
 #
 #  Usage:
@@ -16,41 +12,6 @@ version: '3.9'
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:
-
-  # ── MongoDB ────────────────────────────────────────────────────────────────
-  mongo:
-    image: mongo:6.0
-    container_name: buddbull_mongo
-    restart: unless-stopped
-    ports:
-      - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASS:-secret}
-      MONGO_INITDB_DATABASE: buddbull
-    volumes:
-      - mongo_data:/data/db
-    healthcheck:
-      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ── Mongo Express (dev DB browser) ────────────────────────────────────────
-  mongo-ui:
-    image: mongo-express:1.0.2-20
-    container_name: buddbull_mongo_ui
-    restart: unless-stopped
-    depends_on:
-      mongo:
-        condition: service_healthy
-    ports:
-      - "8081:8081"
-    environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USER:-admin}
-      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASS:-secret}
-      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASS:-secret}@mongo:27017/
-      ME_CONFIG_BASICAUTH: "false"
 
   # ── Redis ─────────────────────────────────────────────────────────────────
   redis:
@@ -70,16 +31,11 @@ services:
       target: development # uses the dev stage in backend/Dockerfile
     container_name: buddbull_api
     restart: unless-stopped
-    depends_on:
-      mongo:
-        condition: service_healthy
     ports:
       - "5000:5000"
     env_file:
       - ./backend/.env
     environment:
-      # Override the MONGO_URI to point to the docker service name
-      MONGO_URI: ${MONGO_URI}
       REDIS_URL: redis://redis:6379
       NODE_ENV: development
     volumes:
@@ -97,10 +53,8 @@ services:
       start_period: 20s
 
 volumes:
-  mongo_data:
   redis_data:
   uploads_data:
-
 
 networks:
   default:
