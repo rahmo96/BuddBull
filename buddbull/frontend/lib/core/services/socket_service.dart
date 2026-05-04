@@ -1,8 +1,8 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:buddbull/core/network/api_endpoints.dart';
-import 'package:buddbull/core/storage/secure_storage.dart';
 import 'package:buddbull/features/chat/data/models/chat_model.dart';
 
 // ── Event data types ──────────────────────────────────────────────────────────
@@ -37,7 +37,6 @@ enum SocketStatus { disconnected, connecting, connected, error }
 // ── SocketService ─────────────────────────────────────────────────────────────
 class SocketService {
   io.Socket? _socket;
-  final SecureStorage _storage;
 
   // ── Broadcast streams ──────────────────────────────────────────────────────
   final _messageController = StreamController<MessageModel>.broadcast();
@@ -55,13 +54,13 @@ class SocketService {
   SocketStatus _status = SocketStatus.disconnected;
   SocketStatus get status => _status;
 
-  SocketService(this._storage);
+  SocketService();
 
   // ── Connect ───────────────────────────────────────────────────────────────
   Future<void> connect() async {
     if (_socket?.connected == true) return;
 
-    final token = await _storage.getAccessToken();
+    final token = await FirebaseAuth.instance.currentUser?.getIdToken();
     if (token == null) return;
 
     _setStatus(SocketStatus.connecting);
@@ -196,8 +195,7 @@ class SocketService {
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 final socketServiceProvider = Provider<SocketService>((ref) {
-  final storage = ref.watch(secureStorageProvider);
-  final service = SocketService(storage);
+  final service = SocketService();
   ref.onDispose(service.dispose);
   return service;
 });

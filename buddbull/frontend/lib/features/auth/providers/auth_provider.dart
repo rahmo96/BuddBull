@@ -1,6 +1,6 @@
-import 'package:buddbull/core/storage/secure_storage.dart';
 import 'package:buddbull/features/auth/data/auth_repository.dart';
 import 'package:buddbull/features/auth/data/models/user_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -48,32 +48,35 @@ class AuthState {
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>(
   (ref) => AuthNotifier(
     ref.watch(authRepositoryProvider),
-    ref.watch(secureStorageProvider),
   ),
 );
 
 // ── Notifier ─────────────────────────────────────────────────────────────────
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier(this._repo, this._storage) : super(const AuthState()) {
+  AuthNotifier(this._repo) : super(const AuthState()) {
     _bootstrap();
   }
 
   final AuthRepository _repo;
-  final SecureStorage _storage;
 
   /// A [ChangeNotifier] that go_router listens to for redirects.
   final routeListenable = _AuthListenable();
 
   // ── Bootstrap ─────────────────────────────────────────────────
   Future<void> _bootstrap() async {
-    final user = await _repo.tryRestoreSession();
-    if (user != null) {
-      state = state.copyWith(
-        status: AuthStatus.authenticated,
-        user: user,
-      );
-    } else {
+    final fbUser = FirebaseAuth.instance.currentUser;
+    if (fbUser == null) {
       state = state.copyWith(status: AuthStatus.unauthenticated);
+      routeListenable.notify();
+      return;
+    }
+
+    try {
+      final user = await _repo.getMe();
+      state = state.copyWith(status: AuthStatus.authenticated, user: user);
+    } catch (_) {
+      // Firebase user exists but backend profile fetch failed.
+      state = state.copyWith(status: AuthStatus.authenticated);
     }
     routeListenable.notify();
   }
@@ -89,19 +92,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }) async {
     state = state.copyWith(isSubmitting: true, clearError: true);
     try {
-      final result = await _repo.register(
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      // CRITICAL: create/sync MongoDB profile after Firebase registration
+      final user = await _repo.syncUserProfile(
         firstName: firstName,
         lastName: lastName,
         username: username,
-        email: email,
-        password: password,
         role: role,
       );
-      await _persist(result.accessToken, result.refreshToken, result.user.id);
-      state = AuthState(
-        status: AuthStatus.authenticated,
-        user: result.user,
-      );
+
+      state = AuthState(status: AuthStatus.authenticated, user: user);
       routeListenable.notify();
     } catch (e) {
       state = state.copyWith(
@@ -118,12 +122,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }) async {
     state = state.copyWith(isSubmitting: true, clearError: true);
     try {
-      final result = await _repo.login(email: email, password: password);
-      await _persist(result.accessToken, result.refreshToken, result.user.id);
-      state = AuthState(
-        status: AuthStatus.authenticated,
-        user: result.user,
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
       );
+
+      final user = await _repo.getMe();
+      state = AuthState(status: AuthStatus.authenticated, user: user);
       routeListenable.notify();
     } catch (e) {
       state = state.copyWith(
@@ -135,7 +140,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   // ── Logout ────────────────────────────────────────────────────
   Future<void> logout() async {
-    await _repo.logout();
+    await FirebaseAuth.instance.signOut();
     state = const AuthState(status: AuthStatus.unauthenticated);
     routeListenable.notify();
   }
@@ -144,7 +149,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> forgotPassword(String email) async {
     state = state.copyWith(isSubmitting: true, clearError: true, clearSuccess: true);
     try {
-      await _repo.forgotPassword(email);
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
       state = state.copyWith(
         isSubmitting: false,
         successMessage: 'Reset link sent! Check your inbox.',
@@ -173,14 +178,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
   void clearSuccess() => state = state.copyWith(clearSuccess: true);
 
   // ── Helpers ───────────────────────────────────────────────────
-  Future<void> _persist(String access, String refresh, String userId) async {
-    await Future.wait([
-      _storage.saveAccessToken(access),
-      _storage.saveRefreshToken(refresh),
-      _storage.saveUserId(userId),
-    ]);
-  }
-
   String _extractMessage(Object e) {
     final raw = e.toString();
     // Strip class name prefix added by AppException.toString()

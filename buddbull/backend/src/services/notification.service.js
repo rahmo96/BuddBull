@@ -10,7 +10,6 @@
  */
 
 const logger = require('../utils/logger');
-const sendEmail = require('../utils/email');
 
 // ── Firebase initialisation (lazy, guarded) ───────────────────────────────────
 let _fcmApp = null;
@@ -95,23 +94,7 @@ const sendPushToMany = async (fcmTokens, payload) => {
 
 // ── Email wrapper (re-exports with fallback) ──────────────────────────────────
 const sendEmailNotification = async (to, { title, body, firstName = 'there' }) => {
-  try {
-    await sendEmail({
-      to,
-      subject: title,
-      text: `Hi ${firstName},\n\n${body}\n\nThe BuddBull Team`,
-      html: `
-        <div style="font-family:sans-serif;max-width:560px;margin:auto">
-          <h2 style="color:#3B82F6">${title}</h2>
-          <p>Hi ${firstName},</p>
-          <p>${body.replace(/\n/g, '<br>')}</p>
-          <hr>
-          <p style="color:#888;font-size:12px">BuddBull — Connect, Play, Track</p>
-        </div>`,
-    });
-  } catch (err) {
-    logger.warn(`[Notifications] Email to ${to} failed: ${err.message}`);
-  }
+  logger.warn('[Notifications] Email channel disabled (email utility removed).');
 };
 
 // ── Domain-specific trigger helpers ──────────────────────────────────────────
