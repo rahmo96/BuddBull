@@ -1,0 +1,50 @@
+# ── Flutter / Dart / Pub ──────────────────────────────────────
+.dart_tool/
+.pub-cache/
+.pub/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+build/
+coverage/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+
+# ── Android ───────────────────────────────────────────────────
+android/.gradle/
+android/local.properties
+android/key.properties
+android/**/*.jks
+*.keystore
+
+# ── iOS ───────────────────────────────────────────────────────
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+
+# ── Symbolication / Obfuscation ─────────────────────────────────
+app.*.symbols
+app.*.map.json
+
+# ── Android Studio / IntelliJ ───────────────────────────────────
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# ── Misc / OS ──────────────────────────────────────────────────
+.DS_Store
+*.class
+*.log
+*.pyc
+*.swp
+*.swo
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
