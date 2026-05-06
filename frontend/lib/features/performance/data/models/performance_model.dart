@@ -41,32 +41,50 @@ class PerformanceLogModel {
   String get formattedDate =>
       DateFormat('EEE, d MMM y').format(loggedAt);
 
+  static int? _readInt(dynamic v) {
+    if (v == null) return null;
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return null;
+  }
+
   factory PerformanceLogModel.fromJson(Map<String, dynamic> json) {
+    final streakRaw = json['streakAtLog'];
+    final streakCount = switch (streakRaw) {
+      int _ => streakRaw,
+      num _ => (streakRaw as num).toInt(),
+      Map _ => _readInt((streakRaw as Map)['current']),
+      _ => null,
+    };
+
     return PerformanceLogModel(
       id: json['_id'] as String? ?? json['id'] as String,
       userId: json['user'] is Map
           ? (json['user']['_id'] as String? ??
               json['user']['id'] as String)
-          : json['user'] as String,
+          : (json['user'] as String?) ?? '',
       gameId: json['game'] is Map
           ? (json['game']['_id'] as String?)
           : json['game'] as String?,
-      logType: json['logType'] as String? ?? 'training',
+      // Backend uses `type`; keep `logType` for backward compatibility.
+      logType: json['type'] as String? ?? json['logType'] as String? ?? 'training',
       sport: json['sport'] as String,
       loggedAt: DateTime.parse(json['loggedAt'] as String),
       outcome: json['matchOutcome'] as String?,
-      durationMinutes: json['durationMinutes'] as int?,
+      durationMinutes: _readInt(json['durationMinutes']),
       stats: (json['stats'] as List<dynamic>?)?.fold(
             <String, dynamic>{},
             (map, item) {
-              final s = item as Map<String, dynamic>;
-              (map as Map<String, dynamic>)[s['metric'] as String] =
-                  s['value'];
+              if (item is! Map) return map;
+              final s = item.cast<String, dynamic>();
+              final key = (s['key'] as String?) ?? (s['metric'] as String?);
+              if (key == null || key.isEmpty) return map;
+              (map as Map<String, dynamic>)[key] = s['value'];
               return map;
             },
           ) ??
           {},
-      selfRating: json['selfRating'] as int?,
+      selfRating: _readInt(json['selfRating']),
       mood: json['mood'] as String?,
       notes: json['notes'] as String?,
       isPublic: json['isPublic'] as bool? ?? false,
@@ -76,7 +94,7 @@ class PerformanceLogModel {
                       e as Map<String, dynamic>))
                   .toList() ??
               [],
-      streakAtLog: json['streakAtLog'] as int? ?? 0,
+      streakAtLog: streakCount ?? 0,
       mediaUrls: (json['mediaUrls'] as List<dynamic>?)
               ?.cast<String>() ??
           [],

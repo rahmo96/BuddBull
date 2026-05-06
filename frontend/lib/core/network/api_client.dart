@@ -199,9 +199,22 @@ class _AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
-    if (idToken != null) options.headers['Authorization'] = 'Bearer $idToken';
-    handler.next(options);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final idToken = await user.getIdToken();
+        options.headers['Authorization'] = 'Bearer $idToken';
+      }
+    } on FirebaseAuthException {
+      try {
+        await FirebaseAuth.instance.signOut();
+      } catch (_) {}
+      _sessionExpired();
+    } catch (_) {
+      // Token retrieval failures must never crash request building.
+    } finally {
+      handler.next(options);
+    }
   }
 
   @override

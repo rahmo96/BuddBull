@@ -108,14 +108,6 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
 
-            // ── Role badge ────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: _RoleBadge(role: user.role),
-              ),
-            ),
-
             // ── Social stats ──────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
@@ -240,38 +232,6 @@ class ProfileScreen extends ConsumerWidget {
                     children: user.sportsInterests
                         .map((s) => SportChip(interest: s))
                         .toList(),
-                  ),
-                ),
-              ),
-
-            // ── Email verification warning ────────────────────
-            if (!user.isEmailVerified)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.warningLight,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: AppColors.warning.withOpacity(0.4)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.warning_amber_rounded,
-                            color: AppColors.warning, size: 20),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'Please verify your email address.',
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.warning,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ),
@@ -506,53 +466,6 @@ class _InitialsAvatar extends StatelessWidget {
             fontWeight: FontWeight.w700,
             fontFamily: 'Inter',
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RoleBadge extends StatelessWidget {
-  const _RoleBadge({required this.role});
-  final String role;
-
-  @override
-  Widget build(BuildContext context) {
-    final isOrganizer = role == 'organizer';
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        decoration: BoxDecoration(
-          color: isOrganizer
-              ? AppColors.secondaryLight
-              : AppColors.primary.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isOrganizer
-                ? AppColors.secondary
-                : AppColors.primary.withOpacity(0.3),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isOrganizer
-                  ? Icons.military_tech_rounded
-                  : Icons.sports_soccer_rounded,
-              size: 14,
-              color: isOrganizer ? AppColors.secondaryDark : AppColors.primary,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              isOrganizer ? 'Organizer' : 'Player',
-              style: AppTextStyles.labelSmall.copyWith(
-                color:
-                    isOrganizer ? AppColors.secondaryDark : AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
         ),
       ),
     );

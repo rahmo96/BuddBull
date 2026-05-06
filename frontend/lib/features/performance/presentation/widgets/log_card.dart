@@ -102,7 +102,7 @@ class LogCard extends StatelessWidget {
                       if (log.selfRating != null)
                         _MetaChip(
                           icon: Icons.star_rounded,
-                          label: '${log.selfRating}/10',
+                          label: '${log.selfRating}/5',
                         ),
                       if (log.mood != null)
                         _MetaChip(

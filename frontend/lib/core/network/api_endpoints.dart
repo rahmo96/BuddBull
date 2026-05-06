@@ -33,7 +33,8 @@ abstract class ApiEndpoints {
   static const String games = '/games';
   /// Search/list games: GET /games with query params (not /games/search).
   static const String searchGames = '/games';
-  static const String myGames = '/games/my-games';
+  /// Authenticated user's games: GET /games/me
+  static const String myGames = '/games/me';
   static const String calendar = '/games/calendar';
   static String game(String id) => '/games/$id';
   static String joinGame(String id) => '/games/$id/join';
@@ -41,7 +42,6 @@ abstract class ApiEndpoints {
   static String invitePlayer(String id) => '/games/$id/invite';
   static String approvePlayer(String id) => '/games/$id/approve';
   static String kickPlayer(String id) => '/games/$id/kick';
-  static String cancelGame(String id) => '/games/$id/cancel';
   static String completeGame(String id) => '/games/$id/complete';
   static String mergeGroups(String id) => '/games/$id/merge';
   static String gamePendingRequests(String id) => '/games/$id/pending';

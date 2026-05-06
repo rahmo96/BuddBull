@@ -203,13 +203,13 @@ class GameActionsNotifier extends StateNotifier<GameActionsState> {
   Future<void> leave() async {
     state = state.copyWith(isLeaving: true, clearError: true);
     try {
-      final game = await _repo.leaveGame(_gameId);
+      await _repo.leaveGame(_gameId);
       state = state.copyWith(
         isLeaving: false,
-        game: game,
         successMessage: 'You left the game.',
       );
       _ref.invalidate(gameDetailProvider(_gameId));
+      _ref.invalidate(myGamesProvider);
     } catch (e) {
       state = state.copyWith(isLeaving: false, error: _msg(e));
     }

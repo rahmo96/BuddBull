@@ -38,12 +38,13 @@ class PerformanceRepository {
 
     final body = await _api.get(endpoint, queryParams: {
       if (sport != null) 'sport': sport,
-      if (logType != null) 'logType': logType,
+      // Backend expects `type` (match|training|fitness), not `logType`
+      if (logType != null) 'type': logType,
       'page': page,
       'limit': limit,
     });
-    final data = body['data'] as Map<String, dynamic>;
-    final list = data['logs'] as List<dynamic>;
+    // Backend returns { success, logs, pagination }, not data.logs
+    final list = (body['logs'] as List<dynamic>?) ?? const [];
     return list
         .map((e) => PerformanceLogModel.fromJson(
             e as Map<String, dynamic>))

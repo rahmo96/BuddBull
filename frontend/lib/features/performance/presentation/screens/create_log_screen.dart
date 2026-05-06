@@ -39,8 +39,21 @@ class _CreateLogScreenState
   String? _mood;
   DateTime _loggedAt = DateTime.now();
   int? _durationMinutes = 60;
-  int _selfRating = 7;
+  int _selfRating = 3;
   bool _isPublic = false;
+
+  String _sportToBackend(String sport) => sport.trim().toLowerCase();
+
+  String _moodToBackend(String uiMood) {
+    return switch (uiMood) {
+      'great' => 'excellent',
+      'good' => 'good',
+      'ok' => 'neutral',
+      'tired' => 'bad',
+      'injured' => 'terrible',
+      _ => 'neutral',
+    };
+  }
 
   @override
   void dispose() {
@@ -69,16 +82,19 @@ class _CreateLogScreenState
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
+    final backendMood = _mood == null ? null : _moodToBackend(_mood!);
+    final selfRating = _selfRating.clamp(1, 5);
+    final durationMinutes = _durationMinutes;
+
     final payload = {
-      'sport': _sport,
-      'type': _logType,
+      'sport': _sportToBackend(_sport),
+      'type': _logType.trim().toLowerCase(),
       'loggedAt': _loggedAt.toIso8601String(),
       if (_outcome != null && _logType == 'match')
         'matchOutcome': _outcome,
-      if (_durationMinutes != null)
-        'durationMinutes': _durationMinutes,
-      'selfRating': _selfRating,
-      if (_mood != null) 'mood': _mood,
+      if (durationMinutes != null) 'durationMinutes': durationMinutes,
+      'selfRating': selfRating,
+      if (backendMood != null) 'mood': backendMood,
       if (_notesCtrl.text.trim().isNotEmpty)
         'notes': _notesCtrl.text.trim(),
       'isPublic': _isPublic,
@@ -301,12 +317,12 @@ class _CreateLogScreenState
 
                 // ── Self rating ────────────────────────────────
                 _SectionLabel(
-                    label: 'How did you perform? $_selfRating/10'),
+                    label: 'How did you perform? $_selfRating/5'),
                 Slider(
                   value: _selfRating.toDouble(),
                   min: 1,
-                  max: 10,
-                  divisions: 9,
+                  max: 5,
+                  divisions: 4,
                   activeColor: _ratingColor(_selfRating),
                   inactiveColor: AppColors.grey300,
                   label: '$_selfRating',
@@ -418,8 +434,8 @@ class _CreateLogScreenState
   }
 
   Color _ratingColor(int rating) {
-    if (rating >= 8) return AppColors.success;
-    if (rating >= 5) return AppColors.primary;
+    if (rating >= 5) return AppColors.success;
+    if (rating >= 3) return AppColors.primary;
     return AppColors.error;
   }
 }

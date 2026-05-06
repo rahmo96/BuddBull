@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
+import 'package:buddbull/features/games/data/game_repository.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/games/presentation/widgets/player_slot_row.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
@@ -238,6 +240,7 @@ class GameDetailScreen extends ConsumerWidget {
                         .leave(),
                     onOpenChat: () =>
                         context.push('/chats/${game.groupChatId}'),
+                    onManage: () => _showManageSheet(context, ref, gameId),
                   )
                 : null,
           ),
@@ -612,6 +615,7 @@ class _BottomActionBar extends StatelessWidget {
     required this.onJoin,
     required this.onLeave,
     required this.onOpenChat,
+    required this.onManage,
   });
 
   final GameModel game;
@@ -621,6 +625,7 @@ class _BottomActionBar extends StatelessWidget {
   final VoidCallback onJoin;
   final VoidCallback onLeave;
   final VoidCallback onOpenChat;
+  final VoidCallback onManage;
 
   @override
   Widget build(BuildContext context) {
@@ -662,9 +667,9 @@ class _BottomActionBar extends StatelessWidget {
 
   Widget _buildMainAction() {
     if (isOrganizer) {
-      return const BbButton(
+      return BbButton(
         label: 'Manage (Organiser)',
-        onPressed: null,
+        onPressed: onManage,
         variant: BbButtonVariant.outlined,
         icon: Icons.military_tech_rounded,
       );
@@ -719,4 +724,127 @@ String _sportEmoji(String sport) {
     'cricket' => '🏏',
     _ => '🏅',
   };
+}
+
+Future<void> _showManageSheet(
+  BuildContext context,
+  WidgetRef ref,
+  String gameId,
+) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (sheetCtx) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.edit_outlined),
+            title: const Text('Edit Game'),
+            onTap: () {
+              Navigator.pop(sheetCtx);
+              if (!context.mounted) return;
+              context.push('/games/$gameId/edit');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.cancel_outlined, color: AppColors.error),
+            title: const Text('Cancel Game'),
+            onTap: () async {
+              // Keep a strict teardown order to avoid "used after disposed" / "attached is not true".
+              final confirmed = await _confirmCancel(context);
+              if (!confirmed || !context.mounted) return;
+
+              final reason = await _askCancelReason(context);
+              if (reason == null || reason.trim().isEmpty || !context.mounted) return;
+
+              // Keyboard cleanup before any async/network work.
+              FocusScope.of(context).unfocus();
+
+              // Close the bottom sheet BEFORE triggering navigation.
+              Navigator.pop(sheetCtx);
+
+              try {
+                await ref.read(gameRepositoryProvider).cancelGame(
+                      gameId,
+                      reason: reason.trim(),
+                    );
+                ref.invalidate(gameDetailProvider(gameId));
+                ref.invalidate(myGamesProvider);
+                ref.invalidate(calendarGamesProvider);
+                if (!context.mounted) return;
+
+                showSuccessSnackBar(context, 'Game cancelled.');
+
+                // Small delay lets route stack settle after modal teardown.
+                await Future<void>.delayed(const Duration(milliseconds: 80));
+                if (!context.mounted) return;
+                context.go(Routes.home);
+              } catch (e) {
+                if (!context.mounted) return;
+                showErrorSnackBar(context, e.toString());
+              }
+            },
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    ),
+  );
+}
+
+Future<bool> _confirmCancel(BuildContext context) async {
+  final res = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Cancel game?'),
+      content: const Text('This will mark the game as cancelled for all players.'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('No'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+          child: const Text('Yes, cancel'),
+        ),
+      ],
+    ),
+  );
+  return res ?? false;
+}
+
+Future<String?> _askCancelReason(BuildContext context) async {
+  final ctrl = TextEditingController();
+  final res = await showDialog<String>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Reason for cancellation'),
+      content: TextField(
+        controller: ctrl,
+        autofocus: true,
+        maxLength: 300,
+        decoration: const InputDecoration(
+          hintText: 'e.g. Weather, venue issue, not enough players…',
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Back'),
+        ),
+        FilledButton(
+          onPressed: () {
+            FocusScope.of(ctx).unfocus();
+            Navigator.pop(ctx, ctrl.text);
+          },
+          style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+          child: const Text('Cancel game'),
+        ),
+      ],
+    ),
+  );
+  ctrl.dispose();
+  return res;
 }

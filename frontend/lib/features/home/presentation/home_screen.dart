@@ -236,33 +236,20 @@ class HomeScreen extends ConsumerWidget {
                               .push('/performance/log/create'),
                         ),
                       ),
-                      if (user?.isOrganizer ?? false)
-                        Expanded(
-                          child: _QuickActionCard(
-                            icon: Icons.sports_score_rounded,
-                            label: 'Create Game',
-                            color: AppColors.secondary,
-                            onTap: () =>
-                                context.push('/games/create'),
-                          ),
+                      Expanded(
+                        child: _QuickActionCard(
+                          icon: Icons.sports_score_rounded,
+                          label: 'Create Game',
+                          color: AppColors.secondary,
+                          onTap: () => context.push('/games/create'),
                         ),
-                      if (!(user?.isOrganizer ?? false))
-                        Expanded(
-                          child: _QuickActionCard(
-                            icon: Icons.calendar_month_rounded,
-                            label: 'Calendar',
-                            color: AppColors.info,
-                            onTap: () => context
-                                .push('/games/calendar'),
-                          ),
-                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
 
                   // ── Email verification warning ─────────────
-                  if (user != null && !user.isEmailVerified)
-                    _VerifyEmailBanner(),
+                  // Removed: do not gate features on verification state.
 
                   // ── Recent activity ───────────────────────
                   _SectionHeader(
@@ -509,37 +496,6 @@ class _UpcomingShimmer extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-// ── Email verify banner ───────────────────────────────────────────────────────
-class _VerifyEmailBanner extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.warningLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: AppColors.warning.withOpacity(0.4)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.warning_amber_rounded,
-              color: AppColors.warning, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Please verify your email to access all features.',
-              style: AppTextStyles.bodySmall
-                  .copyWith(color: AppColors.warning),
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -114,8 +114,8 @@ class GameRepository {
   // ── My games ──────────────────────────────────────────────
   Future<List<GameModel>> getMyGames() async {
     final body = await _api.get(ApiEndpoints.myGames);
-    final data = body['data'] as Map<String, dynamic>;
-    final list = data['games'] as List<dynamic>;
+    // Backend returns { success, games, pagination }, not data.games
+    final list = (body['games'] as List<dynamic>?) ?? [];
     return list
         .map((e) => GameModel.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -146,7 +146,12 @@ class GameRepository {
   }
 
   // ── Cancel ────────────────────────────────────────────────
-  Future<void> cancelGame(String id) => _api.post(ApiEndpoints.cancelGame(id));
+  Future<void> cancelGame(String id, {required String reason}) {
+    return _api.delete(
+      ApiEndpoints.game(id),
+      data: {'reason': reason},
+    );
+  }
 
   // ── Join ──────────────────────────────────────────────────
   Future<GameModel> joinGame(String id) async {
@@ -156,10 +161,8 @@ class GameRepository {
   }
 
   // ── Leave ─────────────────────────────────────────────────
-  Future<GameModel> leaveGame(String id) async {
-    final body = await _api.post(ApiEndpoints.leaveGame(id));
-    final data = body['data'] as Map<String, dynamic>;
-    return GameModel.fromJson(data['game'] as Map<String, dynamic>);
+  Future<void> leaveGame(String id) async {
+    await _api.delete(ApiEndpoints.leaveGame(id));
   }
 
   // ── Approve player ────────────────────────────────────────

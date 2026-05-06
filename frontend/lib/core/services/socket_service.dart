@@ -60,7 +60,17 @@ class SocketService {
   Future<void> connect() async {
     if (_socket?.connected == true) return;
 
-    final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+    String? token;
+    try {
+      token = await FirebaseAuth.instance.currentUser?.getIdToken();
+    } on FirebaseAuthException {
+      try {
+        await FirebaseAuth.instance.signOut();
+      } catch (_) {}
+      return;
+    } catch (_) {
+      return;
+    }
     if (token == null) return;
 
     _setStatus(SocketStatus.connecting);

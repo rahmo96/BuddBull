@@ -8,6 +8,7 @@ import 'package:buddbull/features/chat/presentation/screens/chat_list_screen.dar
 import 'package:buddbull/features/chat/presentation/screens/chat_screen.dart';
 import 'package:buddbull/features/games/presentation/screens/calendar_screen.dart';
 import 'package:buddbull/features/games/presentation/screens/create_game_screen.dart';
+import 'package:buddbull/features/games/presentation/screens/edit_game_screen.dart';
 import 'package:buddbull/features/games/presentation/screens/game_detail_screen.dart';
 import 'package:buddbull/features/games/presentation/screens/games_screen.dart';
 import 'package:buddbull/features/home/home_scaffold.dart';
@@ -169,6 +170,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (_, s) => _slide(
           s,
           GameDetailScreen(gameId: s.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(
+        path: '/games/:id/edit',
+        name: 'editGame',
+        pageBuilder: (_, s) => _slide(
+          s,
+          EditGameScreen(gameId: s.pathParameters['id']!),
         ),
       ),
       GoRoute(

@@ -1,6 +1,9 @@
 import 'package:buddbull/features/auth/data/auth_repository.dart';
 import 'package:buddbull/features/auth/data/models/user_model.dart';
+import 'package:buddbull/core/error/app_exception.dart';
+import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -54,31 +57,79 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>(
 // ── Notifier ─────────────────────────────────────────────────────────────────
 class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier(this._repo) : super(const AuthState()) {
-    _bootstrap();
+    _listenToAuthChanges();
   }
 
   final AuthRepository _repo;
+  bool _isRegistering = false;
 
   /// A [ChangeNotifier] that go_router listens to for redirects.
   final routeListenable = _AuthListenable();
 
-  // ── Bootstrap ─────────────────────────────────────────────────
-  Future<void> _bootstrap() async {
-    final fbUser = FirebaseAuth.instance.currentUser;
-    if (fbUser == null) {
-      state = state.copyWith(status: AuthStatus.unauthenticated);
-      routeListenable.notify();
-      return;
-    }
+  StreamSubscription<User?>? _authSub;
 
-    try {
-      final user = await _repo.getMe();
-      state = state.copyWith(status: AuthStatus.authenticated, user: user);
-    } catch (_) {
-      // Firebase user exists but backend profile fetch failed.
-      state = state.copyWith(status: AuthStatus.authenticated);
-    }
-    routeListenable.notify();
+  // ── Firebase auth listener (source of truth) ───────────────────
+  void _listenToAuthChanges() {
+    _authSub?.cancel();
+    _authSub = FirebaseAuth.instance.idTokenChanges().listen(
+      (fbUser) async {
+        if (fbUser == null) {
+          state = const AuthState(status: AuthStatus.unauthenticated);
+          routeListenable.notify();
+          return;
+        }
+
+        if (_isRegistering) {
+          // Avoid race: idTokenChanges fires immediately after Firebase user creation,
+          // before the backend profile sync completes. Registration flow will set the
+          // final authenticated+profile state when ready.
+          return;
+        }
+
+        // Move off splash immediately; hydrate profile in background.
+        state = const AuthState(status: AuthStatus.authenticated);
+        routeListenable.notify();
+
+        try {
+          final user = await _repo.getMe();
+          state = AuthState(status: AuthStatus.authenticated, user: user);
+        } catch (e) {
+          if (e is AppException && e.statusCode == 401) {
+            if (_isRegistering) return;
+            state = const AuthState(
+              status: AuthStatus.unauthenticated,
+              error: 'Session expired. Please log in again.',
+            );
+            routeListenable.notify();
+            try {
+              await FirebaseAuth.instance.signOut();
+            } catch (_) {}
+            return;
+          }
+
+          // Firebase user exists but backend profile fetch failed.
+          state = const AuthState(status: AuthStatus.authenticated);
+        }
+        routeListenable.notify();
+      },
+      onError: (_, __) async {
+        if (_isRegistering) return;
+        state = const AuthState(
+          status: AuthStatus.unauthenticated,
+          error: 'Session expired. Please log in again.',
+        );
+        routeListenable.notify();
+        try {
+          await FirebaseAuth.instance.signOut();
+        } catch (_) {}
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
   }
 
   // ── Register ──────────────────────────────────────────────────
@@ -91,27 +142,53 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String role,
   }) async {
     state = state.copyWith(isSubmitting: true, clearError: true);
+    _isRegistering = true;
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
+      final fbUser = cred.user;
+      if (fbUser != null) {
+        try {
+          await fbUser.sendEmailVerification();
+        } catch (_) {}
+      }
+
       // CRITICAL: create/sync MongoDB profile after Firebase registration
-      final user = await _repo.syncUserProfile(
-        firstName: firstName,
-        lastName: lastName,
-        username: username,
-        role: role,
-      );
+      UserModel user;
+      try {
+        user = await _repo.syncUserProfile(
+          firstName: firstName,
+          lastName: lastName,
+          username: username,
+          role: role,
+        );
+      } catch (e) {
+        final statusCode = switch (e) {
+          DioException(response: final r) => r?.statusCode,
+          AppException(statusCode: final c) => c,
+          _ => null,
+        };
+
+        if (statusCode == 409) {
+          // User already exists in DB. Treat as success and fetch profile.
+          user = await _repo.getMe();
+        } else {
+          rethrow;
+        }
+      }
 
       state = AuthState(status: AuthStatus.authenticated, user: user);
       routeListenable.notify();
     } catch (e) {
       state = state.copyWith(
         isSubmitting: false,
-        error: _extractMessage(e),
+        error: 'Registration failed. Please try again.',
       );
+    } finally {
+      _isRegistering = false;
     }
   }
 

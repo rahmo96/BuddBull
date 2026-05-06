@@ -28,7 +28,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _passwordCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
 
-  String _role = 'player';
+  static const String _defaultRole = 'player';
   bool _acceptedTerms = false;
   String _password = '';
 
@@ -55,7 +55,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           username: _usernameCtrl.text.trim(),
           email: _emailCtrl.text.trim(),
           password: _passwordCtrl.text,
-          role: _role,
+          role: _defaultRole,
         );
   }
 
@@ -217,16 +217,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        // ── Role picker ───────────────────────
-                        const Text(AppStrings.roleLabel,
-                            style: AppTextStyles.labelLarge),
-                        const SizedBox(height: 8),
-                        _RoleSelector(
-                          selected: _role,
-                          onChanged: (r) => setState(() => _role = r),
-                        ),
-                        const SizedBox(height: 20),
-
                         // ── Terms ─────────────────────────────
                         _TermsCheckbox(
                           accepted: _acceptedTerms,
@@ -308,102 +298,6 @@ class _RegisterHeader extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Role selector ─────────────────────────────────────────────────────────────
-class _RoleSelector extends StatelessWidget {
-  const _RoleSelector({required this.selected, required this.onChanged});
-  final String selected;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      spacing: 10,
-      children: [
-        Expanded(
-          child: _RoleTile(
-            value: 'player',
-            label: 'Player',
-            description: 'Join games',
-            icon: Icons.sports_soccer_rounded,
-            selected: selected == 'player',
-            onTap: () => onChanged('player'),
-          ),
-        ),
-        Expanded(
-          child: _RoleTile(
-            value: 'organizer',
-            label: 'Organizer',
-            description: 'Create games',
-            icon: Icons.military_tech_rounded,
-            selected: selected == 'organizer',
-            onTap: () => onChanged('organizer'),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _RoleTile extends StatelessWidget {
-  const _RoleTile({
-    required this.value,
-    required this.label,
-    required this.description,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String value;
-  final String label;
-  final String description;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.primary.withOpacity(0.08)
-              : AppColors.grey100,
-          border: Border.all(
-            color: selected ? AppColors.primary : AppColors.grey300,
-            width: selected ? 2 : 1,
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              icon,
-              size: 28,
-              color: selected ? AppColors.primary : AppColors.grey500,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: AppTextStyles.titleSmall.copyWith(
-                color: selected ? AppColors.primary : AppColors.textPrimary,
-              ),
-            ),
-            Text(
-              description,
-              style: AppTextStyles.bodySmall,
             ),
           ],
         ),
