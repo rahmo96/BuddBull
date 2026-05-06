@@ -4,6 +4,11 @@ import 'package:buddbull/features/auth/presentation/screens/login_screen.dart';
 import 'package:buddbull/features/auth/presentation/screens/register_screen.dart';
 import 'package:buddbull/features/auth/presentation/screens/splash_screen.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
+import 'package:buddbull/core/storage/shared_preferences_provider.dart';
+import 'package:buddbull/features/onboarding/data/onboarding_prefs.dart';
+import 'package:buddbull/features/onboarding/presentation/screens/onboarding_profile_screen.dart';
+import 'package:buddbull/features/onboarding/presentation/screens/onboarding_welcome_screen.dart';
+import 'package:buddbull/features/onboarding/providers/onboarding_redirect_listen.dart';
 import 'package:buddbull/features/chat/presentation/screens/chat_list_screen.dart';
 import 'package:buddbull/features/chat/presentation/screens/chat_screen.dart';
 import 'package:buddbull/features/games/presentation/screens/calendar_screen.dart';
@@ -17,6 +22,7 @@ import 'package:buddbull/features/performance/presentation/screens/create_log_sc
 import 'package:buddbull/features/performance/presentation/screens/performance_screen.dart';
 import 'package:buddbull/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:buddbull/features/profile/presentation/screens/profile_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -27,6 +33,10 @@ abstract class Routes {
   static const String login = '/login';
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
+
+  /// Post-registration introduction (Riverpod onboarding draft persists here).
+  static const String onboardingWelcome = '/onboarding/welcome';
+  static const String onboardingProfile = '/onboarding/profile';
 
   // Shell tabs
   static const String home = '/home';
@@ -51,10 +61,11 @@ abstract class Routes {
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authProvider.notifier);
   final authListenable = authNotifier.routeListenable;
+  final onboardingRefresh = ref.watch(onboardingRedirectListenProvider);
 
   return GoRouter(
     initialLocation: Routes.splash,
-    refreshListenable: authListenable,
+    refreshListenable: Listenable.merge([authListenable, onboardingRefresh]),
     redirect: (BuildContext context, GoRouterState state) {
       final authStatus = ref.read(authProvider).status;
       final loc = state.matchedLocation;
@@ -65,13 +76,33 @@ final routerProvider = Provider<GoRouter>((ref) {
           loc == Routes.forgotPassword;
       final isOnSplash = loc == Routes.splash;
 
+      final onboardingPending = ref
+              .read(sharedPreferencesProvider)
+              .getBool(OnboardingPrefs.pendingKey) ??
+          false;
+      final isOnOnboarding = loc == Routes.onboardingWelcome ||
+          loc == Routes.onboardingProfile;
+
       if (authStatus == AuthStatus.loading) return null;
 
-      if (authStatus == AuthStatus.unauthenticated && (!isOnAuthPage || isOnSplash)) {
+      if (authStatus == AuthStatus.unauthenticated &&
+          (!isOnAuthPage || isOnSplash)) {
         return Routes.login;
       }
-      if (authStatus == AuthStatus.authenticated && (isOnAuthPage || isOnSplash)) {
-        return Routes.home;
+
+      if (authStatus == AuthStatus.authenticated) {
+        if (onboardingPending) {
+          if (!isOnOnboarding) {
+            return Routes.onboardingWelcome;
+          }
+          return null;
+        }
+        if (isOnOnboarding) {
+          return Routes.home;
+        }
+        if (isOnAuthPage || isOnSplash) {
+          return Routes.home;
+        }
       }
       return null;
     },
@@ -99,6 +130,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'forgotPassword',
         pageBuilder: (_, s) =>
             _slide(s, const ForgotPasswordScreen()),
+      ),
+      GoRoute(
+        path: Routes.onboardingWelcome,
+        name: 'onboardingWelcome',
+        pageBuilder: (_, s) =>
+            _slide(s, const OnboardingWelcomeScreen()),
+      ),
+      GoRoute(
+        path: Routes.onboardingProfile,
+        name: 'onboardingProfile',
+        pageBuilder: (_, s) =>
+            _slide(s, const OnboardingProfileScreen()),
       ),
 
       // ── Shell (bottom nav) ────────────────────────────────

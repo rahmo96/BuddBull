@@ -1,89 +1,59 @@
-import 'package:buddbull/screens/onboarding/introduction_screen.dart';
+import 'package:buddbull/core/constants/app_strings.dart';
+import 'package:buddbull/core/storage/shared_preferences_provider.dart';
+import 'package:buddbull/features/onboarding/presentation/screens/onboarding_welcome_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  const initialPersonalInfo = {
-    'firstName': 'John',
-    'lastName': 'Doe',
-    'email': 'john@example.com',
-    'gender': 'male',
-  };
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('IntroductionScreen', () {
-    testWidgets('renders profile completion form', (tester) async {
+  group('Post-signup onboarding (welcome)', () {
+    testWidgets('renders headline, sports chips, and actions', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
       await tester.pumpWidget(
-        const MaterialApp(
-          home: IntroductionScreen(
-            initialEmail: 'john@example.com',
-            initialUid: 'test-uid-123',
-            initialPersonalInfo: initialPersonalInfo,
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+          ],
+          child: const MaterialApp(
+            home: OnboardingWelcomeScreen(),
           ),
         ),
       );
 
-      expect(find.text('Tell Us About Yourself'), findsOneWidget);
-      expect(find.text('Complete Your Profile'), findsOneWidget);
-      expect(find.text('Help us get to know you better'), findsOneWidget);
-      expect(find.text('Birthday'), findsOneWidget);
-      expect(find.text('Sports Interests'), findsOneWidget);
-      expect(find.text('About Yourself'), findsOneWidget);
-      expect(find.text('Complete Profile'), findsOneWidget);
-    });
-
-    testWidgets('shows validation error when form is empty', (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: IntroductionScreen(
-            initialEmail: 'john@example.com',
-            initialUid: 'test-uid-123',
-            initialPersonalInfo: initialPersonalInfo,
-          ),
-        ),
-      );
-
-      await tester.ensureVisible(find.text('Complete Profile'));
-      await tester.tap(find.text('Complete Profile'));
-      await tester.pumpAndSettle();
-
-      final hasValidationError = find.text('Birthday is required').evaluate().isNotEmpty ||
-          find.text('Select at least one sport').evaluate().isNotEmpty ||
-          find.text('Required').evaluate().isNotEmpty ||
-          find.text('At least 10 characters').evaluate().isNotEmpty;
-      expect(hasValidationError, isTrue);
-    });
-
-    testWidgets('has date picker for birthday', (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: IntroductionScreen(
-            initialEmail: 'john@example.com',
-            initialUid: 'test-uid-123',
-            initialPersonalInfo: initialPersonalInfo,
-          ),
-        ),
-      );
-
-      expect(find.text('Tap to select date'), findsWidgets);
-    });
-
-    testWidgets('has sports checkbox group', (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: IntroductionScreen(
-            initialEmail: 'john@example.com',
-            initialUid: 'test-uid-123',
-            initialPersonalInfo: initialPersonalInfo,
-          ),
-        ),
-      );
-
-      await tester.ensureVisible(find.text('Sports Interests'));
-      expect(find.text('Sports Interests'), findsOneWidget);
-
-      await tester.ensureVisible(find.text('Football'));
+      expect(find.text(AppStrings.onboardingWelcomeMessage), findsOneWidget);
       expect(find.text('Football'), findsOneWidget);
       expect(find.text('Basketball'), findsOneWidget);
+      expect(find.text(AppStrings.onboardingNext), findsOneWidget);
+      expect(find.text(AppStrings.onboardingSkip), findsOneWidget);
+    });
+
+    testWidgets('tapping a sport chip toggles selection', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+          ],
+          child: const MaterialApp(
+            home: OnboardingWelcomeScreen(),
+          ),
+        ),
+      );
+
+      final footballChip = find.byKey(const ValueKey('onboarding_sport_football'));
+      await tester.tap(footballChip);
+      await tester.pump();
+      expect(find.byIcon(Icons.check_rounded), findsWidgets);
+
+      await tester.tap(footballChip);
+      await tester.pump();
     });
   });
 }

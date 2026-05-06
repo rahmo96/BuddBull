@@ -89,6 +89,21 @@ abstract class AppStrings {
   static const String usernameTooShort = 'Username must be at least 3 characters.';
   static const String acceptTerms = 'You must accept the Terms of Service.';
 
+  // ── Onboarding (post‑signup) ───────────────────────────────────
+  static const String onboardingWelcomeMessage =
+      'Welcome to BuddBull! Let\'s get to know you better.';
+  static const String onboardingSportsSection =
+      'What are your favourite sports? Tap to select — you can change this anytime.';
+  static const String onboardingNext = 'Next';
+  static const String onboardingSkip = 'Skip';
+  static const String onboardingProfileTitle = 'Make it yours';
+  static const String onboardingProfileSubtitle =
+      'Upload a photo or pick a Buddy avatar. You can always update later.';
+  static const String onboardingUploadPhoto = 'Upload from device';
+  static const String onboardingOrPickAvatar =
+      'Or choose a starter avatar';
+  static const String onboardingFinish = 'Get started';
+
   // ── Errors ─────────────────────────────────────────────────────
   static const String genericError = 'Something went wrong. Please try again.';
   static const String networkError = 'No internet connection. Check your network.';

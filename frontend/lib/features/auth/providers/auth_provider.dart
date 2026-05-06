@@ -1,11 +1,14 @@
+import 'package:buddbull/core/storage/shared_preferences_provider.dart';
 import 'package:buddbull/features/auth/data/auth_repository.dart';
 import 'package:buddbull/features/auth/data/models/user_model.dart';
 import 'package:buddbull/core/error/app_exception.dart';
+import 'package:buddbull/features/onboarding/data/onboarding_prefs.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ── State ─────────────────────────────────────────────────────────────────────
 enum AuthStatus { loading, authenticated, unauthenticated }
@@ -51,16 +54,18 @@ class AuthState {
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>(
   (ref) => AuthNotifier(
     ref.watch(authRepositoryProvider),
+    ref.watch(sharedPreferencesProvider),
   ),
 );
 
 // ── Notifier ─────────────────────────────────────────────────────────────────
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier(this._repo) : super(const AuthState()) {
+  AuthNotifier(this._repo, this._prefs) : super(const AuthState()) {
     _listenToAuthChanges();
   }
 
   final AuthRepository _repo;
+  final SharedPreferences _prefs;
   bool _isRegistering = false;
 
   /// A [ChangeNotifier] that go_router listens to for redirects.
@@ -180,6 +185,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         }
       }
 
+      await _prefs.setBool(OnboardingPrefs.pendingKey, true);
       state = AuthState(status: AuthStatus.authenticated, user: user);
       routeListenable.notify();
     } catch (e) {
@@ -218,6 +224,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   // ── Logout ────────────────────────────────────────────────────
   Future<void> logout() async {
     await FirebaseAuth.instance.signOut();
+    await _prefs.setBool(OnboardingPrefs.pendingKey, false);
     state = const AuthState(status: AuthStatus.unauthenticated);
     routeListenable.notify();
   }
