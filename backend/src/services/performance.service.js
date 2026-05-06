@@ -233,13 +233,113 @@ const deleteLog = async (logId, userId, userRole) => {
  * @param {object} opts  { dateFrom, dateTo, sport }
  */
 const getStats = async (userId, { dateFrom, dateTo, sport } = {}) => {
-  const [summary, recentPBs, activityHeatmap] = await Promise.all([
-    PerformanceLog.aggregateForUser(userId, dateFrom ? new Date(dateFrom) : null, dateTo ? new Date(dateTo) : null),
-    getRecentPersonalBests(userId, sport),
+  const fromDate = dateFrom ? new Date(dateFrom) : null;
+  const toDate = dateTo ? new Date(dateTo) : null;
+
+  const matchStage = {
+    user: new mongoose.Types.ObjectId(userId),
+    deletedAt: null,
+  };
+  if (fromDate || toDate) {
+    matchStage.loggedAt = {};
+    if (fromDate) matchStage.loggedAt.$gte = fromDate;
+    if (toDate) matchStage.loggedAt.$lte = toDate;
+  }
+  if (sport) matchStage.sport = sport.toLowerCase();
+
+  // Last 8 weeks for charts
+  const sinceWeeks = new Date();
+  sinceWeeks.setDate(sinceWeeks.getDate() - 7 * 8);
+
+  const [
+    totals,
+    weekly,
+    activityHeatmap,
+    recentPBLogs,
+    user,
+  ] = await Promise.all([
+    PerformanceLog.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: null,
+          totalSessions: { $sum: 1 },
+          totalMinutes: { $sum: { $ifNull: ['$durationMinutes', 0] } },
+        },
+      },
+      { $project: { _id: 0, totalSessions: 1, totalMinutes: 1 } },
+    ]),
+    PerformanceLog.aggregate([
+      {
+        $match: {
+          ...matchStage,
+          loggedAt: { $gte: sinceWeeks, ...(matchStage.loggedAt || {}) },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            y: { $isoWeekYear: '$loggedAt' },
+            w: { $isoWeek: '$loggedAt' },
+          },
+          sessionCount: { $sum: 1 },
+          totalMinutes: { $sum: { $ifNull: ['$durationMinutes', 0] } },
+          wins: { $sum: { $cond: [{ $eq: ['$matchOutcome', 'win'] }, 1, 0] } },
+        },
+      },
+      { $sort: { '_id.y': 1, '_id.w': 1 } },
+      { $limit: 8 },
+    ]),
     getActivityHeatmap(userId, 90),
+    getRecentPersonalBests(userId, sport),
+    User.findById(userId).lean(),
   ]);
 
-  return { summary, recentPBs, activityHeatmap };
+  const totalSessions = totals?.[0]?.totalSessions || 0;
+  const totalMinutes = totals?.[0]?.totalMinutes || 0;
+
+  const recentSessions = (weekly || []).map((w) => ({
+    // Keep this short; frontend uses the first token for x-axis label.
+    weekLabel: `W${w?._id?.w ?? ''}`.trim(),
+    sessionCount: w.sessionCount || 0,
+    totalMinutes: w.totalMinutes || 0,
+    wins: w.wins || 0,
+  }));
+
+  // Sport breakdown: map sport -> count
+  const breakdownAgg = await PerformanceLog.aggregate([
+    { $match: matchStage },
+    { $group: { _id: '$sport', count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+  ]);
+  const sportBreakdown = {};
+  for (const e of breakdownAgg) {
+    if (e?._id) sportBreakdown[e._id] = e.count;
+  }
+
+  // Flatten recent PBs into [{ metric, value, sport }]
+  const personalBests = [];
+  for (const doc of recentPBLogs || []) {
+    const pbs = doc.newPersonalBests || [];
+    for (const pb of pbs) {
+      personalBests.push({
+        metric: pb.metric,
+        value: pb.value,
+        sport: doc.sport,
+      });
+    }
+  }
+
+  return {
+    totalSessions,
+    totalMinutes,
+    currentStreak: user?.stats?.currentStreak || 0,
+    longestStreak: user?.stats?.longestStreak || 0,
+    personalBests: personalBests.slice(0, 10),
+    recentSessions,
+    activityHeatmap,
+    sportBreakdown,
+  };
 };
 
 // ─────────────────────────────────────────────

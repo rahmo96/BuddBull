@@ -51,10 +51,10 @@ router.get('/calendar', protect, validate(calendarSchema, 'query'), GameControll
 
 /**
  * @route  POST /api/v1/games
- * @desc   Create a new game (organisers & admins)
- * @access Private — organizer or admin
+ * @desc   Create a new game
+ * @access Private
  */
-router.post('/', protect, restrictTo('organizer', 'admin'), validate(createGameSchema), GameController.createGame);
+router.post('/', protect, restrictTo('player', 'organizer', 'admin'), validate(createGameSchema), GameController.createGame);
 
 /**
  * @route  GET /api/v1/games

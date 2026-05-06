@@ -7,6 +7,14 @@ const GameService = require('../services/game.service');
 // ─────────────────────────────────────────────
 
 const createGame = catchAsync(async (req, res) => {
+  const scheduledAtRaw = req.body?.scheduledAt ?? req.body?.date;
+  if (scheduledAtRaw) {
+    const scheduledAt = new Date(scheduledAtRaw);
+    if (!Number.isNaN(scheduledAt.getTime()) && scheduledAt < new Date()) {
+      throw new AppError('Cannot create a game for a past date.', 400);
+    }
+  }
+
   const game = await GameService.createGame(req.user._id, req.body);
 
   res.status(201).json({ success: true, data: { game } });
