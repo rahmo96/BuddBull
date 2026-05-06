@@ -49,7 +49,14 @@ class UserRepository {
       formData,
     );
     final data = body['data'] as Map<String, dynamic>;
-    return UserModel.fromJson(data['user'] as Map<String, dynamic>);
+    final userJson = data['user'] as Map<String, dynamic>?;
+    if (userJson != null) {
+      return UserModel.fromJson(userJson);
+    }
+    final pic = data['profilePicture'] as String?;
+    final me = await getMe();
+    if (pic != null) return me.copyWith(profilePicture: pic);
+    return me;
   }
 
   // ── Follow / unfollow ─────────────────────────────────────────

@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/constants/skill_level_labels.dart';
 import 'package:buddbull/features/auth/data/models/user_model.dart';
 import 'package:flutter/material.dart';
 
@@ -40,7 +41,7 @@ class SportChip extends StatelessWidget {
                 ),
               ),
               Text(
-                interest.skillLevel,
+                skillLevelDisplayName(interest.skillLevel),
                 style: AppTextStyles.labelSmall.copyWith(color: color),
               ),
             ],

@@ -68,7 +68,7 @@ const uploadProfilePicture = catchAsync(async (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Profile picture updated.',
-    data: { profilePicture: user.profilePicture },
+    data: { user },
   });
 });
 

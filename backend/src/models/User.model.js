@@ -19,7 +19,7 @@ const sportInterestSchema = new mongoose.Schema(
     },
     skillLevel: {
       type: String,
-      enum: ['beginner', 'intermediate', 'advanced', 'professional'],
+      enum: ['beginner', 'amateur', 'intermediate', 'advanced', 'professional'],
       default: 'beginner',
     },
     preferredPositions: [{ type: String, trim: true }],

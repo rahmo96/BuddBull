@@ -3,12 +3,12 @@ import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
+import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
 import 'package:buddbull/features/profile/presentation/widgets/sport_chip.dart';
 import 'package:buddbull/features/profile/presentation/widgets/stats_card.dart';
 import 'package:buddbull/features/profile/providers/profile_provider.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:buddbull/shared/widgets/loading_overlay.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -78,8 +78,8 @@ class ProfileScreen extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const SizedBox(height: 40),
-                        _AvatarWidget(
-                          imageUrl: user.profilePicture,
+                        BbProfileAvatar(
+                          profilePicture: user.profilePicture,
                           radius: 44,
                           initials: '${user.firstName[0]}${user.lastName[0]}',
                         ),
@@ -302,8 +302,8 @@ class _PublicProfileView extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const SizedBox(height: 40),
-                        _AvatarWidget(
-                          imageUrl: user.profilePicture,
+                        BbProfileAvatar(
+                          profilePicture: user.profilePicture,
                           radius: 40,
                           initials:
                               '${user.firstName[0]}${user.lastName[0]}',
@@ -406,72 +406,6 @@ class _FollowButtonState extends ConsumerState<_FollowButton> {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-class _AvatarWidget extends StatelessWidget {
-  const _AvatarWidget({
-    required this.imageUrl,
-    required this.radius,
-    required this.initials,
-  });
-
-  final String? imageUrl;
-  final double radius;
-  final String initials;
-
-  @override
-  Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: radius,
-      backgroundColor: Colors.white,
-      child: imageUrl != null
-          ? ClipOval(
-              child: CachedNetworkImage(
-                imageUrl: imageUrl!,
-                width: radius * 2,
-                height: radius * 2,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => const CircularProgressIndicator(
-                  strokeWidth: 2,
-                ),
-                errorWidget: (_, __, ___) => _InitialsAvatar(
-                  initials: initials,
-                  radius: radius,
-                ),
-              ),
-            )
-          : _InitialsAvatar(initials: initials, radius: radius),
-    );
-  }
-}
-
-class _InitialsAvatar extends StatelessWidget {
-  const _InitialsAvatar({required this.initials, required this.radius});
-  final String initials;
-  final double radius;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: radius * 2,
-      height: radius * 2,
-      decoration: const BoxDecoration(
-        gradient: AppColors.brandGradient,
-        shape: BoxShape.circle,
-      ),
-      child: Center(
-        child: Text(
-          initials.toUpperCase(),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: radius * 0.65,
-            fontWeight: FontWeight.w700,
-            fontFamily: 'Inter',
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _SocialStat extends StatelessWidget {
   const _SocialStat({required this.count, required this.label});
   final int count;

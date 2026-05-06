@@ -66,6 +66,7 @@ abstract class AppStrings {
 
   // ── Skill levels ───────────────────────────────────────────────
   static const String beginner = 'Beginner';
+  static const String amateur = 'Amateur';
   static const String intermediate = 'Intermediate';
   static const String advanced = 'Advanced';
   static const String professional = 'Professional';
@@ -94,6 +95,8 @@ abstract class AppStrings {
       'Welcome to BuddBull! Let\'s get to know you better.';
   static const String onboardingSportsSection =
       'What are your favourite sports? Tap to select — you can change this anytime.';
+  static const String onboardingSkillPerSport =
+      'Your level in each sport';
   static const String onboardingNext = 'Next';
   static const String onboardingSkip = 'Skip';
   static const String onboardingProfileTitle = 'Make it yours';

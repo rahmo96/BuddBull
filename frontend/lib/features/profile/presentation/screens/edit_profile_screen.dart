@@ -1,19 +1,19 @@
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/auth/data/models/user_model.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
+import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
 import 'package:buddbull/features/profile/presentation/widgets/sport_chip.dart';
 import 'package:buddbull/features/profile/providers/profile_provider.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:buddbull/shared/widgets/loading_overlay.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -47,6 +47,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   static const List<String> _skillLevels = [
     'beginner',
+    'amateur',
     'intermediate',
     'advanced',
     'professional',
@@ -155,10 +156,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 Center(
                   child: Stack(
                     children: [
-                      _AvatarPicker(
-                        imageUrl: user.profilePicture,
+                      BbProfileAvatar(
+                        profilePicture: user.profilePicture,
                         initials:
                             '${user.firstName[0]}${user.lastName[0]}',
+                        radius: 52,
                       ),
                       Positioned(
                         bottom: 0,
@@ -298,49 +300,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-// ── Avatar picker ─────────────────────────────────────────────────────────────
-class _AvatarPicker extends StatelessWidget {
-  const _AvatarPicker({required this.imageUrl, required this.initials});
-  final String? imageUrl;
-  final String initials;
-
-  @override
-  Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: 52,
-      backgroundColor: AppColors.grey200,
-      child: imageUrl != null
-          ? ClipOval(
-              child: CachedNetworkImage(
-                imageUrl: imageUrl!,
-                width: 104,
-                height: 104,
-                fit: BoxFit.cover,
-              ),
-            )
-          : Container(
-              width: 104,
-              height: 104,
-              decoration: const BoxDecoration(
-                gradient: AppColors.brandGradient,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  initials.toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 36,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Inter',
-                  ),
-                ),
-              ),
-            ),
     );
   }
 }

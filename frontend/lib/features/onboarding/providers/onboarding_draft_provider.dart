@@ -1,4 +1,3 @@
-import 'package:buddbull/features/onboarding/data/onboarding_mock_data.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,16 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 @immutable
 class OnboardingDraft {
   const OnboardingDraft({
-    this.selectedSportIds = const {},
+    this.sportSkillLevels = const {},
     this.pickedImagePath,
     this.avatarId,
   });
 
-  final Set<String> selectedSportIds;
+  /// Sport id → API skillLevel (`beginner`, `amateur`, …).
+  final Map<String, String> sportSkillLevels;
   final String? pickedImagePath;
   final String? avatarId;
 
-  /// Custom photo wins over preset avatar until cleared.
   bool get usesCustomPhoto =>
       pickedImagePath != null && pickedImagePath!.isNotEmpty;
 }
@@ -28,19 +27,36 @@ final onboardingDraftProvider =
 class OnboardingDraftNotifier extends StateNotifier<OnboardingDraft> {
   OnboardingDraftNotifier() : super(const OnboardingDraft());
 
-  void toggleSport(String id) {
-    final next = Set<String>.from(state.selectedSportIds);
-    if (next.contains(id)) {
-      next.remove(id);
+  static const String _defaultSkill = 'beginner';
+
+  void toggleSport(String sportId) {
+    final next = Map<String, String>.from(state.sportSkillLevels);
+    if (next.containsKey(sportId)) {
+      next.remove(sportId);
     } else {
-      next.add(id);
+      next[sportId] = _defaultSkill;
     }
-    state = OnboardingDraft(selectedSportIds: next, pickedImagePath: state.pickedImagePath, avatarId: state.avatarId);
+    state = OnboardingDraft(
+      sportSkillLevels: next,
+      pickedImagePath: state.pickedImagePath,
+      avatarId: state.avatarId,
+    );
+  }
+
+  void setSportSkill(String sportId, String skillLevel) {
+    if (!state.sportSkillLevels.containsKey(sportId)) return;
+    final next = Map<String, String>.from(state.sportSkillLevels);
+    next[sportId] = skillLevel;
+    state = OnboardingDraft(
+      sportSkillLevels: next,
+      pickedImagePath: state.pickedImagePath,
+      avatarId: state.avatarId,
+    );
   }
 
   void setPickedImagePath(String? path) {
     state = OnboardingDraft(
-      selectedSportIds: state.selectedSportIds,
+      sportSkillLevels: state.sportSkillLevels,
       pickedImagePath: path,
       avatarId: path != null ? null : state.avatarId,
     );
@@ -48,7 +64,7 @@ class OnboardingDraftNotifier extends StateNotifier<OnboardingDraft> {
 
   void selectAvatar(String id) {
     state = OnboardingDraft(
-      selectedSportIds: state.selectedSportIds,
+      sportSkillLevels: state.sportSkillLevels,
       pickedImagePath: null,
       avatarId: id,
     );
@@ -56,11 +72,17 @@ class OnboardingDraftNotifier extends StateNotifier<OnboardingDraft> {
 
   void reset() => state = const OnboardingDraft();
 
-  /// Labels for aggregated mock submit (sport ids resolved to display names).
-  List<String> selectedSportLabels() {
-    final byId = {for (final s in OnboardingMockData.sports) s.id: s.label};
-    return state.selectedSportIds
-        .map((id) => byId[id] ?? id)
+  /// Payload for PATCH `sportsInterests` (sport names are lowercase ids).
+  List<Map<String, dynamic>> sportsInterestsPayload() {
+    final entries = state.sportSkillLevels.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+    return entries
+        .map(
+          (e) => <String, dynamic>{
+            'sport': e.key,
+            'skillLevel': e.value,
+          },
+        )
         .toList(growable: false);
   }
 }

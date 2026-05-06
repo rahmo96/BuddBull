@@ -29,6 +29,29 @@ class OnboardingAvatarOption {
 }
 
 abstract class OnboardingMockData {
+  /// API values for PATCH `sportsInterests[].skillLevel` (matches backend).
+  static const List<String> skillLevelsOrdered = [
+    'beginner',
+    'amateur',
+    'intermediate',
+    'advanced',
+    'professional',
+  ];
+
+  static OnboardingSportOption? sportById(String id) {
+    for (final s in sports) {
+      if (s.id == id) return s;
+    }
+    return null;
+  }
+
+  static OnboardingAvatarOption? avatarById(String id) {
+    for (final a in avatars) {
+      if (a.id == id) return a;
+    }
+    return null;
+  }
+
   static const List<OnboardingSportOption> sports = [
     OnboardingSportOption(
       id: 'football',

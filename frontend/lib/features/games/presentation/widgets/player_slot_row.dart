@@ -1,7 +1,7 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
 import 'package:flutter/material.dart';
 
 /// Displays approved players as stacked avatars + pending count.
@@ -95,48 +95,27 @@ class _MiniAvatar extends StatelessWidget {
   final GamePlayer player;
   final double size;
 
-  @override
-  Widget build(BuildContext context) {
-    if (player.profilePicture != null) {
-      return CircleAvatar(
-        radius: size / 2,
-        child: ClipOval(
-          child: CachedNetworkImage(
-            imageUrl: player.profilePicture!,
-            width: size,
-            height: size,
-            fit: BoxFit.cover,
-            errorWidget: (_, __, ___) => _Initials(player: player, size: size),
-          ),
-        ),
-      );
+  String _initials(GamePlayer p) {
+    final fn = p.firstName;
+    final ln = p.lastName;
+    if (fn != null &&
+        fn.isNotEmpty &&
+        ln != null &&
+        ln.isNotEmpty) {
+      return '${fn[0]}${ln[0]}';
     }
-    return _Initials(player: player, size: size);
+    if (fn != null && fn.isNotEmpty) return fn[0];
+    final u = p.username;
+    if (u.isEmpty) return '?';
+    return u.length >= 2 ? u.substring(0, 2) : u[0];
   }
-}
-
-class _Initials extends StatelessWidget {
-  const _Initials({required this.player, required this.size});
-  final GamePlayer player;
-  final double size;
 
   @override
   Widget build(BuildContext context) {
-    final initial = player.firstName?.isNotEmpty == true
-        ? player.firstName![0]
-        : player.username[0];
-    return CircleAvatar(
+    return BbProfileAvatar(
+      profilePicture: player.profilePicture,
+      initials: _initials(player),
       radius: size / 2,
-      backgroundColor: AppColors.primary.withOpacity(0.2),
-      child: Text(
-        initial.toUpperCase(),
-        style: TextStyle(
-          fontSize: size * 0.38,
-          fontWeight: FontWeight.w700,
-          color: AppColors.primary,
-          fontFamily: 'Inter',
-        ),
-      ),
     );
   }
 }

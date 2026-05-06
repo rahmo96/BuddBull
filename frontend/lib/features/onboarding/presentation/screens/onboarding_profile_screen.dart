@@ -9,6 +9,7 @@ import 'package:buddbull/features/onboarding/onboarding_completion.dart';
 import 'package:buddbull/features/onboarding/presentation/widgets/onboarding_progress_header.dart';
 import 'package:buddbull/features/onboarding/providers/onboarding_draft_provider.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
+import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,17 +49,31 @@ class _OnboardingProfileScreenState
   Future<void> _finish(BuildContext context) async {
     setState(() => _busy = true);
     try {
-      await mockSubmitOnboardingProfile(ref);
+      await submitOnboardingToBackend(ref, savePresetAvatar: true);
       await completePostSignupOnboarding(ref);
       if (context.mounted) context.go(Routes.home);
+    } catch (e) {
+      if (context.mounted) {
+        showErrorSnackBar(context, e.toString());
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _skipToHome(BuildContext context) async {
-    await completePostSignupOnboarding(ref);
-    if (context.mounted) context.go(Routes.home);
+    setState(() => _busy = true);
+    try {
+      await submitOnboardingToBackend(ref, savePresetAvatar: false);
+      await completePostSignupOnboarding(ref);
+      if (context.mounted) context.go(Routes.home);
+    } catch (e) {
+      if (context.mounted) {
+        showErrorSnackBar(context, e.toString());
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   @override
@@ -66,13 +81,8 @@ class _OnboardingProfileScreenState
     final draft = ref.watch(onboardingDraftProvider);
     final width = MediaQuery.sizeOf(context).width;
 
-    OnboardingAvatarOption? avatarPick;
-    for (final a in OnboardingMockData.avatars) {
-      if (a.id == draft.avatarId) {
-        avatarPick = a;
-        break;
-      }
-    }
+    final avatarPick =
+        OnboardingMockData.avatarById(draft.avatarId ?? '');
 
     final Widget avatarChild;
     if (!kIsWeb &&
