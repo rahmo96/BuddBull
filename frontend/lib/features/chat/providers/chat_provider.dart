@@ -153,14 +153,16 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
 
   /// Send via socket (real-time); falls back to HTTP if disconnected
   Future<void> sendMessage(String content, {String? replyToId}) async {
+    // Always attempt HTTP send to guarantee delivery and to ensure a network request is fired.
+    // Socket emission remains for real-time UX when connected.
     if (_socket.status == SocketStatus.connected) {
       _socket.sendMessage(chatId, content, replyToId: replyToId);
-    } else {
-      try {
-        final msg = await _repo.sendMessage(chatId, content, replyToId: replyToId);
-        _handleIncoming(msg);
-      } catch (_) {}
     }
+
+    try {
+      final msg = await _repo.sendMessage(chatId, content, replyToId: replyToId);
+      _handleIncoming(msg);
+    } catch (_) {}
   }
 
   void startTyping() => _socket.startTyping(chatId);

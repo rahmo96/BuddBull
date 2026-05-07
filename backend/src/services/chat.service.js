@@ -1,6 +1,7 @@
 const Chat = require('../models/Chat.model');
 const Message = require('../models/Message.model');
 const User = require('../models/User.model');
+const Game = require('../models/Game.model');
 const AppError = require('../utils/AppError');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -12,6 +13,65 @@ const participantFilter = (userId) => ({
   isActive: true,
   deletedAt: null,
 });
+
+/**
+ * Resolves a chatId to a real group chat the user may access.
+ *
+ * Supported fallbacks:
+ * - chatId is actually a gameId (client bug)
+ * - chat exists but the participant row is missing (older data / join flow)
+ * - chatId is a groupChatId but we need to find the owning game via Game.groupChat
+ *
+ * Returns: { chatId: ObjectId|string } or null
+ */
+const _resolveChatForUser = async (chatId, userId) => {
+  // 1) Standard: find owning game by groupChat = chatId
+  let game = await Game.findOne({ groupChat: chatId, deletedAt: null });
+
+  // 2) Or chatId might be the gameId
+  if (!game) {
+    game = await Game.findById(chatId).where({ deletedAt: null });
+  }
+
+  if (!game) {
+    console.log('[chat.fallback] no game for chatId=', chatId);
+    return null;
+  }
+
+  const isOrganizer = game.organizer?.toString() === userId.toString();
+  const isApprovedPlayer = (game.players || []).some(
+    (p) => p.user.toString() === userId.toString() && p.status === 'approved',
+  );
+
+  if (!isOrganizer && !isApprovedPlayer) {
+    console.log('[chat.fallback] user not allowed', { chatId, userId, gameId: game._id.toString() });
+    return null;
+  }
+
+  // Ensure group chat exists
+  if (!game.groupChat) {
+    console.log('[chat.fallback] creating missing group chat', { gameId: game._id.toString() });
+    const created = await Chat.create({
+      type: 'group',
+      name: `${game.title} — Chat`,
+      game: game._id,
+      participants: [{ user: game.organizer, isAdmin: true }],
+    });
+    game.groupChat = created._id;
+    await game.save({ validateBeforeSave: false });
+  }
+
+  // Ensure requester is a participant
+  const updateRes = await Chat.updateOne(
+    { _id: game.groupChat, deletedAt: null, 'participants.user': { $ne: userId } },
+    { $push: { participants: { user: userId, isAdmin: false, leftAt: null } } },
+  );
+  if (updateRes?.modifiedCount) {
+    console.log('[chat.fallback] participant added', { chatId: game.groupChat.toString(), userId: userId.toString() });
+  }
+
+  return { chatId: game.groupChat };
+};
 
 // ── Get all chats for a user ──────────────────────────────────────────────────
 const getChats = async (userId) => {
@@ -26,7 +86,7 @@ const getChats = async (userId) => {
 
 // ── Get a single chat ─────────────────────────────────────────────────────────
 const getChatById = async (chatId, userId) => {
-  const chat = await Chat.findOne({ _id: chatId, ...participantFilter(userId) })
+  let chat = await Chat.findOne({ _id: chatId, ...participantFilter(userId) })
     .populate('participants.user', PARTICIPANT_FIELDS)
     .populate('game', 'title sport scheduledAt')
     .populate({
@@ -36,11 +96,28 @@ const getChatById = async (chatId, userId) => {
     })
     .lean();
 
+  // Fallback: some clients send a gameId, or chat exists but participant row is missing.
+  if (!chat) {
+    const resolved = await _resolveChatForUser(chatId, userId);
+    if (resolved?.chatId) {
+      // Re-fetch as normal by chat id
+      chat = await Chat.findOne({ _id: resolved.chatId, ...participantFilter(userId) })
+        .populate('participants.user', PARTICIPANT_FIELDS)
+        .populate('game', 'title sport scheduledAt')
+        .populate({
+          path: 'pinnedMessages',
+          populate: { path: 'sender', select: SENDER_FIELDS },
+          select: 'content type sender createdAt',
+        })
+        .lean();
+    }
+  }
+
   if (!chat) throw new AppError('Chat not found or access denied', 404);
 
   // Mark messages as read
   await Chat.updateOne(
-    { _id: chatId, 'participants.user': userId },
+    { _id: chat._id, 'participants.user': userId },
     { $set: { 'participants.$.lastReadAt': new Date() } },
   );
 
@@ -65,10 +142,17 @@ const createOrGetDM = async (userId, recipientId) => {
 
 // ── Get paginated messages for a chat ─────────────────────────────────────────
 const getMessages = async (chatId, userId, { page = 1, limit = 30, before } = {}) => {
-  const chat = await Chat.findOne({ _id: chatId, ...participantFilter(userId) });
+  let chat = await Chat.findOne({ _id: chatId, ...participantFilter(userId) });
+  if (!chat) {
+    const resolved = await _resolveChatForUser(chatId, userId);
+    if (resolved?.chatId) {
+      chat = await Chat.findOne({ _id: resolved.chatId, ...participantFilter(userId) });
+    }
+  }
+
   if (!chat) throw new AppError('Chat not found or access denied', 404);
 
-  const filter = { chat: chatId, isDeleted: false };
+  const filter = { chat: chat._id, isDeleted: false };
   if (before) filter.createdAt = { $lt: new Date(before) };
 
   const messages = await Message.find(filter)
@@ -194,7 +278,11 @@ const _formatMessage = (msg) => ({
   type: msg.type,
   content: msg.isDeleted ? '[Message deleted]' : msg.content,
   replyTo: msg.replyTo || null,
-  reactions: msg.reactions ? Object.fromEntries(msg.reactions) : {},
+  reactions: Object.fromEntries(
+    msg?.reactions instanceof Map
+      ? msg.reactions
+      : Object.entries(msg?.reactions || {}),
+  ),
   isPinned: msg.isPinned,
   isDeleted: msg.isDeleted,
   sentAt: msg.createdAt,

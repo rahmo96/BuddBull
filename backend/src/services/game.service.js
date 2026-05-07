@@ -32,6 +32,33 @@ const notify = (type, payload) => {
   logger.debug(`[notification:stub] ${type} → ${JSON.stringify(payload)}`);
 };
 
+/**
+ * Ensures the given user is an active participant in the game's group chat.
+ * Creates the chat if the game is missing it (defensive against older data).
+ */
+const ensureGroupChatParticipant = async (gameId, userId, { isAdmin = false } = {}) => {
+  const game = await Game.findById(gameId).where({ deletedAt: null });
+  if (!game) throw new AppError('Game not found.', 404);
+
+  let chatId = game.groupChat;
+  if (!chatId) {
+    const chat = await Chat.create({
+      type: 'group',
+      name: `${game.title} — Chat`,
+      game: game._id,
+      participants: [{ user: game.organizer, isAdmin: true }],
+    });
+    game.groupChat = chat._id;
+    await game.save({ validateBeforeSave: false });
+    chatId = chat._id;
+  }
+
+  await Chat.updateOne(
+    { _id: chatId, deletedAt: null, 'participants.user': { $ne: userId } },
+    { $push: { participants: { user: userId, isAdmin, leftAt: null } } },
+  );
+};
+
 // ─────────────────────────────────────────────
 //  createGame
 // ─────────────────────────────────────────────
@@ -364,6 +391,8 @@ const joinGame = async (gameId, userId) => {
   if (playerStatus === 'pending') {
     notify('game:joinRequest', { gameId, organizerId: game.organizer, requesterId: userId });
   } else {
+    // Add approved players to the group chat so they can access messages.
+    await ensureGroupChatParticipant(gameId, userId, { isAdmin: false });
     notify('game:playerJoined', { gameId, userId });
   }
 
@@ -459,6 +488,9 @@ const approvePlayer = async (gameId, organizerId, organizerRole, targetUserId) =
   slot.status = 'approved';
   slot.resolvedAt = new Date();
   await game.save();
+
+  // Approved players must be added to the game group chat.
+  await ensureGroupChatParticipant(gameId, targetUserId, { isAdmin: false });
 
   notify('game:approved', { gameId, targetUserId });
   logger.info(`Player ${targetUserId} approved in game ${gameId}`);
