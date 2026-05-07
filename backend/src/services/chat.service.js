@@ -283,6 +283,7 @@ const _formatMessage = (msg) => ({
       ? msg.reactions
       : Object.entries(msg?.reactions || {}),
   ),
+  readBy: (msg?.readBy || []).map((r) => (r.user?._id || r.user)?.toString()).filter(Boolean),
   isPinned: msg.isPinned,
   isDeleted: msg.isDeleted,
   sentAt: msg.createdAt,

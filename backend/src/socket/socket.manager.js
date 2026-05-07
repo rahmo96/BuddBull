@@ -58,6 +58,7 @@ const socketAuthMiddleware = async (socket, next) => {
     if (!token) return next(new Error('Authentication required'));
 
     const decodedToken = await getFirebaseAuth().verifyIdToken(token);
+    console.log('Socket authenticated for user:', decodedToken.uid);
 
     const user = await User.findOne({ firebaseUid: decodedToken.uid })
       .select('_id firstName lastName username profilePicture isActive deletedAt isBanned banReason')
@@ -67,8 +68,9 @@ const socketAuthMiddleware = async (socket, next) => {
       return next(new Error('User not found or inactive'));
     }
 
-    // Attach user to socket for use in event handlers
-    socket.user = user;
+    // Attach user to socket for use in event handlers.
+    // Keep both Mongo _id and Firebase uid for debugging and downstream logic.
+    socket.user = { ...user, id: decodedToken.uid, uid: decodedToken.uid };
     return next();
   } catch {
     return next(new Error('Invalid or expired token'));
@@ -91,6 +93,7 @@ module.exports = (io) => {
     // ── join_chat ────────────────────────────────────────────────────────────
     socket.on('join_chat', async ({ chatId } = {}) => {
       try {
+        console.log(`[Socket] User ${socket.user.id} is joining room: ${chatId}`);
         const chat = await getChat(chatId, user._id);
         if (!chat) return socket.emit('error', { message: 'Chat not found' });
 
@@ -103,6 +106,22 @@ module.exports = (io) => {
       }
     });
 
+    // Alias for client compatibility
+    socket.on('joinChat', async ({ chatId } = {}) => {
+      try {
+        console.log(`[Socket] User ${socket.user.id} is joining room: ${chatId}`);
+        const chat = await getChat(chatId, user._id);
+        if (!chat) return socket.emit('error', { message: 'Chat not found' });
+
+        socket.join(chatId);
+        socket.emit('joined_chat', { chatId });
+        logger.debug(`[Socket] ${user.username} joined chat ${chatId}`);
+      } catch (err) {
+        logger.error('[Socket] joinChat error:', err);
+        socket.emit('error', { message: 'Failed to join chat' });
+      }
+    });
+
     // ── leave_chat ───────────────────────────────────────────────────────────
     socket.on('leave_chat', ({ chatId } = {}) => {
       if (chatId) {
@@ -110,6 +129,9 @@ module.exports = (io) => {
         logger.debug(`[Socket] ${user.username} left chat ${chatId}`);
       }
     });
+
+    // Alias for client compatibility
+    socket.on('leaveChat', (payload) => socket.emit('leave_chat', payload));
 
     // ── send_message ─────────────────────────────────────────────────────────
     socket.on('send_message', async ({ chatId, content, type = 'text', replyTo } = {}) => {
@@ -149,11 +171,43 @@ module.exports = (io) => {
         ]);
 
         io.to(chatId).emit('receive_message', { message });
+        io.to(chatId).emit('newMessage', message);
       } catch (err) {
         logger.error('[Socket] send_message error:', err);
         socket.emit('error', { message: 'Failed to send message' });
       }
     });
+
+    // ── markAsRead ───────────────────────────────────────────────────────────
+    const markAsReadHandler = async ({ chatId, lastMessageId } = {}) => {
+      try {
+        if (!chatId || !lastMessageId) return;
+        const chat = await getChat(chatId, user._id);
+        if (!chat) return;
+
+        // Mark all messages up to lastMessageId as read by this user
+        await Message.updateMany(
+          {
+            chat: chatId,
+            isDeleted: false,
+            _id: { $lte: lastMessageId },
+            'readBy.user': { $ne: user._id },
+          },
+          { $push: { readBy: { user: user._id, readAt: new Date() } } },
+        );
+
+        io.to(chatId).emit('messageRead', {
+          chatId,
+          userId: user._id,
+          lastMessageId,
+        });
+      } catch (err) {
+        logger.error('[Socket] markAsRead error:', err);
+      }
+    };
+
+    socket.on('markAsRead', markAsReadHandler);
+    socket.on('mark_as_read', markAsReadHandler);
 
     // ── typing / stop_typing ─────────────────────────────────────────────────
     socket.on('typing', ({ chatId } = {}) => {

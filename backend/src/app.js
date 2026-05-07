@@ -27,6 +27,10 @@ const mapsRoutes = require('./routes/maps.routes');
 const createApp = () => {
   const app = express();
 
+  // Socket.io instance will be attached later by `server.js` via `app.set('io', io)`.
+  // Setting it here ensures `req.app.get('io')` is always defined (even if null) across all routes.
+  app.set('io', null);
+
   // ── Trust proxy (required when behind nginx / load balancer) ─
   app.set('trust proxy', 1);
 
@@ -38,12 +42,16 @@ const createApp = () => {
     cors({
       origin: (origin, callback) => {
         const allowedOrigins = [clientUrl, 'http://localhost:3000', 'http://localhost:8080'];
+        const isLocalDevOrigin =
+          typeof origin === 'string' &&
+          /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
         // Allow mobile apps that have no origin header
-        if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+        if (!origin || allowedOrigins.includes(origin) || isLocalDevOrigin) return callback(null, true);
         return callback(new Error(`CORS policy violation: ${origin}`));
       },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      // Must include Authorization for Firebase ID token Bearer auth.
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     }),
   );

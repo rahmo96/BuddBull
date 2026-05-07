@@ -37,15 +37,19 @@ enum SocketStatus { disconnected, connecting, connected, error }
 // ── SocketService ─────────────────────────────────────────────────────────────
 class SocketService {
   io.Socket? _socket;
+  final Set<String> _joinedChats = <String>{};
+  StreamSubscription<User?>? _authSub;
+  String? _lastToken;
 
   // ── Broadcast streams ──────────────────────────────────────────────────────
-  final _messageController = StreamController<MessageModel>.broadcast();
+  // Raw socket payloads for debugging + provider-side parsing.
+  final _messageController = StreamController<dynamic>.broadcast();
   final _typingController = StreamController<TypingEvent>.broadcast();
   final _deletedController = StreamController<MessageDeletedEvent>.broadcast();
   final _pinnedController = StreamController<MessagePinnedEvent>.broadcast();
   final _statusController = StreamController<SocketStatus>.broadcast();
 
-  Stream<MessageModel> get messageStream => _messageController.stream;
+  Stream<dynamic> get messageStream => _messageController.stream;
   Stream<TypingEvent> get typingStream => _typingController.stream;
   Stream<MessageDeletedEvent> get deletedStream => _deletedController.stream;
   Stream<MessagePinnedEvent> get pinnedStream => _pinnedController.stream;
@@ -54,7 +58,33 @@ class SocketService {
   SocketStatus _status = SocketStatus.disconnected;
   SocketStatus get status => _status;
 
-  SocketService();
+  SocketService() {
+    _authSub = FirebaseAuth.instance.idTokenChanges().listen((user) async {
+      if (user == null) {
+        _lastToken = null;
+        disconnect();
+        return;
+      }
+
+      String? token;
+      try {
+        token = await user.getIdToken();
+      } catch (_) {
+        return;
+      }
+      if (token == null || token == _lastToken) return;
+      _lastToken = token;
+
+      // Refresh auth and reconnect so the new token is used.
+      if (_socket != null) {
+        _socket!.auth = {'token': token};
+        if (_socket!.connected == true) {
+          _socket!.disconnect();
+        }
+        _socket!.connect();
+      }
+    });
+  }
 
   // ── Connect ───────────────────────────────────────────────────────────────
   Future<void> connect() async {
@@ -72,6 +102,7 @@ class SocketService {
       return;
     }
     if (token == null) return;
+    _lastToken = token;
 
     _setStatus(SocketStatus.connecting);
 
@@ -92,6 +123,10 @@ class SocketService {
     _socket!
       ..onConnect((_) {
         _setStatus(SocketStatus.connected);
+        // Re-join rooms after reconnect.
+        for (final chatId in _joinedChats) {
+          _emit('join_chat', {'chatId': chatId});
+        }
       })
       ..onDisconnect((_) {
         _setStatus(SocketStatus.disconnected);
@@ -101,11 +136,18 @@ class SocketService {
       })
       ..on('receive_message', (data) {
         try {
-          final msgRaw =
-              (data is Map) ? data['message'] as Map<String, dynamic>? : null;
-          if (msgRaw != null)
-            _messageController.add(MessageModel.fromJson(msgRaw));
+          // ignore: avoid_print
+          print('SOCKET_DEBUG: Received message: $data');
+          _messageController.add(data);
         } catch (_) {}
+      })
+      ..on('newMessage', (data) {
+        // ignore: avoid_print
+        print('FRONTEND_RECEIVE: $data'); // This will prove the message arrived
+        _messageController.add(data);
+      })
+      ..on('messageRead', (data) {
+        // Forward as a lightweight pinned event channel reuse isn't ideal; handled in provider via socket raw if needed.
       })
       ..on('typing', (data) {
         try {
@@ -155,8 +197,18 @@ class SocketService {
   }
 
   // ── Room management ───────────────────────────────────────────────────────
-  void joinChat(String chatId) => _emit('join_chat', {'chatId': chatId});
-  void leaveChat(String chatId) => _emit('leave_chat', {'chatId': chatId});
+  void joinChat(String chatId) {
+    _joinedChats.add(chatId);
+    _emit('join_chat', {'chatId': chatId});
+  }
+
+  void leaveChat(String chatId) {
+    _joinedChats.remove(chatId);
+    _emit('leave_chat', {'chatId': chatId});
+  }
+
+  void markAsRead(String chatId, String lastMessageId) =>
+      _emit('markAsRead', {'chatId': chatId, 'lastMessageId': lastMessageId});
 
   // ── Messaging ─────────────────────────────────────────────────────────────
   void sendMessage(String chatId, String content,
@@ -190,6 +242,8 @@ class SocketService {
 
   // ── Dispose ───────────────────────────────────────────────────────────────
   void dispose() {
+    _authSub?.cancel();
+    _authSub = null;
     disconnect();
     _messageController.close();
     _typingController.close();

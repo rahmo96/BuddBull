@@ -11,6 +11,7 @@ class MessageBubble extends StatelessWidget {
   final bool isMe;
   final bool showSenderName; // true in group chats
   final bool showAvatar;
+  final String? currentUserId;
   final VoidCallback? onReply;
   final VoidCallback? onPin;
   final VoidCallback? onDelete;
@@ -21,6 +22,7 @@ class MessageBubble extends StatelessWidget {
     required this.isMe,
     this.showSenderName = false,
     this.showAvatar = true,
+    this.currentUserId,
     this.onReply,
     this.onPin,
     this.onDelete,
@@ -84,6 +86,18 @@ class MessageBubble extends StatelessWidget {
                             fontSize: 10,
                           ),
                         ),
+                        if (isMe && currentUserId != null) ...[
+                          const SizedBox(width: 6),
+                          Icon(
+                            _isSeenBySomeoneElse(currentUserId!)
+                                ? Icons.done_all_rounded
+                                : Icons.done_rounded,
+                            size: 14,
+                            color: _isSeenBySomeoneElse(currentUserId!)
+                                ? AppColors.success
+                                : AppColors.textSecondary,
+                          ),
+                        ],
                         if (message.isEdited) ...[
                           const SizedBox(width: 4),
                           Text(
@@ -211,6 +225,12 @@ class MessageBubble extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  bool _isSeenBySomeoneElse(String currentUserId) {
+    // "Seen" means at least one other user has a read receipt.
+    final readBy = message.readBy;
+    return readBy.isNotEmpty && readBy.any((id) => id != currentUserId);
   }
 
   void _showOptions(BuildContext context) {

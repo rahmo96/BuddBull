@@ -41,6 +41,15 @@ const getFirebaseAuth = () => {
  * (excluding password + token fields) is attached to req.user.
  */
 const protect = catchAsync(async (req, res, next) => {
+  // Debug (dev): confirm auth header arrives (don't log full token)
+  try {
+    const h = req.headers.authorization;
+    console.log(
+      '[auth.protect] Authorization header:',
+      h ? `${String(h).slice(0, 20)}…` : '(missing)',
+    );
+  } catch (_) {}
+
   // 1. Extract token
   let token;
   if (req.headers.authorization?.startsWith('Bearer ')) {

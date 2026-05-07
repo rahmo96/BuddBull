@@ -108,6 +108,7 @@ class MessageModel extends Equatable {
   final String content;
   final MessageModel? replyTo;
   final Map<String, int> reactions;
+  final List<String> readBy;
   final bool isPinned;
   final bool isDeleted;
   final DateTime sentAt;
@@ -121,6 +122,7 @@ class MessageModel extends Equatable {
     required this.content,
     this.replyTo,
     this.reactions = const {},
+    this.readBy = const [],
     this.isPinned = false,
     this.isDeleted = false,
     required this.sentAt,
@@ -144,6 +146,10 @@ class MessageModel extends Equatable {
     if (reactionsRaw is Map) {
       reactionsRaw.forEach((k, v) => reactions[k.toString()] = (v as num).toInt());
     }
+    final readByRaw = json['readBy'];
+    final readBy = (readByRaw is List)
+        ? readByRaw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList()
+        : const <String>[];
     return MessageModel(
       id: (json['_id'] ?? json['id'] ?? '').toString(),
       chatId: (json['chatId'] ?? json['chat'] ?? '').toString(),
@@ -154,6 +160,7 @@ class MessageModel extends Equatable {
           ? MessageModel.fromJson(json['replyTo'] as Map<String, dynamic>)
           : null,
       reactions: reactions,
+      readBy: readBy,
       isPinned: json['isPinned'] == true,
       isDeleted: json['isDeleted'] == true,
       sentAt: DateTime.tryParse(json['sentAt']?.toString() ?? json['createdAt']?.toString() ?? '') ?? DateTime.now(),
@@ -162,7 +169,7 @@ class MessageModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, content, isPinned, isDeleted, reactions];
+  List<Object?> get props => [id, content, isPinned, isDeleted, reactions, readBy];
 }
 
 // ── ChatModel ─────────────────────────────────────────────────────────────────

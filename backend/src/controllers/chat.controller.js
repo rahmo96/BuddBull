@@ -22,11 +22,18 @@ exports.getMessages = catchAsync(async (req, res) => {
 });
 
 exports.sendMessage = catchAsync(async (req, res) => {
-  const message = await chatService.sendMessage(req.params.chatId, req.user._id, req.body);
+  const chatId = req.params.chatId?.toString();
+  const message = await chatService.sendMessage(chatId, req.user._id, req.body);
 
   // Broadcast to socket room in real-time (non-blocking)
   const io = req.app.get('io');
-  if (io) io.to(req.params.chatId).emit('receive_message', { message });
+  if (io) {
+    console.log('Broadcasting to room:', chatId, 'Message:', message?.content);
+    // Emit both event names for safety (client compatibility).
+    // Ensure chatId is a string (room names are string-keyed in socket.io).
+    io.to(chatId.toString()).emit('newMessage', message);
+    io.to(chatId.toString()).emit('receive_message', message);
+  }
 
   res.status(201).json({ success: true, data: { message } });
 });

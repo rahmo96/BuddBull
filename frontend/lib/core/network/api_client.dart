@@ -186,6 +186,7 @@ class _AuthInterceptor extends Interceptor {
   _AuthInterceptor(this._onSessionExpired);
 
   final void Function()? _onSessionExpired;
+  final Logger _log = Logger();
 
   void _sessionExpired() {
     final callback = _onSessionExpired;
@@ -204,6 +205,8 @@ class _AuthInterceptor extends Interceptor {
       if (user != null) {
         final idToken = await user.getIdToken();
         options.headers['Authorization'] = 'Bearer $idToken';
+      } else {
+        _log.w('[auth] No currentUser for ${options.method} ${options.path}');
       }
     } on FirebaseAuthException {
       try {

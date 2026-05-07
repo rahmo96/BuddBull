@@ -32,13 +32,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _scrollController.addListener(_onScroll);
     // Connect socket when entering chat
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(socketServiceProvider).connect();
+      final socket = ref.read(socketServiceProvider);
+      socket.connect();
+      socket.joinChat(widget.chatId);
     });
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    ref.read(socketServiceProvider).leaveChat(widget.chatId);
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _typingTimer?.cancel();
@@ -150,6 +153,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         isMe: isMe,
                         showSenderName: !isMe && isGroup && showAvatar,
                         showAvatar: !isMe && showAvatar,
+                        currentUserId: currentUserId,
                         onReply: () => setState(() => _replyingTo = msg),
                         onPin: chatAsync.valueOrNull?.isAdmin == true
                             ? () => _pinMessage(msg)

@@ -57,7 +57,7 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
   final SocketService _socket;
   final String chatId;
 
-  StreamSubscription<MessageModel>? _msgSub;
+  StreamSubscription<dynamic>? _msgSub;
   StreamSubscription<MessageDeletedEvent>? _delSub;
   StreamSubscription<MessagePinnedEvent>? _pinSub;
 
@@ -73,9 +73,24 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     _socket.joinChat(chatId);
 
     // Subscribe to real-time events
-    _msgSub = _socket.messageStream
-        .where((m) => m.chatId == chatId)
-        .listen(_handleIncoming);
+    _msgSub = _socket.messageStream.listen((data) {
+      try {
+        if (data == null) return;
+        if (data is! Map) return;
+
+        final d = data.cast<String, dynamic>();
+        final raw = (d['message'] is Map)
+            ? (d['message'] as Map).cast<String, dynamic>()
+            : d;
+
+        final msg = MessageModel.fromJson(raw);
+        if (msg.chatId != chatId) return;
+
+        // ignore: avoid_print
+        print('PROVIDER_UPDATE: Updating state with new message');
+        _handleIncoming(msg);
+      } catch (_) {}
+    });
 
     _delSub = _socket.deletedStream.listen((event) {
       state = state.copyWith(
@@ -116,6 +131,9 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     });
 
     await loadMessages();
+    if (state.messages.isNotEmpty) {
+      _socket.markAsRead(chatId, state.messages.last.id);
+    }
   }
 
   Future<void> loadMessages() async {
@@ -169,9 +187,10 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
   void stopTyping() => _socket.stopTyping(chatId);
 
   void _handleIncoming(MessageModel msg) {
-    // Avoid duplicates
-    if (state.messages.any((m) => m.id == msg.id)) return;
+    // Avoid duplicates (temporarily less restrictive during debugging)
+    // if (state.messages.any((m) => m.id == msg.id)) return;
     state = state.copyWith(messages: [...state.messages, msg]);
+    _socket.markAsRead(chatId, msg.id);
   }
 
   @override
