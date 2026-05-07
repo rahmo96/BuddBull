@@ -192,13 +192,33 @@ class GameLocation {
     required this.city,
     this.neighborhood,
     this.venueName,
+    this.address,
+    this.formattedAddress,
+    this.placeId,
+    this.state,
+    this.country,
+    this.postalCode,
+    this.coordinates,
   });
 
   final String city;
   final String? neighborhood;
   final String? venueName;
+  final String? address;
+  final String? formattedAddress;
+  final String? placeId;
+  final String? state;
+  final String? country;
+  final String? postalCode;
+  final GeoPoint? coordinates;
+
+  double? get latitude => coordinates?.lat;
+  double? get longitude => coordinates?.lng;
 
   String get displayName {
+    if (formattedAddress != null && formattedAddress!.trim().isNotEmpty) {
+      return formattedAddress!;
+    }
     final parts = <String>[];
     if (venueName != null) parts.add(venueName!);
     if (neighborhood != null) parts.add(neighborhood!);
@@ -210,12 +230,61 @@ class GameLocation {
         city: json['city'] as String,
         neighborhood: json['neighborhood'] as String?,
         venueName: json['venueName'] as String?,
+        address: json['address'] as String?,
+        formattedAddress: json['formattedAddress'] as String?,
+        placeId: json['placeId'] as String?,
+        state: json['state'] as String?,
+        country: json['country'] as String?,
+        postalCode: json['postalCode'] as String?,
+        coordinates: _tryParseCoordinates(json['coordinates']),
       );
 
   Map<String, dynamic> toJson() => {
         'city': city,
         if (neighborhood != null) 'neighborhood': neighborhood,
         if (venueName != null) 'venueName': venueName,
+        if (address != null) 'address': address,
+        if (formattedAddress != null) 'formattedAddress': formattedAddress,
+        if (placeId != null) 'placeId': placeId,
+        if (state != null) 'state': state,
+        if (country != null) 'country': country,
+        if (postalCode != null) 'postalCode': postalCode,
+        if (coordinates != null) 'coordinates': coordinates!.toJson(),
+      };
+}
+
+GeoPoint? _tryParseCoordinates(dynamic raw) {
+  if (raw is! Map<String, dynamic>) return null;
+  try {
+    return GeoPoint.fromJson(raw);
+  } catch (_) {
+    return null;
+  }
+}
+
+class GeoPoint {
+  const GeoPoint({
+    required this.lng,
+    required this.lat,
+  });
+
+  final double lng;
+  final double lat;
+
+  factory GeoPoint.fromJson(Map<String, dynamic> json) {
+    final list = (json['coordinates'] as List<dynamic>?);
+    if (list == null || list.length < 2) {
+      throw const FormatException('Invalid coordinates');
+    }
+    return GeoPoint(
+      lng: (list[0] as num).toDouble(),
+      lat: (list[1] as num).toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'type': 'Point',
+        'coordinates': [lng, lat],
       };
 }
 

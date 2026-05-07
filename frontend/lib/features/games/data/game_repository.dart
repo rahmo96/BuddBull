@@ -204,4 +204,47 @@ class GameRepository {
         .map((e) => GamePlayer.fromJson(e as Map<String, dynamic>))
         .toList();
   }
+
+  Future<List<AddressSuggestion>> autocompleteAddress(String input) async {
+    final body = await _api.get(
+      ApiEndpoints.mapsAutocomplete,
+      queryParams: {'input': input},
+    );
+    final data = body['data'] as Map<String, dynamic>;
+    final list = data['suggestions'] as List<dynamic>? ?? [];
+    return list
+        .map((e) => AddressSuggestion.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<GameLocation> getPlaceDetails(String placeId) async {
+    final body = await _api.get(
+      ApiEndpoints.mapsPlaceDetails,
+      queryParams: {'placeId': placeId},
+    );
+    final data = body['data'] as Map<String, dynamic>;
+    return GameLocation.fromJson(data['location'] as Map<String, dynamic>);
+  }
+}
+
+class AddressSuggestion {
+  const AddressSuggestion({
+    required this.placeId,
+    required this.description,
+    this.primaryText,
+    this.secondaryText,
+  });
+
+  final String placeId;
+  final String description;
+  final String? primaryText;
+  final String? secondaryText;
+
+  factory AddressSuggestion.fromJson(Map<String, dynamic> json) =>
+      AddressSuggestion(
+        placeId: json['placeId'] as String,
+        description: json['description'] as String,
+        primaryText: json['primaryText'] as String?,
+        secondaryText: json['secondaryText'] as String?,
+      );
 }

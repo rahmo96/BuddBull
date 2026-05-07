@@ -33,13 +33,15 @@ const playerSlotSchema = new mongoose.Schema(
 );
 
 /**
- * Area-level location — never precise GPS coordinates.
+ * Game venue location metadata.
  * postalCode is selected: false to prevent accidental exposure.
  */
 const gamLocationSchema = new mongoose.Schema(
   {
     venueName: { type: String, trim: true, maxlength: 100 },
     address: { type: String, trim: true, maxlength: 200 },
+    formattedAddress: { type: String, trim: true, maxlength: 250 },
+    placeId: { type: String, trim: true, maxlength: 200 },
     neighborhood: {
       type: String,
       trim: true,
@@ -53,6 +55,26 @@ const gamLocationSchema = new mongoose.Schema(
     state: { type: String, trim: true },
     country: { type: String, trim: true, default: 'US' },
     postalCode: { type: String, trim: true, select: false },
+    coordinates: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point',
+      },
+      coordinates: {
+        type: [Number],
+        validate: {
+          validator(coords) {
+            return (
+              Array.isArray(coords)
+              && coords.length === 2
+              && coords.every((v) => typeof v === 'number' && Number.isFinite(v))
+            );
+          },
+          message: 'Coordinates must be [lng, lat].',
+        },
+      },
+    },
   },
   { _id: false },
 );
@@ -253,6 +275,9 @@ gameSchema.index({ sport: 1, 'location.city': 1, status: 1, scheduledAt: 1 });
 
 // Neighbourhood-level search
 gameSchema.index({ 'location.neighborhood': 1, sport: 1, scheduledAt: 1 });
+
+// Geospatial lookup support for map/location features
+gameSchema.index({ 'location.coordinates': '2dsphere' }, { sparse: true });
 
 // Organizer's game list
 gameSchema.index({ organizer: 1, status: 1 });

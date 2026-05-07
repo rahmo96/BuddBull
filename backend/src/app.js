@@ -22,6 +22,7 @@ const performanceRoutes = require('./routes/performance.routes');
 const chatRoutes = require('./routes/chat.routes');
 const ratingRoutes = require('./routes/rating.routes');
 const adminRoutes = require('./routes/admin.routes');
+const mapsRoutes = require('./routes/maps.routes');
 
 const createApp = () => {
   const app = express();
@@ -107,6 +108,7 @@ const createApp = () => {
   app.use('/api/v1/chats', chatRoutes);
   app.use('/api/v1/ratings', ratingRoutes);
   app.use('/api/v1/admin', adminRoutes);
+  app.use('/api/v1/maps', mapsRoutes);
 
   // ── Catch-all 404 ────────────────────────────────────────────
   app.use(notFound);

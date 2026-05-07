@@ -24,6 +24,7 @@ class _EditGameScreenState extends ConsumerState<EditGameScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
+  final _addressCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
   final _neighborhoodCtrl = TextEditingController();
   final _venueCtrl = TextEditingController();
@@ -34,6 +35,7 @@ class _EditGameScreenState extends ConsumerState<EditGameScreen> {
   TimeOfDay _time = const TimeOfDay(hour: 18, minute: 0);
   int _durationMinutes = 60;
   int _maxPlayers = 10;
+  GameLocation? _locationMetadata;
 
   bool _isSubmitting = false;
 
@@ -41,6 +43,7 @@ class _EditGameScreenState extends ConsumerState<EditGameScreen> {
   void dispose() {
     _titleCtrl.dispose();
     _descCtrl.dispose();
+    _addressCtrl.dispose();
     _cityCtrl.dispose();
     _neighborhoodCtrl.dispose();
     _venueCtrl.dispose();
@@ -51,15 +54,17 @@ class _EditGameScreenState extends ConsumerState<EditGameScreen> {
     _titleCtrl.text = g.title;
     _descCtrl.text = g.description ?? '';
     _sport = g.sport;
-    _skillLevel = g.requiredSkillLevel ?? 'any';
+    _skillLevel = g.requiredSkillLevel;
     final dt = g.scheduledAt;
     _date = DateTime(dt.year, dt.month, dt.day);
     _time = TimeOfDay(hour: dt.hour, minute: dt.minute);
-    _durationMinutes = g.durationMinutes ?? 60;
+    _durationMinutes = g.durationMinutes;
     _maxPlayers = g.maxPlayers;
+    _addressCtrl.text = g.location.formattedAddress ?? g.location.address ?? '';
     _cityCtrl.text = g.location.city;
     _neighborhoodCtrl.text = g.location.neighborhood ?? '';
     _venueCtrl.text = g.location.venueName ?? '';
+    _locationMetadata = g.location;
   }
 
   Future<void> _pickDate() async {
@@ -113,6 +118,13 @@ class _EditGameScreenState extends ConsumerState<EditGameScreen> {
         'city': _cityCtrl.text.trim(),
         if (_neighborhoodCtrl.text.trim().isNotEmpty) 'neighborhood': _neighborhoodCtrl.text.trim(),
         if (_venueCtrl.text.trim().isNotEmpty) 'venueName': _venueCtrl.text.trim(),
+        if (_addressCtrl.text.trim().isNotEmpty) 'formattedAddress': _addressCtrl.text.trim(),
+        if (((_locationMetadata?.address) ?? '').trim().isNotEmpty) 'address': _locationMetadata?.address,
+        if (((_locationMetadata?.placeId) ?? '').trim().isNotEmpty) 'placeId': _locationMetadata?.placeId,
+        if (((_locationMetadata?.state) ?? '').trim().isNotEmpty) 'state': _locationMetadata?.state,
+        if (((_locationMetadata?.country) ?? '').trim().isNotEmpty) 'country': _locationMetadata?.country,
+        if (((_locationMetadata?.postalCode) ?? '').trim().isNotEmpty) 'postalCode': _locationMetadata?.postalCode,
+        if (_locationMetadata?.coordinates != null) 'coordinates': _locationMetadata!.coordinates!.toJson(),
       },
       'maxPlayers': _maxPlayers,
       'requiredSkillLevel': _skillLevel,
@@ -233,6 +245,13 @@ class _EditGameScreenState extends ConsumerState<EditGameScreen> {
                     const SizedBox(height: 16),
 
                     const Text('Location', style: AppTextStyles.titleMedium),
+                    const SizedBox(height: 12),
+                    BbTextField(
+                      label: 'Address',
+                      hint: 'Selected address',
+                      controller: _addressCtrl,
+                      readOnly: true,
+                    ),
                     const SizedBox(height: 12),
                     BbTextField(
                       label: 'City *',

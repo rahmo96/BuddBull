@@ -8,6 +8,8 @@ const { validate } = require('./auth.validator');
 const locationSchema = Joi.object({
   venueName: Joi.string().trim().max(100),
   address: Joi.string().trim().max(200),
+  formattedAddress: Joi.string().trim().max(250),
+  placeId: Joi.string().trim().max(200),
   neighborhood: Joi.string().trim().max(100).required().messages({
     'any.required': 'Neighborhood is required for matchmaking.',
   }),
@@ -17,6 +19,15 @@ const locationSchema = Joi.object({
   state: Joi.string().trim().max(60),
   country: Joi.string().trim().max(60).default('US'),
   postalCode: Joi.string().trim().max(20),
+  coordinates: Joi.object({
+    type: Joi.string().valid('Point').default('Point'),
+    coordinates: Joi.array()
+      .ordered(
+        Joi.number().min(-180).max(180).required(),
+        Joi.number().min(-90).max(90).required(),
+      )
+      .required(),
+  }),
 });
 
 const SPORTS = [

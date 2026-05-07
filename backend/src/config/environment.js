@@ -32,6 +32,7 @@ const envSchema = Joi.object({
   RATE_LIMIT_MAX: Joi.number().integer().default(100),
 
   CLIENT_URL: Joi.string().uri().default('http://localhost:3000'),
+  GOOGLE_MAPS_API_KEY: Joi.string().allow('').default(''),
 })
   .unknown(true) // allow extra keys (AWS_, FIREBASE_, SENTRY_DSN, etc.)
   .required();
@@ -70,4 +71,5 @@ module.exports = {
     max: Number(env.RATE_LIMIT_MAX),
   },
   clientUrl: env.CLIENT_URL,
+  googleMapsApiKey: env.GOOGLE_MAPS_API_KEY,
 };

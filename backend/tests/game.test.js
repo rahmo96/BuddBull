@@ -50,7 +50,14 @@ const mkGame = (overrides = {}) => ({
   sport: 'football',
   scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
   durationMinutes: 90,
-  location: { neighborhood: 'Notting Hill', city: 'London', country: 'GB' },
+  location: {
+    neighborhood: 'Notting Hill',
+    city: 'London',
+    country: 'GB',
+    formattedAddress: 'Notting Hill, London W11, UK',
+    placeId: 'test-place-id',
+    coordinates: { type: 'Point', coordinates: [-0.1955, 51.5099] },
+  },
   maxPlayers: 10,
   requiredSkillLevel: 'any',
   ...overrides,
@@ -103,6 +110,18 @@ describe('POST /games', () => {
     const orgSlot = res.body.data.game.players.find((p) => p.user === userId || p.user?._id === userId);
     expect(orgSlot).toBeDefined();
     expect(orgSlot.status).toBe('approved');
+  });
+
+  it('accepts place metadata and coordinates in location payload', async () => {
+    const { token } = await registerAndLogin(1, 'organizer');
+    const res = await createGameAs(token);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.game.location.placeId).toBe('test-place-id');
+    expect(res.body.data.game.location.coordinates.type).toBe('Point');
+    expect(res.body.data.game.location.coordinates.coordinates).toEqual(
+      [-0.1955, 51.5099],
+    );
   });
 });
 

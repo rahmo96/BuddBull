@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/network/api_endpoints.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/games/data/game_repository.dart';
@@ -94,6 +95,7 @@ class GameDetailScreen extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 16),
+                      _StaticLocationMap(location: game.location),
 
                       // ── Location ───────────────────────────
                       _Section(
@@ -454,6 +456,51 @@ class _InfoCard extends StatelessWidget {
               style: AppTextStyles.labelSmall,
               textAlign: TextAlign.center),
         ],
+      ),
+    );
+  }
+}
+
+class _StaticLocationMap extends StatelessWidget {
+  const _StaticLocationMap({required this.location});
+
+  final GameLocation location;
+
+  @override
+  Widget build(BuildContext context) {
+    final lat = location.latitude;
+    final lng = location.longitude;
+    if (lat == null || lng == null) return const SizedBox.shrink();
+
+    final imageUrl = '${ApiEndpoints.baseUrl}'
+        '${ApiEndpoints.mapsStatic(lat: lat, lng: lng)}';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.grey200),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: AspectRatio(
+        aspectRatio: 16 / 7,
+        child: Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (context, _, __) => Container(
+            color: AppColors.grey100,
+            alignment: Alignment.center,
+            child: Text(
+              'Map preview unavailable',
+              style: AppTextStyles.bodySmall,
+            ),
+          ),
+          loadingBuilder: (context, child, progress) {
+            if (progress == null) return child;
+            return const Center(child: CircularProgressIndicator());
+          },
+        ),
       ),
     );
   }

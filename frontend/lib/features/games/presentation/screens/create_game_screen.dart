@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/features/games/data/game_repository.dart';
+import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
@@ -31,6 +35,7 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
+  final _addressCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
   final _neighborhoodCtrl = TextEditingController();
   final _venueCtrl = TextEditingController();
@@ -41,15 +46,87 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
   TimeOfDay _time = const TimeOfDay(hour: 18, minute: 0);
   int _durationMinutes = 60;
   int _maxPlayers = 10;
+  Timer? _debounce;
+  int _autocompleteRequestId = 0;
+  bool _isFetchingSuggestions = false;
+  bool _isResolvingPlace = false;
+  String? _locationError;
+  GameLocation? _selectedLocation;
+  List<AddressSuggestion> _suggestions = const [];
 
   @override
   void dispose() {
     _titleCtrl.dispose();
     _descCtrl.dispose();
+    _addressCtrl.dispose();
     _cityCtrl.dispose();
     _neighborhoodCtrl.dispose();
     _venueCtrl.dispose();
+    _debounce?.cancel();
     super.dispose();
+  }
+
+  Future<void> _onAddressChanged(String value) async {
+    _debounce?.cancel();
+    if (_selectedLocation != null && _addressCtrl.text.trim() != (_selectedLocation!.formattedAddress ?? '').trim()) {
+      setState(() => _selectedLocation = null);
+    }
+
+    final query = value.trim();
+    if (query.length < 3) {
+      setState(() {
+        _suggestions = const [];
+        _isFetchingSuggestions = false;
+      });
+      return;
+    }
+
+    _debounce = Timer(const Duration(milliseconds: 350), () async {
+      final requestId = ++_autocompleteRequestId;
+      setState(() => _isFetchingSuggestions = true);
+      try {
+        final suggestions = await ref.read(gameRepositoryProvider).autocompleteAddress(query);
+        if (!mounted || requestId != _autocompleteRequestId) return;
+        setState(() => _suggestions = suggestions);
+      } catch (_) {
+        if (!mounted || requestId != _autocompleteRequestId) return;
+        setState(() => _suggestions = const []);
+      } finally {
+        if (mounted && requestId == _autocompleteRequestId) {
+          setState(() => _isFetchingSuggestions = false);
+        }
+      }
+    });
+  }
+
+  Future<void> _selectSuggestion(AddressSuggestion suggestion) async {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _isResolvingPlace = true;
+      _locationError = null;
+    });
+    try {
+      final location = await ref.read(gameRepositoryProvider).getPlaceDetails(suggestion.placeId);
+      if (!mounted) return;
+      _addressCtrl.text = location.formattedAddress ?? suggestion.description;
+      _cityCtrl.text = location.city;
+      _neighborhoodCtrl.text = location.neighborhood ?? '';
+      _venueCtrl.text = location.venueName ?? '';
+      setState(() {
+        _selectedLocation = location;
+        _suggestions = const [];
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _locationError = 'Could not verify this address. Please choose another one.';
+      });
+      showErrorSnackBar(context, e.toString());
+    } finally {
+      if (mounted) {
+        setState(() => _isResolvingPlace = false);
+      }
+    }
   }
 
   Future<void> _pickDate() async {
@@ -88,6 +165,10 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_selectedLocation == null) {
+      setState(() => _locationError = 'Please select a valid address from suggestions.');
+      return;
+    }
 
     final scheduledAt = DateTime(
       _date.year,
@@ -105,11 +186,25 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
       'scheduledAt': scheduledAt.toIso8601String(),
       'durationMinutes': _durationMinutes,
       'location': {
-        'city': _cityCtrl.text.trim(),
+        'city': _selectedLocation!.city,
         if (_neighborhoodCtrl.text.trim().isNotEmpty)
           'neighborhood': _neighborhoodCtrl.text.trim(),
         if (_venueCtrl.text.trim().isNotEmpty)
           'venueName': _venueCtrl.text.trim(),
+        if ((_selectedLocation!.address ?? '').trim().isNotEmpty)
+          'address': _selectedLocation!.address,
+        if ((_selectedLocation!.formattedAddress ?? '').trim().isNotEmpty)
+          'formattedAddress': _selectedLocation!.formattedAddress,
+        if ((_selectedLocation!.placeId ?? '').trim().isNotEmpty)
+          'placeId': _selectedLocation!.placeId,
+        if ((_selectedLocation!.state ?? '').trim().isNotEmpty)
+          'state': _selectedLocation!.state,
+        if ((_selectedLocation!.country ?? '').trim().isNotEmpty)
+          'country': _selectedLocation!.country,
+        if ((_selectedLocation!.postalCode ?? '').trim().isNotEmpty)
+          'postalCode': _selectedLocation!.postalCode,
+        if (_selectedLocation!.coordinates != null)
+          'coordinates': _selectedLocation!.coordinates!.toJson(),
       },
       'maxPlayers': _maxPlayers,
       'requiredSkillLevel': _skillLevel,
@@ -253,20 +348,64 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
                 const _SectionLabel(label: 'Location *'),
                 const SizedBox(height: 8),
                 BbTextField(
-                  label: 'City *',
-                  hint: 'e.g. London',
-                  controller: _cityCtrl,
-                  prefixIcon: Icons.location_city_rounded,
-                  validator: (v) => (v?.trim().isEmpty ?? true)
-                      ? 'City is required'
+                  label: 'Address *',
+                  hint: 'Start typing an address...',
+                  controller: _addressCtrl,
+                  prefixIcon: Icons.location_on_rounded,
+                  onChanged: _onAddressChanged,
+                  validator: (v) => _selectedLocation == null
+                      ? 'Select a valid address from suggestions'
                       : null,
                 ),
+                if (_locationError != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _locationError!,
+                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+                  ),
+                ],
+                if (_isFetchingSuggestions || _isResolvingPlace) ...[
+                  const SizedBox(height: 8),
+                  const LinearProgressIndicator(minHeight: 2),
+                ],
+                if (_suggestions.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.grey200),
+                    ),
+                    child: Column(
+                      children: _suggestions.take(5).map((suggestion) {
+                        return ListTile(
+                          dense: true,
+                          leading: const Icon(Icons.place_outlined, size: 18, color: AppColors.primary),
+                          title: Text(
+                            suggestion.primaryText ?? suggestion.description,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: (suggestion.secondaryText ?? '').isEmpty
+                              ? null
+                              : Text(
+                                  suggestion.secondaryText!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                          onTap: () => _selectSuggestion(suggestion),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 BbTextField(
                   label: 'Neighbourhood',
                   hint: 'e.g. Shoreditch',
                   controller: _neighborhoodCtrl,
                   prefixIcon: Icons.map_rounded,
+                  readOnly: true,
                 ),
                 const SizedBox(height: 12),
                 BbTextField(
@@ -274,6 +413,15 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
                   hint: 'e.g. Hackney Marshes',
                   controller: _venueCtrl,
                   prefixIcon: Icons.stadium_rounded,
+                  readOnly: true,
+                ),
+                const SizedBox(height: 12),
+                BbTextField(
+                  label: 'City *',
+                  hint: 'e.g. London',
+                  controller: _cityCtrl,
+                  prefixIcon: Icons.location_city_rounded,
+                  readOnly: true,
                 ),
                 const SizedBox(height: 20),
 

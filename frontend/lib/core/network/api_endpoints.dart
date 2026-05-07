@@ -46,6 +46,18 @@ abstract class ApiEndpoints {
   static String mergeGroups(String id) => '/games/$id/merge';
   static String gamePendingRequests(String id) => '/games/$id/pending';
 
+  // ── Maps ──────────────────────────────────────────────────────
+  static const String mapsAutocomplete = '/maps/autocomplete';
+  static const String mapsPlaceDetails = '/maps/place-details';
+  static String mapsStatic({
+    required double lat,
+    required double lng,
+    int zoom = 14,
+    int width = 900,
+    int height = 360,
+  }) =>
+      '/maps/static?lat=$lat&lng=$lng&zoom=$zoom&width=$width&height=$height';
+
   // ── Performance ───────────────────────────────────────────────
   static const String performanceLogs = '/performance';
   static const String performanceStats = '/performance/stats';
