@@ -4,13 +4,28 @@ import 'package:buddbull/core/network/api_endpoints.dart';
 /// (`profiles/...`), or a preset token `avatar:<id>` from onboarding.
 abstract class ProfilePictureUtils {
   static const String avatarPrefix = 'avatar:';
+  static const String diceBearPrefix = 'dicebear:';
 
   static bool isPresetToken(String? stored) =>
       stored != null && stored.startsWith(avatarPrefix);
 
+  static bool isDiceBearToken(String? stored) =>
+      stored != null && stored.startsWith(diceBearPrefix);
+
   static String? presetAvatarId(String stored) {
     if (!isPresetToken(stored)) return null;
     return stored.substring(avatarPrefix.length);
+  }
+
+  /// Stored token format: `dicebear:<style>:<seed>`
+  static String? diceBearUrl(String? stored) {
+    if (!isDiceBearToken(stored)) return null;
+    final raw = stored!.substring(diceBearPrefix.length);
+    final splitIdx = raw.indexOf(':');
+    if (splitIdx <= 0 || splitIdx >= raw.length - 1) return null;
+    final style = Uri.encodeComponent(raw.substring(0, splitIdx));
+    final seed = Uri.encodeComponent(raw.substring(splitIdx + 1));
+    return 'https://api.dicebear.com/9.x/$style/svg?seed=$seed';
   }
 
   /// Resolves a value suitable for [CachedNetworkImage]; returns null for
@@ -18,6 +33,7 @@ abstract class ProfilePictureUtils {
   static String? networkImageUrl(String? stored) {
     if (stored == null || stored.isEmpty) return null;
     if (isPresetToken(stored)) return null;
+    if (isDiceBearToken(stored)) return diceBearUrl(stored);
     if (stored.startsWith('http://') || stored.startsWith('https://')) {
       return stored;
     }

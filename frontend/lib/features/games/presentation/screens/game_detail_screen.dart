@@ -9,6 +9,7 @@ import 'package:buddbull/features/games/data/game_repository.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/games/presentation/widgets/player_slot_row.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
+import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:buddbull/shared/widgets/loading_overlay.dart';
@@ -131,18 +132,11 @@ class GameDetailScreen extends ConsumerWidget {
                             GestureDetector(
                               onTap: () => context.push(
                                   '/profile/${game.organizer.id}'),
-                              child: CircleAvatar(
+                              child: BbProfileAvatar(
+                                profilePicture: game.organizer.profilePicture,
+                                initials:
+                                    '${game.organizer.firstName[0]}${game.organizer.lastName[0]}',
                                 radius: 20,
-                                backgroundColor:
-                                    AppColors.primary.withOpacity(0.15),
-                                child: Text(
-                                  game.organizer.firstName[0]
-                                      .toUpperCase(),
-                                  style: AppTextStyles.titleSmall
-                                      .copyWith(
-                                    color: AppColors.primary,
-                                  ),
-                                ),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -538,19 +532,26 @@ class _PlayerTile extends StatelessWidget {
   final VoidCallback? onApprove;
   final VoidCallback? onKick;
 
+  String get _initials {
+    final fn = player.firstName;
+    final ln = player.lastName;
+    if (fn != null && fn.isNotEmpty && ln != null && ln.isNotEmpty) {
+      return '${fn[0]}${ln[0]}';
+    }
+    if (fn != null && fn.isNotEmpty) return fn[0];
+    if (player.username.isEmpty) return '?';
+    return player.username[0];
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       dense: true,
-      leading: CircleAvatar(
+      leading: BbProfileAvatar(
+        profilePicture: player.profilePicture,
+        initials: _initials,
         radius: 18,
-        backgroundColor: AppColors.primary.withOpacity(0.12),
-        child: Text(
-          player.displayName[0].toUpperCase(),
-          style: AppTextStyles.labelMedium
-              .copyWith(color: AppColors.primary),
-        ),
       ),
       title: Text(
         player.displayName + (isCurrentUser ? ' (You)' : ''),

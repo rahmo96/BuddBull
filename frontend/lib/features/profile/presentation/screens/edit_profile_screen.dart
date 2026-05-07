@@ -3,6 +3,7 @@ import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/auth/data/models/user_model.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
+import 'package:buddbull/features/onboarding/data/onboarding_mock_data.dart';
 import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
 import 'package:buddbull/features/profile/presentation/widgets/sport_chip.dart';
 import 'package:buddbull/features/profile/providers/profile_provider.dart';
@@ -86,6 +87,85 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (image != null) {
       await ref.read(profileProvider.notifier).updateProfilePicture(image);
     }
+  }
+
+  Future<void> _setPresetAvatar(String avatarId) async {
+    await ref.read(profileProvider.notifier).updateProfile({
+      'profilePicture': 'avatar:$avatarId',
+    });
+  }
+
+  Future<void> _showAvatarOptionsSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Update Profile Picture', style: AppTextStyles.titleMedium),
+                const SizedBox(height: 12),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.photo_library_rounded),
+                  title: const Text('Upload from gallery'),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    await _pickImage();
+                  },
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.emoji_emotions_outlined),
+                  title: const Text('Choose preset avatar'),
+                ),
+                const SizedBox(height: 10),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 5,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  itemCount: OnboardingMockData.avatars.length,
+                  itemBuilder: (_, i) {
+                    final option = OnboardingMockData.avatars[i];
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () async {
+                        Navigator.pop(ctx);
+                        await _setPresetAvatar(option.id);
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: option.background,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          option.emoji,
+                          style: const TextStyle(fontSize: 24),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _save() async {
@@ -186,8 +266,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 const SizedBox(height: 8),
                 Center(
                   child: TextButton(
-                    onPressed: _pickImage,
-                    child: const Text(AppStrings.changePhoto),
+                    onPressed: _showAvatarOptionsSheet,
+                    child: const Text('Change photo or avatar'),
                   ),
                 ),
                 const SizedBox(height: 24),

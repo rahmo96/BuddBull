@@ -42,7 +42,12 @@ Future<void> submitOnboardingToBackend(
       !draft.usesCustomPhoto &&
       draft.avatarId != null &&
       draft.avatarId!.isNotEmpty) {
-    patch['profilePicture'] = 'avatar:${draft.avatarId}';
+    final avatarId = draft.avatarId!;
+    if (avatarId.startsWith('dicebear:')) {
+      patch['profilePicture'] = avatarId;
+    } else {
+      patch['profilePicture'] = 'avatar:$avatarId';
+    }
   }
 
   if (patch.isNotEmpty) {

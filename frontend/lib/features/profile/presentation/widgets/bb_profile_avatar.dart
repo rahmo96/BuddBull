@@ -38,6 +38,28 @@ class BbProfileAvatar extends StatelessWidget {
       );
     }
 
+    final diceBearUrl = ProfilePictureUtils.diceBearUrl(profilePicture);
+    if (diceBearUrl != null) {
+      return CircleAvatar(
+        radius: radius,
+        backgroundColor: Colors.white,
+        child: ClipOval(
+          child: CachedNetworkImage(
+            imageUrl: diceBearUrl,
+            width: radius * 2,
+            height: radius * 2,
+            fit: BoxFit.cover,
+            placeholder: (_, __) => const Padding(
+              padding: EdgeInsets.all(12),
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            errorWidget: (_, __, ___) =>
+                _InitialsAvatar(initials: initials, radius: radius),
+          ),
+        ),
+      );
+    }
+
     final url = ProfilePictureUtils.networkImageUrl(profilePicture);
     if (url != null) {
       return CircleAvatar(
