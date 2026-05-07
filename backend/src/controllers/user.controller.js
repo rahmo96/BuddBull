@@ -25,6 +25,16 @@ const getUser = catchAsync(async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
+//  GET /api/v1/users/:id
+// ─────────────────────────────────────────────
+
+const getUserById = catchAsync(async (req, res) => {
+  const user = await UserService.getPublicProfileById(req.params.id);
+
+  res.status(200).json({ success: true, data: { user } });
+});
+
+// ─────────────────────────────────────────────
 //  PATCH /api/v1/users/me
 // ─────────────────────────────────────────────
 
@@ -186,6 +196,7 @@ const adminBanUser = catchAsync(async (req, res) => {
 
 module.exports = {
   getMe,
+  getUserById,
   getUser,
   updateMe,
   updateUsername,

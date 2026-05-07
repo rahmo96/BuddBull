@@ -2,6 +2,9 @@ const path = require('path');
 const fs = require('fs');
 const mongoose = require('mongoose');
 const User = require('../models/User.model');
+const Rating = require('../models/Rating.model');
+const Game = require('../models/Game.model');
+const PerformanceLog = require('../models/PerformanceLog.model');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
 const { upload: uploadConfig } = require('../config/environment');
@@ -25,6 +28,16 @@ const getMe = async (userId) => {
  * Excludes private fields: email, location.postalCode, pushTokens, etc.
  */
 const getPublicProfile = async (username) => {
+  // Defensive fallback: if a 24-char ObjectId reaches this username handler
+  // (e.g., route ordering/regex edge-cases), resolve by ID instead.
+  if (mongoose.Types.ObjectId.isValid(username)) {
+    const byId = await User.findById(username)
+      .active()
+      .notBanned()
+      .select('-email -pushTokens -notificationPreferences -refreshTokenHash -verificationToken -resetPasswordToken');
+    if (byId) return byId;
+  }
+
   const user = await User.findOne({ username })
     .active()
     .notBanned()
@@ -42,6 +55,51 @@ const getUserById = async (id) => {
   const user = await User.findById(id).active();
   if (!user) throw new AppError('User not found.', 404);
   return user;
+};
+
+/**
+ * Returns a public profile by Mongo ID with rating/game/activity summary.
+ */
+const getPublicProfileById = async (id) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID.', 400);
+
+  const user = await User.findById(id)
+    .active()
+    .notBanned()
+    .select('-email -pushTokens -notificationPreferences -refreshTokenHash -verificationToken -resetPasswordToken');
+
+  if (!user) throw new AppError('User not found.', 404);
+
+  const [ratingSummary, recentLogs, upcomingGames] = await Promise.all([
+    Rating.getProfileSummary(id),
+    PerformanceLog.find({ user: id, deletedAt: null })
+      .sort({ loggedAt: -1 })
+      .limit(5)
+      .select('sport type loggedAt matchOutcome durationMinutes')
+      .lean(),
+    Game.find({
+      status: { $in: ['open', 'full', 'draft'] },
+      deletedAt: null,
+      $or: [
+        { organizer: id },
+        { players: { $elemMatch: { user: id, status: { $in: ['approved', 'pending', 'invited'] } } } },
+      ],
+      scheduledAt: { $gte: new Date() },
+    })
+      .sort({ scheduledAt: 1 })
+      .limit(5)
+      .select('title sport scheduledAt status location.city location.neighborhood')
+      .lean(),
+  ]);
+
+  return {
+    ...user.toObject(),
+    performanceSummary: {
+      ratings: ratingSummary,
+      recentActivity: recentLogs,
+      upcomingGames,
+    },
+  };
 };
 
 // ─────────────────────────────────────────────
@@ -358,6 +416,7 @@ module.exports = {
   getMe,
   getPublicProfile,
   getUserById,
+  getPublicProfileById,
   updateMe,
   updateUsername,
   updateProfilePicture,

@@ -52,7 +52,7 @@ abstract class Routes {
   static const String createLog = '/performance/log/create';
   static const String profile = '/profile';
   static const String editProfile = '/profile/edit';
-  static String publicProfile(String id) => '/users/$id';
+  static String publicProfile(String id) => '/profile/$id';
 
   Routes._();
 }
@@ -230,7 +230,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             _slide(s, const CreateLogScreen()),
       ),
       GoRoute(
-        path: '/users/:id',
+        path: '/profile/:id',
         name: 'publicProfile',
         pageBuilder: (_, s) => _slide(
           s,

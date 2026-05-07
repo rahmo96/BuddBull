@@ -18,6 +18,7 @@ class UserModel {
     this.followersCount = 0,
     this.followingCount = 0,
     this.createdAt,
+    this.performanceSummary,
   });
 
   final String id;
@@ -36,6 +37,7 @@ class UserModel {
   final int followersCount;
   final int followingCount;
   final DateTime? createdAt;
+  final UserPerformanceSummary? performanceSummary;
 
   String get fullName => '$firstName $lastName';
   bool get isOrganizer => role == 'organizer';
@@ -69,6 +71,11 @@ class UserModel {
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'] as String)
           : null,
+      performanceSummary: json['performanceSummary'] != null
+          ? UserPerformanceSummary.fromJson(
+              json['performanceSummary'] as Map<String, dynamic>,
+            )
+          : null,
     );
   }
 
@@ -94,6 +101,7 @@ class UserModel {
     UserStats? stats,
     int? followersCount,
     int? followingCount,
+    UserPerformanceSummary? performanceSummary,
   }) {
     return UserModel(
       id: id,
@@ -112,6 +120,7 @@ class UserModel {
       followersCount: followersCount ?? this.followersCount,
       followingCount: followingCount ?? this.followingCount,
       createdAt: createdAt,
+      performanceSummary: performanceSummary ?? this.performanceSummary,
     );
   }
 
@@ -195,4 +204,114 @@ class SportInterest {
         sport: sport ?? this.sport,
         skillLevel: skillLevel ?? this.skillLevel,
       );
+}
+
+class UserPerformanceSummary {
+  const UserPerformanceSummary({
+    this.ratings = const UserRatingSummary(),
+    this.recentActivity = const [],
+    this.upcomingGames = const [],
+  });
+
+  final UserRatingSummary ratings;
+  final List<UserActivityItem> recentActivity;
+  final List<UserUpcomingGame> upcomingGames;
+
+  factory UserPerformanceSummary.fromJson(Map<String, dynamic> json) {
+    return UserPerformanceSummary(
+      ratings: json['ratings'] != null
+          ? UserRatingSummary.fromJson(json['ratings'] as Map<String, dynamic>)
+          : const UserRatingSummary(),
+      recentActivity: (json['recentActivity'] as List<dynamic>?)
+              ?.map((e) => UserActivityItem.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      upcomingGames: (json['upcomingGames'] as List<dynamic>?)
+              ?.map((e) => UserUpcomingGame.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+    );
+  }
+}
+
+class UserRatingSummary {
+  const UserRatingSummary({
+    this.totalRatings = 0,
+    this.avgReliability = 0,
+    this.avgBehavior = 0,
+    this.avgComposite = 0,
+  });
+
+  final int totalRatings;
+  final num avgReliability;
+  final num avgBehavior;
+  final num avgComposite;
+
+  factory UserRatingSummary.fromJson(Map<String, dynamic> json) {
+    return UserRatingSummary(
+      totalRatings: json['totalRatings'] as int? ?? 0,
+      avgReliability: (json['avgReliability'] as num?) ?? 0,
+      avgBehavior: (json['avgBehavior'] as num?) ?? 0,
+      avgComposite: (json['avgComposite'] as num?) ?? 0,
+    );
+  }
+}
+
+class UserActivityItem {
+  const UserActivityItem({
+    required this.id,
+    required this.sport,
+    required this.type,
+    this.loggedAt,
+    this.matchOutcome,
+    this.durationMinutes,
+  });
+
+  final String id;
+  final String sport;
+  final String type;
+  final DateTime? loggedAt;
+  final String? matchOutcome;
+  final int? durationMinutes;
+
+  factory UserActivityItem.fromJson(Map<String, dynamic> json) {
+    return UserActivityItem(
+      id: (json['_id'] ?? json['id'])?.toString() ?? '',
+      sport: json['sport'] as String? ?? '',
+      type: json['type'] as String? ?? '',
+      loggedAt: json['loggedAt'] != null
+          ? DateTime.tryParse(json['loggedAt'] as String)
+          : null,
+      matchOutcome: json['matchOutcome'] as String?,
+      durationMinutes: json['durationMinutes'] as int?,
+    );
+  }
+}
+
+class UserUpcomingGame {
+  const UserUpcomingGame({
+    required this.id,
+    required this.title,
+    required this.sport,
+    this.scheduledAt,
+    this.status,
+  });
+
+  final String id;
+  final String title;
+  final String sport;
+  final DateTime? scheduledAt;
+  final String? status;
+
+  factory UserUpcomingGame.fromJson(Map<String, dynamic> json) {
+    return UserUpcomingGame(
+      id: (json['_id'] ?? json['id'])?.toString() ?? '',
+      title: json['title'] as String? ?? '',
+      sport: json['sport'] as String? ?? '',
+      scheduledAt: json['scheduledAt'] != null
+          ? DateTime.tryParse(json['scheduledAt'] as String)
+          : null,
+      status: json['status'] as String?,
+    );
+  }
 }

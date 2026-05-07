@@ -2,6 +2,7 @@ import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/router/app_router.dart';
+import 'package:buddbull/features/auth/data/models/user_model.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
 import 'package:buddbull/features/profile/presentation/widgets/sport_chip.dart';
@@ -236,6 +237,16 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ),
 
+            if (user.performanceSummary?.recentActivity.isNotEmpty ?? false)
+              SliverToBoxAdapter(
+                child: _SectionCard(
+                  title: 'Recent Activity',
+                  child: _ActivityFeed(
+                    items: user.performanceSummary!.recentActivity,
+                  ),
+                ),
+              ),
+
             const SliverToBoxAdapter(child: SizedBox(height: 32)),
           ],
         ),
@@ -334,9 +345,56 @@ class _PublicProfileView extends ConsumerWidget {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: _FollowButton(userId: userId),
+                child: Row(
+                  children: [
+                    Expanded(child: _FollowButton(userId: userId)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {},
+                        icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                        label: const Text('Message'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
+            if (user.stats != null)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                  child: Row(
+                    spacing: 8,
+                    children: [
+                      Expanded(
+                        child: StatsCard(
+                          value: user.stats!.gamesPlayed.toString(),
+                          label: AppStrings.gamesPlayed,
+                          icon: Icons.sports_soccer_rounded,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      Expanded(
+                        child: StatsCard(
+                          value: user.stats!.averageRating.toStringAsFixed(1),
+                          label: AppStrings.rating,
+                          icon: Icons.star_rounded,
+                          color: AppColors.secondary,
+                        ),
+                      ),
+                      Expanded(
+                        child: StatsCard(
+                          value: _winRate(user).toStringAsFixed(0),
+                          label: 'Win Rate %',
+                          icon: Icons.emoji_events_outlined,
+                          color: AppColors.success,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             if (user.bio != null)
               SliverToBoxAdapter(
                 child: _SectionCard(
@@ -354,6 +412,55 @@ class _PublicProfileView extends ConsumerWidget {
                     children: user.sportsInterests
                         .map((s) => SportChip(interest: s))
                         .toList(),
+                  ),
+                ),
+              ),
+            if (user.performanceSummary != null)
+              SliverToBoxAdapter(
+                child: _SectionCard(
+                  title: 'Ratings Summary',
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _Metric(
+                          label: 'Overall',
+                          value: user.performanceSummary!.ratings.avgComposite
+                              .toStringAsFixed(1),
+                        ),
+                      ),
+                      Expanded(
+                        child: _Metric(
+                          label: 'Reliability',
+                          value: user.performanceSummary!.ratings.avgReliability
+                              .toStringAsFixed(1),
+                        ),
+                      ),
+                      Expanded(
+                        child: _Metric(
+                          label: 'Behavior',
+                          value: user.performanceSummary!.ratings.avgBehavior
+                              .toStringAsFixed(1),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            if (user.performanceSummary?.recentActivity.isNotEmpty ?? false)
+              SliverToBoxAdapter(
+                child: _SectionCard(
+                  title: 'Recent Activity',
+                  child: _ActivityFeed(
+                    items: user.performanceSummary!.recentActivity,
+                  ),
+                ),
+              ),
+            if (user.performanceSummary?.upcomingGames.isNotEmpty ?? false)
+              SliverToBoxAdapter(
+                child: _SectionCard(
+                  title: 'Upcoming Games',
+                  child: _UpcomingGamesList(
+                    games: user.performanceSummary!.upcomingGames,
                   ),
                 ),
               ),
@@ -460,4 +567,90 @@ class _SectionCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _Metric extends StatelessWidget {
+  const _Metric({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: AppTextStyles.titleSmall.copyWith(color: AppColors.textPrimary),
+        ),
+        const SizedBox(height: 2),
+        Text(label, style: AppTextStyles.labelSmall),
+      ],
+    );
+  }
+}
+
+class _ActivityFeed extends StatelessWidget {
+  const _ActivityFeed({required this.items});
+  final List<UserActivityItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: items.map((item) {
+        final loggedAt = item.loggedAt;
+        return ListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.timeline_rounded, size: 18),
+          title: Text(
+            '${item.sport} • ${item.type}',
+            style: AppTextStyles.bodyMedium,
+          ),
+          subtitle: Text(
+            [
+              if (item.matchOutcome != null) item.matchOutcome,
+              if (item.durationMinutes != null) '${item.durationMinutes} min',
+              if (loggedAt != null)
+                '${loggedAt.day}/${loggedAt.month}/${loggedAt.year}',
+            ].whereType<String>().join(' • '),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _UpcomingGamesList extends StatelessWidget {
+  const _UpcomingGamesList({required this.games});
+  final List<UserUpcomingGame> games;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: games.map((game) {
+        final schedule = game.scheduledAt;
+        return ListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.event_rounded, size: 18),
+          title: Text(game.title, style: AppTextStyles.bodyMedium),
+          subtitle: Text(
+            [
+              game.sport,
+              if (schedule != null)
+                '${schedule.day}/${schedule.month}/${schedule.year}',
+              game.status,
+            ].whereType<String>().join(' • '),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+double _winRate(UserModel user) {
+  final stats = user.stats;
+  if (stats == null || stats.gamesPlayed == 0) return 0;
+  return (stats.gamesWon / stats.gamesPlayed) * 100;
 }

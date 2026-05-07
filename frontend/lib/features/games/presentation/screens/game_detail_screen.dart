@@ -130,7 +130,7 @@ class GameDetailScreen extends ConsumerWidget {
                           children: [
                             GestureDetector(
                               onTap: () => context.push(
-                                  '/users/${game.organizer.id}'),
+                                  '/profile/${game.organizer.id}'),
                               child: CircleAvatar(
                                 radius: 20,
                                 backgroundColor:

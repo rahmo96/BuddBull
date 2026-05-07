@@ -117,8 +117,22 @@ router.get('/:id/following', validateMongoId('id'), UserController.getFollowing)
 // ─────────────────────────────────────────────
 
 /**
- * @route  GET /api/v1/users/:username
+ * @route  GET /api/v1/users/username/:username
  * @desc   Get public profile of any user by username
+ * @access Private
+ */
+router.get('/username/:username', UserController.getUser);
+
+/**
+ * @route  GET /api/v1/users/:id
+ * @desc   Get public profile of any user by Mongo ID
+ * @access Private
+ */
+router.get('/:id([0-9a-fA-F]{24})', validateMongoId('id'), UserController.getUserById);
+
+/**
+ * @route  GET /api/v1/users/:username
+ * @desc   Backward-compatible username profile route
  * @access Private
  */
 router.get('/:username', UserController.getUser);
