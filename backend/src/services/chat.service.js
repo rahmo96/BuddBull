@@ -3,6 +3,7 @@ const Message = require('../models/Message.model');
 const User = require('../models/User.model');
 const Game = require('../models/Game.model');
 const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const PARTICIPANT_FIELDS = 'firstName lastName username profilePicture';
@@ -34,7 +35,7 @@ const _resolveChatForUser = async (chatId, userId) => {
   }
 
   if (!game) {
-    console.log('[chat.fallback] no game for chatId=', chatId);
+    logger.debug(`[chat.fallback] no game for chatId=${chatId}`);
     return null;
   }
 
@@ -44,13 +45,13 @@ const _resolveChatForUser = async (chatId, userId) => {
   );
 
   if (!isOrganizer && !isApprovedPlayer) {
-    console.log('[chat.fallback] user not allowed', { chatId, userId, gameId: game._id.toString() });
+    logger.debug('[chat.fallback] user not allowed', { chatId, userId, gameId: game._id.toString() });
     return null;
   }
 
   // Ensure group chat exists
   if (!game.groupChat) {
-    console.log('[chat.fallback] creating missing group chat', { gameId: game._id.toString() });
+    logger.debug('[chat.fallback] creating missing group chat', { gameId: game._id.toString() });
     const created = await Chat.create({
       type: 'group',
       name: `${game.title} — Chat`,
@@ -67,7 +68,7 @@ const _resolveChatForUser = async (chatId, userId) => {
     { $push: { participants: { user: userId, isAdmin: false, leftAt: null } } },
   );
   if (updateRes?.modifiedCount) {
-    console.log('[chat.fallback] participant added', { chatId: game.groupChat.toString(), userId: userId.toString() });
+    logger.debug('[chat.fallback] participant added', { chatId: game.groupChat.toString(), userId: userId.toString() });
   }
 
   return { chatId: game.groupChat };

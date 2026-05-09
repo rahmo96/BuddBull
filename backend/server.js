@@ -33,7 +33,8 @@ const startServer = async () => {
   // ── 4. Socket.io (stub — fully wired in Phase 6) ───────────
   const io = new SocketIOServer(server, {
     cors: {
-      origin: [clientUrl, 'http://localhost:3000'],
+      // Mobile clients / emulators often omit or vary Origin; allow all non-prod handshakes.
+      origin: nodeEnv === 'production' ? [clientUrl] : true,
       methods: ['GET', 'POST'],
       credentials: true,
     },

@@ -328,27 +328,74 @@ gameSchema.methods.hasPlayer = function (userId) {
 };
 
 /**
- * Detects a schedule conflict for a given user across all their games.
- * Call this as a static before adding a player to a new game.
+ * Returns another game (lean doc) where this user is approved and the time window overlaps proposed slot.
+ *
+ * Overlap iff (A = existing game, B = proposed slot):
+ *   (A.start < B.end) AND (A.end > B.start)
+ * Comparisons use epoch ms ($toLong) so we never compare BSON Date + number to a bare number
+ * (that mix caused false overlaps across unrelated calendar days).
  */
-gameSchema.statics.hasConflict = async function (userId, proposedStart, proposedDurationMinutes) {
-  const proposedEnd = new Date(proposedStart.getTime() + proposedDurationMinutes * 60 * 1000);
+gameSchema.statics.findScheduleConflictGame = async function (
+  userId,
+  proposedStart,
+  proposedDurationMinutes,
+  excludeGameId,
+) {
+  const start =
+    proposedStart instanceof Date ? new Date(proposedStart.getTime()) : new Date(proposedStart);
+  if (Number.isNaN(start.getTime())) {
+    return null;
+  }
 
-  const conflicting = await this.findOne({
+  const dur = Number(proposedDurationMinutes);
+  const durationMinutes = Number.isFinite(dur) && dur >= 0 ? dur : 0;
+
+  const proposedStartMs = start.getTime();
+  const proposedEndMs = proposedStartMs + durationMinutes * 60 * 1000;
+
+  const filter = {
     'players.user': userId,
     'players.status': 'approved',
     status: { $in: ['open', 'full', 'in_progress'] },
     deletedAt: null,
-    // Overlap condition: existing.start < proposed.end AND existing.end > proposed.start
-    scheduledAt: { $lt: proposedEnd },
+    scheduledAt: { $lt: new Date(proposedEndMs) },
     $expr: {
-      $gt: [
-        { $add: ['$scheduledAt', { $multiply: ['$durationMinutes', 60000] }] },
-        proposedStart.getTime(),
+      $and: [
+        { $lt: [{ $toLong: '$scheduledAt' }, proposedEndMs] },
+        {
+          $gt: [
+            {
+              $add: [
+                { $toLong: '$scheduledAt' },
+                { $multiply: [{ $ifNull: ['$durationMinutes', 0] }, 60000] },
+              ],
+            },
+            proposedStartMs,
+          ],
+        },
       ],
     },
-  });
+  };
 
+  if (excludeGameId != null && excludeGameId !== '') {
+    filter._id = { $ne: excludeGameId };
+  }
+
+  return this.findOne(filter).lean();
+};
+
+/**
+ * Detects a schedule conflict for a given user across all their games.
+ * Call this as a static before adding a player to a new game.
+ * @param {import('mongoose').Types.ObjectId|string} [excludeGameId]  Ignore this game (e.g. the one being joined).
+ */
+gameSchema.statics.hasConflict = async function (userId, proposedStart, proposedDurationMinutes, excludeGameId) {
+  const conflicting = await this.findScheduleConflictGame(
+    userId,
+    proposedStart,
+    proposedDurationMinutes,
+    excludeGameId,
+  );
   return !!conflicting;
 };
 

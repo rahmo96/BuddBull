@@ -27,6 +27,7 @@ const User = require('../models/User.model');
 const Chat = require('../models/Chat.model');
 const Message = require('../models/Message.model');
 const logger = require('../utils/logger');
+const { toPlainDoc } = require('../utils/toPlainDoc');
 
 const SENDER_FIELDS = 'firstName lastName username profilePicture';
 
@@ -58,7 +59,6 @@ const socketAuthMiddleware = async (socket, next) => {
     if (!token) return next(new Error('Authentication required'));
 
     const decodedToken = await getFirebaseAuth().verifyIdToken(token);
-    console.log('Socket authenticated for user:', decodedToken.uid);
 
     const user = await User.findOne({ firebaseUid: decodedToken.uid })
       .select('_id firstName lastName username profilePicture isActive deletedAt isBanned banReason')
@@ -81,6 +81,13 @@ const socketAuthMiddleware = async (socket, next) => {
 const getChat = async (chatId, userId) =>
   Chat.findOne({ _id: chatId, 'participants.user': userId, isDeleted: false });
 
+/** Room id from client payload: `{ chatId }` object or bare string (legacy). */
+const roomIdFromJoinPayload = (data) => {
+  const room = data?.chatId ?? data;
+  if (room == null || room === '') return null;
+  return String(room);
+};
+
 // ── Main initialiser — call with the io instance ───────────────────────────────
 module.exports = (io) => {
   // Apply auth to all sockets before connect
@@ -91,15 +98,16 @@ module.exports = (io) => {
     logger.info(`[Socket] connected  user=${user.username}  id=${socket.id}`);
 
     // ── join_chat ────────────────────────────────────────────────────────────
-    socket.on('join_chat', async ({ chatId } = {}) => {
+    // Room membership is keyed by chatId string only — no DB lookup required to join
+    // the Socket.io room (send_message / HTTP paths still enforce participation).
+    socket.on('join_chat', (data) => {
       try {
-        console.log(`[Socket] User ${socket.user.id} is joining room: ${chatId}`);
-        const chat = await getChat(chatId, user._id);
-        if (!chat) return socket.emit('error', { message: 'Chat not found' });
+        const room = roomIdFromJoinPayload(data);
+        if (!room) return socket.emit('error', { message: 'chatId is required' });
 
-        socket.join(chatId);
-        socket.emit('joined_chat', { chatId });
-        logger.debug(`[Socket] ${user.username} joined chat ${chatId}`);
+        socket.join(room);
+        socket.emit('joined_chat', { chatId: room });
+        logger.debug(`[Socket] ${user.username} joined socket room ${room}`);
       } catch (err) {
         logger.error('[Socket] join_chat error:', err);
         socket.emit('error', { message: 'Failed to join chat' });
@@ -107,15 +115,14 @@ module.exports = (io) => {
     });
 
     // Alias for client compatibility
-    socket.on('joinChat', async ({ chatId } = {}) => {
+    socket.on('joinChat', (data) => {
       try {
-        console.log(`[Socket] User ${socket.user.id} is joining room: ${chatId}`);
-        const chat = await getChat(chatId, user._id);
-        if (!chat) return socket.emit('error', { message: 'Chat not found' });
+        const room = roomIdFromJoinPayload(data);
+        if (!room) return socket.emit('error', { message: 'chatId is required' });
 
-        socket.join(chatId);
-        socket.emit('joined_chat', { chatId });
-        logger.debug(`[Socket] ${user.username} joined chat ${chatId}`);
+        socket.join(room);
+        socket.emit('joined_chat', { chatId: room });
+        logger.debug(`[Socket] ${user.username} joined socket room ${room}`);
       } catch (err) {
         logger.error('[Socket] joinChat error:', err);
         socket.emit('error', { message: 'Failed to join chat' });
@@ -170,8 +177,14 @@ module.exports = (io) => {
           },
         ]);
 
-        io.to(chatId).emit('receive_message', { message });
-        io.to(chatId).emit('newMessage', message);
+        const plain = toPlainDoc(message);
+        const receivePayload = { message: plain };
+
+        // Direct to this socket + broadcast to everyone else in the room (no duplicate for sender).
+        socket.emit('receive_message', receivePayload);
+        socket.emit('newMessage', plain);
+        socket.broadcast.to(chatId).emit('receive_message', receivePayload);
+        socket.broadcast.to(chatId).emit('newMessage', plain);
       } catch (err) {
         logger.error('[Socket] send_message error:', err);
         socket.emit('error', { message: 'Failed to send message' });

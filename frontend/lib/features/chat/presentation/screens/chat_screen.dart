@@ -25,15 +25,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   MessageModel? _replyingTo;
   Timer? _typingTimer;
   bool _isTyping = false;
+  DateTime? _lastLoadMoreAt;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
     // Connect socket when entering chat
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final socket = ref.read(socketServiceProvider);
-      socket.connect();
+      await socket.connect();
+      if (!mounted) return;
       socket.joinChat(widget.chatId);
     });
   }
@@ -49,11 +51,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   void _onScroll() {
-    // Load older messages when scrolled to top
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      ref.read(messagesProvider(widget.chatId).notifier).loadMore();
+    if (!_scrollController.hasClients) return;
+    final pos = _scrollController.position;
+    // Load older messages when scrolled to top (reverse list).
+    if (pos.pixels < pos.maxScrollExtent - 200) return;
+
+    final now = DateTime.now();
+    if (_lastLoadMoreAt != null &&
+        now.difference(_lastLoadMoreAt!) < const Duration(milliseconds: 400)) {
+      return;
     }
+    _lastLoadMoreAt = now;
+    ref.read(messagesProvider(widget.chatId).notifier).loadMore();
   }
 
   void _handleTyping() {

@@ -2,6 +2,7 @@ import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/services/socket_service.dart';
+import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -78,6 +79,15 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AuthState>(authProvider, (prev, next) {
+      if (next.status == AuthStatus.authenticated) {
+        ref.read(socketServiceProvider).connect();
+      }
+      if (next.status == AuthStatus.unauthenticated) {
+        ref.read(socketServiceProvider).disconnect();
+      }
+    });
+
     final selectedIndex = _selectedIndex(context);
 
     return Scaffold(

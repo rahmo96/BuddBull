@@ -1,9 +1,9 @@
 import 'dart:async';
+
+import 'package:buddbull/core/network/api_endpoints.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
-import 'package:buddbull/core/network/api_endpoints.dart';
-import 'package:buddbull/features/chat/data/models/chat_model.dart';
 
 // ── Event data types ──────────────────────────────────────────────────────────
 class TypingEvent {
@@ -88,63 +88,82 @@ class SocketService {
 
   // ── Connect ───────────────────────────────────────────────────────────────
   Future<void> connect() async {
-    if (_socket?.connected == true) return;
+    if (_socket?.connected == true) {
+      print('⚪ SOCKET connect skipped — already connected (${_socket!.id})');
+      return;
+    }
+
+    // Drop half-open client so a later connect() always rebuilds listeners + handshake.
+    if (_socket != null) {
+      print('⚪ SOCKET disposing stale socket before new handshake');
+      try {
+        _socket!.dispose();
+      } catch (_) {}
+      _socket = null;
+    }
 
     String? token;
     try {
       token = await FirebaseAuth.instance.currentUser?.getIdToken();
-    } on FirebaseAuthException {
+    } on FirebaseAuthException catch (e, st) {
+      print('❌ SOCKET abort — FirebaseAuthException getting token: $e\n$st');
       try {
         await FirebaseAuth.instance.signOut();
       } catch (_) {}
       return;
-    } catch (_) {
+    } catch (e, st) {
+      print('❌ SOCKET abort — error getting token: $e\n$st');
       return;
     }
-    if (token == null) return;
+    if (token == null) {
+      print(
+        '❌ SOCKET abort — no Firebase ID token (currentUser: ${FirebaseAuth.instance.currentUser?.uid})',
+      );
+      return;
+    }
     _lastToken = token;
 
     _setStatus(SocketStatus.connecting);
 
-    // Strip /api/v1 suffix — socket connects to the base server URL
-    final serverUrl = ApiEndpoints.baseUrl.replaceAll(RegExp(r'/api/v1$'), '');
+    final serverUrl = ApiEndpoints.socketUrl;
+    print('🟡 SOCKET handshake → $serverUrl (same origin as ApiClient base, minus /api/v1)');
 
-    _socket = io.io(
-      serverUrl,
-      io.OptionBuilder()
-          .setTransports(['websocket'])
-          .disableAutoConnect()
-          .setAuth({'token': token})
-          .setTimeout(10000)
-          .setReconnectionAttempts(5)
-          .build(),
-    );
+    try {
+      _socket = io.io(
+        serverUrl,
+        io.OptionBuilder()
+            .setTransports(['websocket'])
+            .enableForceNew()
+            .enableReconnection()
+            .setAuth({'token': token})
+            // Must defer connect until handlers below are attached (see Socket ctor).
+            .disableAutoConnect()
+            .build(),
+      );
+    } catch (e, st) {
+      print('❌ SOCKET io.io() failed: $e\n$st');
+      _setStatus(SocketStatus.error);
+      return;
+    }
 
     _socket!
       ..onConnect((_) {
+        print('🟢 SOCKET CONNECTED: ${_socket!.id}');
         _setStatus(SocketStatus.connected);
-        // Re-join rooms after reconnect.
+        // Re-join rooms after reconnect — contract: `{ 'chatId': chatId }`.
         for (final chatId in _joinedChats) {
-          _emit('join_chat', {'chatId': chatId});
+          if (_socket?.connected == true) {
+            _socket!.emit('join_chat', <String, dynamic>{'chatId': chatId});
+          }
         }
       })
       ..onDisconnect((_) {
+        print('🔴 SOCKET DISCONNECTED');
         _setStatus(SocketStatus.disconnected);
       })
       ..onConnectError((err) {
+        print('❌ SOCKET ERROR: $err');
         _setStatus(SocketStatus.error);
-      })
-      ..on('receive_message', (data) {
-        try {
-          // ignore: avoid_print
-          print('SOCKET_DEBUG: Received message: $data');
-          _messageController.add(data);
-        } catch (_) {}
-      })
-      ..on('newMessage', (data) {
-        // ignore: avoid_print
-        print('FRONTEND_RECEIVE: $data'); // This will prove the message arrived
-        _messageController.add(data);
       })
       ..on('messageRead', (data) {
         // Forward as a lightweight pinned event channel reuse isn't ideal; handled in provider via socket raw if needed.
@@ -193,13 +212,35 @@ class SocketService {
         } catch (_) {}
       });
 
+    print('🟡 SOCKET calling connect()…');
     _socket!.connect();
+
+    _socket!.onAny((event, data) {
+      print('⚡ GLOBAL CAUGHT: Event: $event | Data: $data');
+    });
+
+    // Register message handlers immediately after connect() so they always bind to this instance.
+    _socket!.on('receive_message', (data) {
+      print('🔥 RECEIVED: $data');
+      try {
+        _messageController.add(data);
+      } catch (_) {}
+    });
+    _socket!.on('newMessage', (data) {
+      print('🔥 RECEIVED newMessage: $data');
+      try {
+        _messageController.add(data);
+      } catch (_) {}
+    });
   }
 
   // ── Room management ───────────────────────────────────────────────────────
   void joinChat(String chatId) {
+    print('🔵 SOCKET EMITTING JOIN ROOM: $chatId');
     _joinedChats.add(chatId);
-    _emit('join_chat', {'chatId': chatId});
+    if (_socket?.connected == true) {
+      _socket!.emit('join_chat', <String, dynamic>{'chatId': chatId});
+    }
   }
 
   void leaveChat(String chatId) {

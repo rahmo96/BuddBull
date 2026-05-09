@@ -9,10 +9,18 @@ abstract class ApiEndpoints {
     const env = String.fromEnvironment('API_BASE_URL', defaultValue: '');
     if (env.isNotEmpty) return env;
 
-    return kIsWeb
-        ? 'http://127.0.0.1:5000/api/v1'
-        : 'http://10.0.2.2:5000/api/v1';
+    if (kIsWeb) return 'http://127.0.0.1:5000/api/v1';
+
+    // Android emulator: host loopback. iOS simulator & desktop: localhost (not 10.0.2.2).
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:5000/api/v1';
+    }
+    return 'http://127.0.0.1:5000/api/v1';
   }
+
+  /// HTTP origin for Socket.IO (same host/port as REST, without `/api/v1`).
+  static String get socketUrl =>
+      baseUrl.replaceAll(RegExp(r'/api/v1/?$'), '');
 
   // ── Auth ──────────────────────────────────────────────────────
   static const String register = '/auth/register';

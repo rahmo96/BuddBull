@@ -344,8 +344,12 @@ const joinGame = async (gameId, userId) => {
   // Already in the game?
   const existingSlot = game.players.find((p) => p.user.toString() === userId.toString());
   if (existingSlot) {
-    if (existingSlot.status === 'approved') throw new AppError('You are already in this game.', 409);
-    if (existingSlot.status === 'pending') throw new AppError('Your join request is already pending.', 409);
+    if (existingSlot.status === 'approved') {
+      throw new AppError('You are already in this game.', 409);
+    }
+    if (existingSlot.status === 'pending') {
+      throw new AppError('Your join request is already pending.', 409);
+    }
     if (existingSlot.status === 'kicked') throw new AppError('You have been removed from this game.', 403);
     if (existingSlot.status === 'invited') {
       // Accept the invitation
@@ -375,9 +379,25 @@ const joinGame = async (gameId, userId) => {
     }
   }
 
-  // Double-booking check
-  const hasConflict = await Game.hasConflict(userId, game.scheduledAt, game.durationMinutes);
-  if (hasConflict) {
+  // Double-booking check — proposed window as explicit Dates / ms (see Game.findScheduleConflictGame)
+  const proposedStart =
+    game.scheduledAt instanceof Date ? game.scheduledAt : new Date(game.scheduledAt);
+  if (Number.isNaN(proposedStart.getTime())) {
+    throw new AppError('This game has an invalid scheduled time.', 500);
+  }
+  const proposedDurationMinutes = Number(game.durationMinutes);
+  const durationMinutes =
+    Number.isFinite(proposedDurationMinutes) && proposedDurationMinutes >= 0
+      ? proposedDurationMinutes
+      : 0;
+
+  const conflictingGame = await Game.findScheduleConflictGame(
+    userId,
+    proposedStart,
+    durationMinutes,
+    game._id,
+  );
+  if (conflictingGame) {
     throw new AppError(
       'You have a schedule conflict — another game you have joined overlaps with this time slot.',
       409,
@@ -480,7 +500,7 @@ const approvePlayer = async (gameId, organizerId, organizerRole, targetUserId) =
   }
 
   // Schedule conflict check at approve-time as well
-  const hasConflict = await Game.hasConflict(targetUserId, game.scheduledAt, game.durationMinutes);
+  const hasConflict = await Game.hasConflict(targetUserId, game.scheduledAt, game.durationMinutes, game._id);
   if (hasConflict) {
     throw new AppError('This player has a schedule conflict and cannot be approved for this time slot.', 409);
   }
@@ -594,7 +614,7 @@ const mergeGroups = async (sourceGameId, targetGameId, organizerId, organizerRol
     if (!existingTargetUserIds.has(slot.user.toString())) {
       // Recheck schedule conflict for each migrating player
       // eslint-disable-next-line no-await-in-loop
-      const conflict = await Game.hasConflict(slot.user, target.scheduledAt, target.durationMinutes);
+      const conflict = await Game.hasConflict(slot.user, target.scheduledAt, target.durationMinutes, target._id);
       if (!conflict) {
         target.players.push({ user: slot.user, status: 'approved', joinedAt: new Date() });
       }

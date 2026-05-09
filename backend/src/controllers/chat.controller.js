@@ -1,5 +1,6 @@
 const chatService = require('../services/chat.service');
 const catchAsync = require('../utils/catchAsync');
+const { toPlainDoc } = require('../utils/toPlainDoc');
 
 exports.getChats = catchAsync(async (req, res) => {
   const chats = await chatService.getChats(req.user._id);
@@ -28,11 +29,11 @@ exports.sendMessage = catchAsync(async (req, res) => {
   // Broadcast to socket room in real-time (non-blocking)
   const io = req.app.get('io');
   if (io) {
-    console.log('Broadcasting to room:', chatId, 'Message:', message?.content);
-    // Emit both event names for safety (client compatibility).
-    // Ensure chatId is a string (room names are string-keyed in socket.io).
-    io.to(chatId.toString()).emit('newMessage', message);
-    io.to(chatId.toString()).emit('receive_message', message);
+    const messageDocument = toPlainDoc(message);
+    const roomId = chatId.toString();
+    console.log('🚀 FIRING TO ROOM:', roomId);
+    io.to(roomId).emit('receive_message', { message: messageDocument });
+    io.to(roomId).emit('newMessage', messageDocument);
   }
 
   res.status(201).json({ success: true, data: { message } });

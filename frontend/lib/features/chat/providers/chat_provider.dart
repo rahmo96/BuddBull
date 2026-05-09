@@ -61,6 +61,9 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
   StreamSubscription<MessageDeletedEvent>? _delSub;
   StreamSubscription<MessagePinnedEvent>? _pinSub;
 
+  /// Fast duplicate detection for socket + HTTP echo without scanning the full list.
+  final Set<String> _seenMessageIds = <String>{};
+
   int _page = 1;
   static const int _limit = 30;
 
@@ -73,30 +76,10 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     _socket.joinChat(chatId);
 
     // Subscribe to real-time events
-    _msgSub = _socket.messageStream.listen((data) {
-      try {
-        if (data == null) return;
-        if (data is! Map) return;
-
-        final d = data.cast<String, dynamic>();
-        final raw = (d['message'] is Map)
-            ? (d['message'] as Map).cast<String, dynamic>()
-            : d;
-
-        final msg = MessageModel.fromJson(raw);
-        if (msg.chatId != chatId) return;
-
-        // ignore: avoid_print
-        print('PROVIDER_UPDATE: Updating state with new message');
-        _handleIncoming(msg);
-      } catch (_) {}
-    });
+    _msgSub = _socket.messageStream.listen(_onSocketMessagePayload);
 
     _delSub = _socket.deletedStream.listen((event) {
-      state = state.copyWith(
-        messages: state.messages.map((m) {
-          if (m.id != event.messageId) return m;
-          return MessageModel(
+      _replaceMessage(event.messageId, (m) => MessageModel(
             id: m.id,
             chatId: m.chatId,
             sender: m.sender,
@@ -106,16 +89,11 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
             isPinned: m.isPinned,
             isDeleted: true,
             sentAt: m.sentAt,
-          );
-        }).toList(),
-      );
+          ));
     });
 
     _pinSub = _socket.pinnedStream.listen((event) {
-      state = state.copyWith(
-        messages: state.messages.map((m) {
-          if (m.id != event.messageId) return m;
-          return MessageModel(
+      _replaceMessage(event.messageId, (m) => MessageModel(
             id: m.id,
             chatId: m.chatId,
             sender: m.sender,
@@ -125,9 +103,7 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
             isPinned: event.isPinned,
             isDeleted: m.isDeleted,
             sentAt: m.sentAt,
-          );
-        }).toList(),
-      );
+          ));
     });
 
     await loadMessages();
@@ -141,6 +117,9 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     try {
       _page = 1;
       final msgs = await _repo.getMessages(chatId, page: _page, limit: _limit);
+      _seenMessageIds
+        ..clear()
+        ..addAll(msgs.map((m) => m.id));
       state = state.copyWith(
         messages: msgs,
         isLoading: false,
@@ -158,6 +137,7 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
       _page++;
       final firstMsgTime = state.messages.isNotEmpty ? state.messages.first.sentAt.toIso8601String() : null;
       final older = await _repo.getMessages(chatId, page: _page, limit: _limit, before: firstMsgTime);
+      _seenMessageIds.addAll(older.map((m) => m.id));
       state = state.copyWith(
         messages: [...older, ...state.messages],
         isLoadingMore: false,
@@ -186,9 +166,40 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
   void startTyping() => _socket.startTyping(chatId);
   void stopTyping() => _socket.stopTyping(chatId);
 
+  /// Cheap chat filter + defer JSON parsing so socket bursts don't block frames.
+  void _onSocketMessagePayload(dynamic data) {
+    if (data == null || data is! Map) return;
+    final Map<String, dynamic> d;
+    try {
+      d = Map<String, dynamic>.from(data as Map);
+    } catch (_) {
+      return;
+    }
+    final raw = (d['message'] is Map)
+        ? Map<String, dynamic>.from(d['message'] as Map)
+        : d;
+    final incomingChatId = (raw['chat'] ?? raw['chatId'])?.toString();
+    if (incomingChatId != chatId) return;
+
+    Future.microtask(() {
+      try {
+        final msg = MessageModel.fromJson(raw);
+        _handleIncoming(msg);
+      } catch (_) {}
+    });
+  }
+
+  void _replaceMessage(String messageId, MessageModel Function(MessageModel m) builder) {
+    final list = state.messages;
+    final idx = list.indexWhere((m) => m.id == messageId);
+    if (idx < 0) return;
+    final next = [...list];
+    next[idx] = builder(list[idx]);
+    state = state.copyWith(messages: next);
+  }
+
   void _handleIncoming(MessageModel msg) {
-    // Avoid duplicates (temporarily less restrictive during debugging)
-    // if (state.messages.any((m) => m.id == msg.id)) return;
+    if (!_seenMessageIds.add(msg.id)) return;
     state = state.copyWith(messages: [...state.messages, msg]);
     _socket.markAsRead(chatId, msg.id);
   }
