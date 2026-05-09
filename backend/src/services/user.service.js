@@ -188,14 +188,22 @@ const updateProfilePicture = async (userId, newFilePath) => {
  * @param {string} password  Must match current password before deletion
  */
 const deleteMe = async (userId, password) => {
-  const user = await User.findById(userId).select('+password').active();
+  const user = await User.findById(userId).active();
   if (!user) throw new AppError('User not found.', 404);
 
-  const isCorrect = await user.comparePassword(password);
+  if (!User.schema.paths.password) {
+    throw new AppError(
+      'Account deletion is not available via this API endpoint for SSO-managed profiles.',
+      501,
+    );
+  }
+
+  const withSecret = await User.findById(userId).select('+password').active();
+  const isCorrect = await withSecret.comparePassword(password);
   if (!isCorrect) throw new AppError('Password is incorrect. Account deletion cancelled.', 401);
 
-  user.softDelete();
-  await user.save({ validateBeforeSave: false });
+  withSecret.softDelete();
+  await withSecret.save({ validateBeforeSave: false });
 
   logger.info(`Account soft-deleted: ${userId}`);
 };

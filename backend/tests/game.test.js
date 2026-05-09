@@ -1,54 +1,27 @@
 /**
- * Game & Matchmaking Integration Tests
+ * Game & matchmaking integration tests (Express + mongoose + firebase-auth stub).
  *
- * Coverage:
- *  - Create game (organiser only, player blocked)
- *  - Get game by ID
- *  - Search games (sport, city, status filters)
- *  - Join game (success, already joined, schedule conflict)
- *  - Leave game
- *  - Invite → Approve flow
- *  - Kick player
- *  - Cancel game
- *  - Complete game (stat increment check)
- *  - Group merge (capacity check, expandCapacity flag)
- *  - Double-booking prevention
+ * Auth: firebase-admin is mapped to tests/__mocks__/firebase-admin.js; users onboard via POST /auth/sync.
  */
 
 const request = require('supertest');
 const testDb = require('./helpers/testDb');
 const createApp = require('../src/app');
+const User = require('../src/models/User.model');
+const { syncFirebaseUser } = require('./helpers/authTestFactory');
 
 const app = createApp();
-
-// ─────────────────────────────────────────────
-//  Lifecycle
-// ─────────────────────────────────────────────
 
 beforeAll(testDb.connect);
 afterEach(testDb.clearAll);
 afterAll(testDb.disconnect);
 
-// ─────────────────────────────────────────────
-//  Helpers
-// ─────────────────────────────────────────────
-
-const AUTH = '/api/v1/auth';
 const GAMES = '/api/v1/games';
-
-const mkUser = (n, role = 'player') => ({
-  firstName: `User${n}`,
-  lastName: 'Test',
-  username: `user${n}t`,
-  email: `user${n}@game.test`,
-  password: 'Password1',
-  role,
-});
 
 const mkGame = (overrides = {}) => ({
   title: 'Sunday Football',
   sport: 'football',
-  scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
+  scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
   durationMinutes: 90,
   location: {
     neighborhood: 'Notting Hill',
@@ -63,19 +36,18 @@ const mkGame = (overrides = {}) => ({
   ...overrides,
 });
 
-const registerAndLogin = async (n, role = 'player') => {
-  const dto = mkUser(n, role);
-  await request(app).post(`${AUTH}/register`).send(dto);
-  const res = await request(app).post(`${AUTH}/login`).send({ email: dto.email, password: dto.password });
-  return { token: res.body.accessToken, userId: res.body.data.user._id };
+const registerAndLogin = async (slot, role = 'player') => {
+  const r = await syncFirebaseUser(app, {
+    role,
+    firstName: `User${slot}`,
+    lastName: 'Test',
+  });
+  expect(r.status).toBe(200);
+  return { token: r.token, userId: r.userId, user: r.user };
 };
 
 const createGameAs = async (token, overrides = {}) =>
   request(app).post(GAMES).set('Authorization', `Bearer ${token}`).send(mkGame(overrides));
-
-// ─────────────────────────────────────────────
-//  POST /games  — Create
-// ─────────────────────────────────────────────
 
 describe('POST /games', () => {
   it('allows an organizer to create a game and returns 201', async () => {
@@ -87,27 +59,27 @@ describe('POST /games', () => {
     expect(res.body.data.game.status).toBe('open');
   });
 
-  it('rejects a player trying to create a game with 403', async () => {
+  it('allows a player role to create a game because restrictTo permits player organizer admin', async () => {
     const { token } = await registerAndLogin(1, 'player');
     const res = await createGameAs(token);
-
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(201);
   });
 
-  it('requires a future scheduledAt', async () => {
+  it('requires a future scheduledAt (validator returns 422)', async () => {
     const { token } = await registerAndLogin(1, 'organizer');
     const res = await createGameAs(token, {
       scheduledAt: new Date(Date.now() - 60000).toISOString(),
     });
 
     expect(res.status).toBe(422);
+    expect(Array.isArray(res.body.errors)).toBe(true);
   });
 
   it('auto-adds organizer as approved player', async () => {
     const { token, userId } = await registerAndLogin(1, 'organizer');
     const res = await createGameAs(token);
 
-    const orgSlot = res.body.data.game.players.find((p) => p.user === userId || p.user?._id === userId);
+    const orgSlot = res.body.data.game.players.find((p) => p.user === `${userId}` || p.user?._id === `${userId}`);
     expect(orgSlot).toBeDefined();
     expect(orgSlot.status).toBe('approved');
   });
@@ -119,15 +91,14 @@ describe('POST /games', () => {
     expect(res.status).toBe(201);
     expect(res.body.data.game.location.placeId).toBe('test-place-id');
     expect(res.body.data.game.location.coordinates.type).toBe('Point');
-    expect(res.body.data.game.location.coordinates.coordinates).toEqual(
-      [-0.1955, 51.5099],
-    );
+    expect(res.body.data.game.location.coordinates.coordinates).toEqual([-0.1955, 51.5099]);
+  });
+
+  it('rejects unauthenticated game creation', async () => {
+    const res = await request(app).post(GAMES).send(mkGame());
+    expect(res.status).toBe(401);
   });
 });
-
-// ─────────────────────────────────────────────
-//  GET /games/:id
-// ─────────────────────────────────────────────
 
 describe('GET /games/:id', () => {
   it('returns a game by ID', async () => {
@@ -146,10 +117,6 @@ describe('GET /games/:id', () => {
     expect(res.status).toBe(404);
   });
 });
-
-// ─────────────────────────────────────────────
-//  GET /games  — Search
-// ─────────────────────────────────────────────
 
 describe('GET /games (search)', () => {
   it('returns open games filtered by sport', async () => {
@@ -176,10 +143,6 @@ describe('GET /games (search)', () => {
   });
 });
 
-// ─────────────────────────────────────────────
-//  POST /games/:id/join
-// ─────────────────────────────────────────────
-
 describe('POST /games/:id/join', () => {
   it('allows a player to join an open game', async () => {
     const { token: orgToken } = await registerAndLogin(1, 'organizer');
@@ -188,12 +151,10 @@ describe('POST /games/:id/join', () => {
     const game = await createGameAs(orgToken);
     const gameId = game.body.data.game._id;
 
-    const res = await request(app)
-      .post(`${GAMES}/${gameId}/join`)
-      .set('Authorization', `Bearer ${playerToken}`);
+    const res = await request(app).post(`${GAMES}/${gameId}/join`).set('Authorization', `Bearer ${playerToken}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.data.status).toBe('approved'); // no requiresApproval
+    expect(res.body.data.status).toBe('approved');
   });
 
   it('prevents joining the same game twice', async () => {
@@ -204,9 +165,7 @@ describe('POST /games/:id/join', () => {
     const gameId = game.body.data.game._id;
 
     await request(app).post(`${GAMES}/${gameId}/join`).set('Authorization', `Bearer ${playerToken}`);
-    const res = await request(app)
-      .post(`${GAMES}/${gameId}/join`)
-      .set('Authorization', `Bearer ${playerToken}`);
+    const res = await request(app).post(`${GAMES}/${gameId}/join`).set('Authorization', `Bearer ${playerToken}`);
 
     expect(res.status).toBe(409);
   });
@@ -216,29 +175,24 @@ describe('POST /games/:id/join', () => {
     const { token: p2 } = await registerAndLogin(2);
     const { token: p3 } = await registerAndLogin(3);
 
-    // Create game with maxPlayers = 2 (organizer fills slot 1)
     const game = await createGameAs(orgToken, { maxPlayers: 2 });
     const gameId = game.body.data.game._id;
 
     await request(app).post(`${GAMES}/${gameId}/join`).set('Authorization', `Bearer ${p2}`);
 
-    const res = await request(app)
-      .post(`${GAMES}/${gameId}/join`)
-      .set('Authorization', `Bearer ${p3}`);
+    const res = await request(app).post(`${GAMES}/${gameId}/join`).set('Authorization', `Bearer ${p3}`);
 
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/full/i);
   });
 
-  it('detects a schedule conflict', async () => {
+  it('detects a schedule conflict across overlapping fixtures', async () => {
     const { token: orgToken } = await registerAndLogin(1, 'organizer');
     const { token: playerToken } = await registerAndLogin(2);
 
     const sharedTime = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Game A
     const gameA = await createGameAs(orgToken, { scheduledAt: sharedTime, durationMinutes: 90 });
-    // Game B — same time slot
     const gameB = await createGameAs(orgToken, { title: 'Game B', scheduledAt: sharedTime, durationMinutes: 90 });
 
     await request(app).post(`${GAMES}/${gameA.body.data.game._id}/join`).set('Authorization', `Bearer ${playerToken}`);
@@ -250,11 +204,19 @@ describe('POST /games/:id/join', () => {
     expect(res.status).toBe(409);
     expect(res.body.message).toMatch(/conflict/i);
   });
-});
 
-// ─────────────────────────────────────────────
-//  DELETE /games/:id/leave
-// ─────────────────────────────────────────────
+  it('rejects joining with unknown Firebase token mapping', async () => {
+    const { token: orgToken } = await registerAndLogin(1, 'organizer');
+    const game = await createGameAs(orgToken);
+    const gameId = game.body.data.game._id;
+
+    const res = await request(app)
+      .post(`${GAMES}/${gameId}/join`)
+      .set('Authorization', 'Bearer totally-unregistered-test-token');
+
+    expect(res.status).toBe(401);
+  });
+});
 
 describe('DELETE /games/:id/leave', () => {
   it('allows a joined player to leave', async () => {
@@ -283,42 +245,46 @@ describe('DELETE /games/:id/leave', () => {
   });
 });
 
-// ─────────────────────────────────────────────
-//  Invite → Approve flow
-// ─────────────────────────────────────────────
-
 describe('Invite & Approve flow', () => {
-  it('organizer invites a user and then approves them', async () => {
+  it('organizer invites a user and then approves them after join', async () => {
     const { token: orgToken } = await registerAndLogin(1, 'organizer');
-    const { userId: p2Id } = await registerAndLogin(2);
+    const { token: p2Token, userId: p2Id } = await registerAndLogin(2, 'player');
 
     const game = await createGameAs(orgToken, { requiresApproval: true });
     const gameId = game.body.data.game._id;
 
-    // Invite
-    const invRes = await request(app)
-      .post(`${GAMES}/${gameId}/invite/${p2Id}`)
-      .set('Authorization', `Bearer ${orgToken}`);
+    const invRes = await request(app).post(`${GAMES}/${gameId}/invite/${p2Id}`).set('Authorization', `Bearer ${orgToken}`);
     expect(invRes.status).toBe(200);
 
-    // Player accepts invite (joins)
-    const { token: p2Token } = await registerAndLogin(2);
     await request(app).post(`${GAMES}/${gameId}/join`).set('Authorization', `Bearer ${p2Token}`);
 
-    // Organizer approves
     const appRes = await request(app)
       .patch(`${GAMES}/${gameId}/players/${p2Id}/approve`)
       .set('Authorization', `Bearer ${orgToken}`);
 
     expect(appRes.status).toBe(200);
-    const slot = appRes.body.data.game.players.find((p) => p.user === p2Id || p.user?._id === p2Id);
+    const slot = appRes.body.data.game.players.find((p) => `${p.user}` === `${p2Id}` || p.user?._id === `${p2Id}`);
     expect(slot?.status).toBe('approved');
   });
-});
 
-// ─────────────────────────────────────────────
-//  Kick player
-// ─────────────────────────────────────────────
+  it('returns 403 when a non-organizer attempts to approve a participant', async () => {
+    const { token: orgToken } = await registerAndLogin(1, 'organizer');
+    const { token: p2Token, userId: p2Id } = await registerAndLogin(2, 'player');
+    const { token: p3Token } = await registerAndLogin(3, 'player');
+
+    const game = await createGameAs(orgToken, { requiresApproval: true });
+    const gameId = game.body.data.game._id;
+
+    await request(app).post(`${GAMES}/${gameId}/invite/${p2Id}`).set('Authorization', `Bearer ${orgToken}`);
+    await request(app).post(`${GAMES}/${gameId}/join`).set('Authorization', `Bearer ${p2Token}`);
+
+    const res = await request(app)
+      .patch(`${GAMES}/${gameId}/players/${p2Id}/approve`)
+      .set('Authorization', `Bearer ${p3Token}`);
+
+    expect(res.status).toBe(403);
+  });
+});
 
 describe('DELETE /games/:id/players/:userId (kick)', () => {
   it('organizer can kick an approved player', async () => {
@@ -336,7 +302,7 @@ describe('DELETE /games/:id/players/:userId (kick)', () => {
       .send({ reason: 'No-show at last event' });
 
     expect(res.status).toBe(200);
-    const slot = res.body.data.game.players.find((p) => p.user === p2Id || p.user?._id === p2Id);
+    const slot = res.body.data.game.players.find((p) => `${p.user}` === `${p2Id}` || p.user?._id === `${p2Id}`);
     expect(slot?.status).toBe('kicked');
   });
 
@@ -359,66 +325,76 @@ describe('DELETE /games/:id/players/:userId (kick)', () => {
   });
 });
 
-// ─────────────────────────────────────────────
-//  Cancel game
-// ─────────────────────────────────────────────
-
 describe('DELETE /games/:id (cancel)', () => {
   it('organizer can cancel their own game', async () => {
     const { token } = await registerAndLogin(1, 'organizer');
     const game = await createGameAs(token);
     const gameId = game.body.data.game._id;
 
-    const res = await request(app)
-      .delete(`${GAMES}/${gameId}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({ reason: 'Venue unavailable' });
+    const res = await request(app).delete(`${GAMES}/${gameId}`).set('Authorization', `Bearer ${token}`).send({
+      reason: 'Venue unavailable',
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.data.game.status).toBe('cancelled');
   });
+
+  it('requires a cancellation reason payload', async () => {
+    const { token } = await registerAndLogin(1, 'organizer');
+    const game = await createGameAs(token);
+    const gameId = game.body.data.game._id;
+
+    const res = await request(app).delete(`${GAMES}/${gameId}`).set('Authorization', `Bearer ${token}`).send({});
+
+    expect(res.status).toBe(422);
+  });
+
+  it('non-organiser cannot cancel another organiser fixture', async () => {
+    const { token: org1 } = await registerAndLogin(1, 'organizer');
+    const { token: org2 } = await registerAndLogin(2, 'organizer');
+    const game = await createGameAs(org1);
+
+    const res = await request(app)
+      .delete(`${GAMES}/${game.body.data.game._id}`)
+      .set('Authorization', `Bearer ${org2}`)
+      .send({ reason: 'Trolling cancellation' });
+
+    expect(res.status).toBe(403);
+  });
 });
 
-// ─────────────────────────────────────────────
-//  Complete game
-// ─────────────────────────────────────────────
-
 describe('PATCH /games/:id/complete', () => {
-  it('marks game completed and increments player stats', async () => {
+  it('marks game completed and increments player stats for organiser', async () => {
     const { token: orgToken, userId: orgId } = await registerAndLogin(1, 'organizer');
-    const { token: p2Token } = await registerAndLogin(2);
-    const User = require('../src/models/User.model');
+    const { token: p2Token, userId: p2Id } = await registerAndLogin(2);
 
     const game = await createGameAs(orgToken);
     const gameId = game.body.data.game._id;
 
     await request(app).post(`${GAMES}/${gameId}/join`).set('Authorization', `Bearer ${p2Token}`);
 
-    const res = await request(app)
-      .patch(`${GAMES}/${gameId}/complete`)
-      .set('Authorization', `Bearer ${orgToken}`)
-      .send({ score: '3-1', winnerDescription: 'Team A' });
+    const res = await request(app).patch(`${GAMES}/${gameId}/complete`).set('Authorization', `Bearer ${orgToken}`).send({
+      score: '3-1',
+      winnerDescription: 'Team A',
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.data.game.status).toBe('completed');
 
     const organizer = await User.findById(orgId);
     expect(organizer.stats.gamesPlayed).toBe(1);
+
+    const participant = await User.findById(p2Id);
+    expect(participant.stats.gamesPlayed).toBe(1);
   });
 });
-
-// ─────────────────────────────────────────────
-//  Group merge
-// ─────────────────────────────────────────────
 
 describe('POST /games/:id/merge/:targetId', () => {
   it('merges two under-capacity games', async () => {
     const { token: org1Token } = await registerAndLogin(1, 'organizer');
     const { token: org2Token } = await registerAndLogin(2, 'organizer');
 
-    // Source game (org1)
     const source = await createGameAs(org1Token, { maxPlayers: 5 });
-    // Target game (org2)
     const target = await createGameAs(org2Token, { maxPlayers: 5, title: 'Target Game' });
 
     const res = await request(app)
@@ -431,48 +407,51 @@ describe('POST /games/:id/merge/:targetId', () => {
     expect(res.body.data.game.isMerged).toBe(true);
   });
 
-  it('rejects merge when combined players would exceed capacity', async () => {
-    const { token: org1Token } = await registerAndLogin(1, 'organizer');
-    const { token: org2Token } = await registerAndLogin(2, 'organizer');
+  it('rejects merge when merged roster would burst target.maxPlayers without expandCapacity', async () => {
+    const { token: orgSrc } = await registerAndLogin(1, 'organizer');
+    const { token: orgTgt } = await registerAndLogin(2, 'organizer');
     const { token: p3 } = await registerAndLogin(3);
     const { token: p4 } = await registerAndLogin(4);
+    const { token: p5 } = await registerAndLogin(5);
 
-    // Both games have maxPlayers=2, organizer already takes 1 slot each
-    const source = await createGameAs(org1Token, { maxPlayers: 2 });
-    const target = await createGameAs(org2Token, { maxPlayers: 2, title: 'Target' });
+    const capacity = 4;
+    const source = await createGameAs(orgSrc, { maxPlayers: capacity, title: 'Source overcrowd' });
+    const target = await createGameAs(orgTgt, { maxPlayers: capacity, title: 'Target tight' });
 
-    // Fill source game
     await request(app).post(`${GAMES}/${source.body.data.game._id}/join`).set('Authorization', `Bearer ${p3}`);
-    // Fill target game
-    await request(app).post(`${GAMES}/${target.body.data.game._id}/join`).set('Authorization', `Bearer ${p4}`);
+    await request(app).post(`${GAMES}/${source.body.data.game._id}/join`).set('Authorization', `Bearer ${p4}`);
+    await request(app).post(`${GAMES}/${target.body.data.game._id}/join`).set('Authorization', `Bearer ${p5}`);
 
     const res = await request(app)
       .post(`${GAMES}/${source.body.data.game._id}/merge/${target.body.data.game._id}`)
-      .set('Authorization', `Bearer ${org1Token}`)
+      .set('Authorization', `Bearer ${orgSrc}`)
       .send({ expandCapacity: false });
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toMatch(/capacity/i);
+    expect(res.body.message).toMatch(/capacity|exceeding/i);
   });
 
-  it('expands capacity and merges when expandCapacity is true', async () => {
-    const { token: org1Token } = await registerAndLogin(1, 'organizer');
-    const { token: org2Token } = await registerAndLogin(2, 'organizer');
+  it('expands capacity and merges disjoint rosters into a single survivor game', async () => {
+    const { token: orgSrc } = await registerAndLogin(1, 'organizer');
+    const { token: orgTgt } = await registerAndLogin(2, 'organizer');
     const { token: p3 } = await registerAndLogin(3);
     const { token: p4 } = await registerAndLogin(4);
+    const { token: p5 } = await registerAndLogin(5);
 
-    const source = await createGameAs(org1Token, { maxPlayers: 2 });
-    const target = await createGameAs(org2Token, { maxPlayers: 2, title: 'Target' });
+    const tightCap = 4;
+    const source = await createGameAs(orgSrc, { maxPlayers: tightCap });
+    const target = await createGameAs(orgTgt, { maxPlayers: tightCap, title: 'Target expand' });
 
     await request(app).post(`${GAMES}/${source.body.data.game._id}/join`).set('Authorization', `Bearer ${p3}`);
-    await request(app).post(`${GAMES}/${target.body.data.game._id}/join`).set('Authorization', `Bearer ${p4}`);
+    await request(app).post(`${GAMES}/${source.body.data.game._id}/join`).set('Authorization', `Bearer ${p4}`);
+    await request(app).post(`${GAMES}/${target.body.data.game._id}/join`).set('Authorization', `Bearer ${p5}`);
 
     const res = await request(app)
       .post(`${GAMES}/${source.body.data.game._id}/merge/${target.body.data.game._id}`)
-      .set('Authorization', `Bearer ${org1Token}`)
+      .set('Authorization', `Bearer ${orgSrc}`)
       .send({ expandCapacity: true });
 
     expect(res.status).toBe(200);
-    expect(res.body.data.game.maxPlayers).toBeGreaterThan(2);
+    expect(res.body.data.game.maxPlayers).toBeGreaterThan(tightCap);
   });
 });

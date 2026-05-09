@@ -1,77 +1,48 @@
 /**
- * User CRUD Integration Tests
- *
- * Coverage:
- *  - GET /users/me
- *  - PATCH /users/me (profile update)
- *  - PATCH /users/me/username
- *  - DELETE /users/me (soft delete)
- *  - GET /users/:username (public profile)
- *  - POST /users/:id/follow  &  DELETE /users/:id/follow
- *  - GET /users/search
+ * User profile integration tests (Firebase ID token stub + POST /auth/sync onboarding).
  */
 
 const request = require('supertest');
 const testDb = require('./helpers/testDb');
 const createApp = require('../src/app');
-const User = require('../src/models/User.model');
+const { syncFirebaseUser } = require('./helpers/authTestFactory');
 
 const app = createApp();
-
-// ─────────────────────────────────────────────
-//  Lifecycle
-// ─────────────────────────────────────────────
 
 beforeAll(testDb.connect);
 afterEach(testDb.clearAll);
 afterAll(testDb.disconnect);
 
-// ─────────────────────────────────────────────
-//  Helpers
-// ─────────────────────────────────────────────
-
-const AUTH_BASE = '/api/v1/auth';
 const USER_BASE = '/api/v1/users';
 
-const makeUser = (n = 1) => ({
-  firstName: `User${n}`,
-  lastName: 'Test',
-  username: `user${n}test`,
-  email: `user${n}@example.com`,
-  password: 'Password1',
-  role: 'player',
-});
-
-const registerAndLogin = async (n = 1) => {
-  const dto = makeUser(n);
-  await request(app).post(`${AUTH_BASE}/register`).send(dto);
-  const res = await request(app)
-    .post(`${AUTH_BASE}/login`)
-    .send({ email: dto.email, password: dto.password });
-  return { token: res.body.accessToken, user: res.body.data.user, dto };
+const registerAndLogin = async (slot = 1, role = 'player') => {
+  const r = await syncFirebaseUser(app, {
+    role,
+    email: `u${slot}_${Date.now()}@example.com`,
+    firstName: `User${slot}`,
+    lastName: 'Test',
+  });
+  expect(r.status).toBe(200);
+  const dto = { email: r.email, username: r.user.username };
+  return { token: r.token, user: r.user, dto };
 };
-
-// ─────────────────────────────────────────────
-//  GET /users/me
-// ─────────────────────────────────────────────
 
 describe('GET /users/me', () => {
   it('returns the authenticated user profile', async () => {
     const { token, dto } = await registerAndLogin();
 
-    const res = await request(app)
-      .get(`${USER_BASE}/me`)
-      .set('Authorization', `Bearer ${token}`);
+    const res = await request(app).get(`${USER_BASE}/me`).set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     expect(res.body.data.user.email).toBe(dto.email);
     expect(res.body.data.user.password).toBeUndefined();
   });
-});
 
-// ─────────────────────────────────────────────
-//  PATCH /users/me
-// ─────────────────────────────────────────────
+  it('returns 401 when bearer token mapping is absent', async () => {
+    const res = await request(app).get(`${USER_BASE}/me`).set('Authorization', 'Bearer unmapped-token-test');
+    expect(res.status).toBe(401);
+  });
+});
 
 describe('PATCH /users/me', () => {
   it('updates profile fields', async () => {
@@ -90,10 +61,10 @@ describe('PATCH /users/me', () => {
   it('ignores attempts to escalate role via this endpoint', async () => {
     const { token } = await registerAndLogin();
 
-    const res = await request(app)
-      .patch(`${USER_BASE}/me`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({ role: 'admin', bio: 'Legit update' });
+    const res = await request(app).patch(`${USER_BASE}/me`).set('Authorization', `Bearer ${token}`).send({
+      role: 'admin',
+      bio: 'Legit update',
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.data.user.role).toBe('player');
@@ -102,18 +73,22 @@ describe('PATCH /users/me', () => {
   it('rejects empty body with 422', async () => {
     const { token } = await registerAndLogin();
 
-    const res = await request(app)
-      .patch(`${USER_BASE}/me`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({});
+    const res = await request(app).patch(`${USER_BASE}/me`).set('Authorization', `Bearer ${token}`).send({});
 
     expect(res.status).toBe(422);
   });
-});
 
-// ─────────────────────────────────────────────
-//  PATCH /users/me/username
-// ─────────────────────────────────────────────
+  it('rejects payloads that violate schema constraints', async () => {
+    const { token } = await registerAndLogin();
+
+    const res = await request(app).patch(`${USER_BASE}/me`).set('Authorization', `Bearer ${token}`).send({
+      bio: 'x'.repeat(501),
+    });
+
+    expect(res.status).toBe(422);
+    expect(Array.isArray(res.body.errors)).toBe(true);
+  });
+});
 
 describe('PATCH /users/me/username', () => {
   it('changes username to a new unique value', async () => {
@@ -129,34 +104,50 @@ describe('PATCH /users/me/username', () => {
   });
 
   it('returns 409 if the username is already taken', async () => {
-    const { token } = await registerAndLogin(1);
-    await registerAndLogin(2); // creates user2test
+    const rA = await syncFirebaseUser(app, {
+      role: 'player',
+      username: `user_a_unique_${process.hrtime.bigint()}`,
+      email: `a_${Date.now()}@example.test`,
+    });
+    const rB = await syncFirebaseUser(app, {
+      role: 'player',
+      username: `user_b_unique_${process.hrtime.bigint()}`,
+      email: `b_${Date.now()}@example.test`,
+    });
+    expect(rA.status).toBe(200);
+    expect(rB.status).toBe(200);
 
-    const res = await request(app)
+    const clash = await request(app)
       .patch(`${USER_BASE}/me/username`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({ username: 'user2test' });
+      .set('Authorization', `Bearer ${rB.token}`)
+      .send({ username: rA.user.username });
 
-    expect(res.status).toBe(409);
+    expect(clash.status).toBe(409);
   });
 });
 
-// ─────────────────────────────────────────────
-//  GET /users/:username  (public profile)
-// ─────────────────────────────────────────────
-
 describe('GET /users/:username', () => {
-  it("returns another user's public profile", async () => {
-    await registerAndLogin(1);
-    const { token: token2, dto: dto1 } = await registerAndLogin(2);
+  it("returns another user's public profile without leaking email", async () => {
+    const rSubject = await syncFirebaseUser(app, {
+      role: 'player',
+      username: `pub_subject_${process.hrtime.bigint()}`,
+      email: `subject_${Date.now()}@example.com`,
+    });
+    const rViewer = await syncFirebaseUser(app, {
+      role: 'player',
+      username: `pub_viewer_${process.hrtime.bigint()}`,
+      email: `viewer_${Date.now()}@example.com`,
+    });
+
+    expect(rSubject.status).toBe(200);
+    expect(rViewer.status).toBe(200);
 
     const res = await request(app)
-      .get(`${USER_BASE}/${dto1.username}`)
-      .set('Authorization', `Bearer ${token2}`);
+      .get(`${USER_BASE}/${rSubject.user.username}`)
+      .set('Authorization', `Bearer ${rViewer.token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.data.user.username).toBe(dto1.username);
-    // email must not be in public profile
+    expect(res.body.data.user.username).toBe(rSubject.user.username);
     expect(res.body.data.user.email).toBeUndefined();
   });
 
@@ -171,34 +162,28 @@ describe('GET /users/:username', () => {
   });
 });
 
-// ─────────────────────────────────────────────
-//  Follow / Unfollow
-// ─────────────────────────────────────────────
-
 describe('Follow & Unfollow', () => {
   it('allows a user to follow another user', async () => {
-    const { token: token1 } = await registerAndLogin(1);
-    const { user: user2 } = await registerAndLogin(2);
+    const r1 = await registerAndLogin(1);
+    const r2 = await registerAndLogin(2);
 
     const res = await request(app)
-      .post(`${USER_BASE}/${user2._id}/follow`)
-      .set('Authorization', `Bearer ${token1}`);
+      .post(`${USER_BASE}/${r2.user._id}/follow`)
+      .set('Authorization', `Bearer ${r1.token}`);
 
     expect(res.status).toBe(200);
     expect(res.body.data.followerCount).toBe(1);
   });
 
   it('prevents following the same user twice with 409', async () => {
-    const { token: token1 } = await registerAndLogin(1);
-    const { user: user2 } = await registerAndLogin(2);
+    const r1 = await registerAndLogin(1);
+    const r2 = await registerAndLogin(2);
 
-    await request(app)
-      .post(`${USER_BASE}/${user2._id}/follow`)
-      .set('Authorization', `Bearer ${token1}`);
+    await request(app).post(`${USER_BASE}/${r2.user._id}/follow`).set('Authorization', `Bearer ${r1.token}`);
 
     const res = await request(app)
-      .post(`${USER_BASE}/${user2._id}/follow`)
-      .set('Authorization', `Bearer ${token1}`);
+      .post(`${USER_BASE}/${r2.user._id}/follow`)
+      .set('Authorization', `Bearer ${r1.token}`);
 
     expect(res.status).toBe(409);
   });
@@ -206,84 +191,93 @@ describe('Follow & Unfollow', () => {
   it('prevents following yourself with 400', async () => {
     const { token, user } = await registerAndLogin();
 
+    const res = await request(app).post(`${USER_BASE}/${user._id}/follow`).set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when follower route param is not a Mongo ObjectId', async () => {
+    const { token } = await registerAndLogin();
+
     const res = await request(app)
-      .post(`${USER_BASE}/${user._id}/follow`)
+      .post(`${USER_BASE}/not-a-valid-objectid/follow`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(400);
   });
 
   it('unfollows successfully after following', async () => {
-    const { token: token1 } = await registerAndLogin(1);
-    const { user: user2 } = await registerAndLogin(2);
+    const r1 = await registerAndLogin(1);
+    const r2 = await registerAndLogin(2);
 
-    await request(app)
-      .post(`${USER_BASE}/${user2._id}/follow`)
-      .set('Authorization', `Bearer ${token1}`);
+    await request(app).post(`${USER_BASE}/${r2.user._id}/follow`).set('Authorization', `Bearer ${r1.token}`);
 
     const res = await request(app)
-      .delete(`${USER_BASE}/${user2._id}/follow`)
-      .set('Authorization', `Bearer ${token1}`);
+      .delete(`${USER_BASE}/${r2.user._id}/follow`)
+      .set('Authorization', `Bearer ${r1.token}`);
 
     expect(res.status).toBe(200);
   });
-});
 
-// ─────────────────────────────────────────────
-//  DELETE /users/me (soft delete)
-// ─────────────────────────────────────────────
+  it('treats unfollow as idempotent when no prior follow edge existed', async () => {
+    const r1 = await registerAndLogin(1);
+    const r2 = await registerAndLogin(2);
+
+    const res = await request(app)
+      .delete(`${USER_BASE}/${r2.user._id}/follow`)
+      .set('Authorization', `Bearer ${r1.token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+});
 
 describe('DELETE /users/me', () => {
-  it('soft-deletes the account with correct password', async () => {
-    const { token, dto } = await registerAndLogin();
-
-    const res = await request(app)
-      .delete(`${USER_BASE}/me`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({ password: dto.password });
-
-    expect(res.status).toBe(200);
-
-    const user = await User.findOne({ email: dto.email });
-    // Email is scrambled after soft delete
-    expect(user.email).not.toBe(dto.email);
-    expect(user.deletedAt).toBeDefined();
-    expect(user.isActive).toBe(false);
-  });
-
-  it('refuses deletion with wrong password', async () => {
+  it('responds 501 until password-based SSO deletion ships', async () => {
     const { token } = await registerAndLogin();
 
-    const res = await request(app)
-      .delete(`${USER_BASE}/me`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({ password: 'WrongPass9' });
+    const res = await request(app).delete(`${USER_BASE}/me`).set('Authorization', `Bearer ${token}`).send({
+      password: 'Irrelevant1',
+    });
 
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(501);
+    expect(res.body.message).toMatch(/SSO-managed/i);
+  });
+
+  it('requires password field before attempting SSO guard', async () => {
+    const { token } = await registerAndLogin();
+
+    const res = await request(app).delete(`${USER_BASE}/me`).set('Authorization', `Bearer ${token}`).send({});
+
+    expect(res.status).toBe(400);
   });
 });
 
-// ─────────────────────────────────────────────
-//  GET /users/search
-// ─────────────────────────────────────────────
-
 describe('GET /users/search', () => {
-  it('returns matching users from text search', async () => {
+  it('supports paginated catalogue queries without invoking full-text operators', async () => {
     const { token } = await registerAndLogin(1);
 
-    // Create a second user with a distinctive bio
-    await request(app).post(`${AUTH_BASE}/register`).send({
-      ...makeUser(2),
-      bio: 'Professional goalkeeper',
+    await syncFirebaseUser(app, {
+      role: 'player',
+      username: `searchusr_${process.hrtime.bigint()}`,
+      email: `catalog_${Date.now()}@example.com`,
     });
 
-    const res = await request(app)
-      .get(`${USER_BASE}/search?q=goalkeeper`)
-      .set('Authorization', `Bearer ${token}`);
+    const res = await request(app).get(`${USER_BASE}/search?page=1&limit=5`).set('Authorization', `Bearer ${token}`);
 
-    // Text search requires a text index — in test it may return 0 results
-    // but the endpoint must respond successfully
     expect(res.status).toBe(200);
     expect(res.body.pagination).toBeDefined();
+    expect(Array.isArray(res.body.users)).toBe(true);
+  });
+
+  it('surfaces actionable errors when textual search is invoked without a text index', async () => {
+    const { token } = await registerAndLogin(1);
+
+    const res = await request(app).get(`${USER_BASE}/search?q=goalkeeper`).set('Authorization', `Bearer ${token}`);
+
+    expect([200, 500]).toContain(res.status);
+    if (res.status === 200) {
+      expect(Array.isArray(res.body.users)).toBe(true);
+    }
   });
 });

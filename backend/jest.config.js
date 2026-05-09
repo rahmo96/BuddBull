@@ -16,6 +16,10 @@ module.exports = {
   testMatch: ['**/tests/**/*.test.js', '**/?(*.)+(spec|test).js'],
   collectCoverageFrom: ['src/**/*.js', '!src/config/**'],
 
+  moduleNameMapper: {
+    '^firebase-admin$': '<rootDir>/tests/__mocks__/firebase-admin.js',
+  },
+
   // Runs in each worker BEFORE any test module is imported.
   // This ensures .env.test vars (including MONGO_URI, JWT_SECRET, MONGOMS_VERSION)
   // are available before environment.js Joi validation and mongodb-memory-server init.

@@ -1,88 +1,86 @@
-import 'package:buddbull/screens/auth/login_screen.dart';
+import 'package:buddbull/core/constants/app_strings.dart';
+import 'package:buddbull/core/storage/shared_preferences_provider.dart';
+import 'package:buddbull/features/auth/presentation/screens/register_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../setup.dart';
+import '../helpers/auth_router.dart';
+import '../helpers/test_bootstrap.dart';
 
 void main() {
+  setUpAll(() async {
+    await initTestFirebaseAndBinding();
+  });
+
   group('LoginScreen', () {
-    testWidgets('renders all main UI elements', (WidgetTester tester) async {
+    Future<void> pumpLogin(WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final router = authTestRouter();
       await tester.pumpWidget(
-        MaterialApp(
-          home: LoginScreen(authService: createMockAuthService()),
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+          ],
+          child: MaterialApp.router(routerConfig: router),
         ),
       );
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+    }
 
-      expect(find.text('Login'), findsOneWidget);
-      expect(find.text('New user? Register here'), findsOneWidget);
-      expect(find.text('Forgot Password?'), findsOneWidget);
-      expect(find.byType(FormBuilderTextField), findsNWidgets(2));
-    });
+    testWidgets(
+        'should display validation hints when submitting an empty form',
+        (tester) async {
+      await pumpLogin(tester);
 
-    testWidgets('shows validation errors when form is empty', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: LoginScreen(authService: createMockAuthService()),
-        ),
-      );
-
-      await tester.tap(find.text('Login'));
+      await tester.tap(find.text(AppStrings.loginButton));
       await tester.pumpAndSettle();
 
-      expect(find.text('Required'), findsWidgets);
+      expect(find.text(AppStrings.fieldRequired), findsWidgets);
     });
 
-    testWidgets('shows invalid email error for bad email format', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: LoginScreen(authService: createMockAuthService()),
-        ),
-      );
+    testWidgets(
+        'should display invalid email message when email format is wrong',
+        (tester) async {
+      await pumpLogin(tester);
 
       await tester.enterText(
-        find.byType(FormBuilderTextField).first,
-        'notanemail',
-      );
+          textFieldBelowLabel(AppStrings.emailLabel), 'not-an-email');
       await tester.enterText(
-        find.byType(FormBuilderTextField).last,
-        'password123',
-      );
-      await tester.tap(find.text('Login'));
+          textFieldBelowLabel(AppStrings.passwordLabel), 'password123');
+      await tester.tap(find.text(AppStrings.loginButton));
       await tester.pumpAndSettle();
 
-      expect(find.text('Invalid email'), findsOneWidget);
+      expect(find.text(AppStrings.invalidEmail), findsOneWidget);
     });
 
-    testWidgets('navigates to register when Register here is tapped',
+    testWidgets('should navigate to register when Sign up is tapped',
         (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: LoginScreen(authService: createMockAuthService()),
-        ),
-      );
+      await pumpLogin(tester);
 
-      await tester.tap(find.text('New user? Register here'));
+      final signUpFinder = find.text(AppStrings.signUpLink);
+      await tester.ensureVisible(signUpFinder);
+      await tester.pumpAndSettle();
+      await tester.tap(signUpFinder);
       await tester.pumpAndSettle();
 
-      expect(find.text('Register & Create Profile'), findsOneWidget);
+      expect(find.byType(RegisterScreen), findsOneWidget);
+      expect(find.text(AppStrings.registerSubtitle), findsOneWidget);
     });
 
-    testWidgets('opens forgot password dialog when Forgot Password is tapped',
+    testWidgets(
+        'should navigate to forgot password route when link is tapped',
         (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: LoginScreen(authService: createMockAuthService()),
-        ),
-      );
+      await pumpLogin(tester);
 
-      await tester.tap(find.text('Forgot Password?'));
+      await tester.tap(find.text(AppStrings.forgotPassword));
       await tester.pumpAndSettle();
 
-      expect(find.text('Reset Password'), findsOneWidget);
-      expect(find.text('Enter your email to receive a reset link:'), findsOneWidget);
-      expect(find.text('Cancel'), findsOneWidget);
-      expect(find.text('Send'), findsOneWidget);
+      expect(find.text(AppStrings.resetPassword), findsOneWidget);
+      expect(find.text(AppStrings.forgotSubtitle), findsOneWidget);
     });
   });
 }

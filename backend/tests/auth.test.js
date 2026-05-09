@@ -1,335 +1,134 @@
 /**
- * Auth Integration Tests
+ * Firebase-first auth integration smoke tests.
  *
- * Tests the full request/response cycle through Express + Mongoose
- * using an in-memory MongoDB instance.
- *
- * Coverage:
- *  - Registration (success, duplicate email, duplicate username, weak password)
- *  - Login (success, wrong password, inactive account)
- *  - /me endpoint protection
- *  - Refresh token rotation
- *  - Forgot / Reset password flow
- *  - Change password
- *  - Logout
+ * Legacy email/password JWT routes are not mounted in src/app — coverage targets /auth/sync and token verification.
  */
 
 const request = require('supertest');
-const mongoose = require('mongoose');
 const testDb = require('./helpers/testDb');
 const createApp = require('../src/app');
 const User = require('../src/models/User.model');
+const { syncFirebaseUser } = require('./helpers/authTestFactory');
 
 const app = createApp();
 
-// ─────────────────────────────────────────────
-//  Lifecycle
-// ─────────────────────────────────────────────
-
-beforeAll(async () => {
-  await testDb.connect();
-});
-
-afterEach(async () => {
-  await testDb.clearAll();
-});
-
-afterAll(async () => {
-  await testDb.disconnect();
-});
-
-// ─────────────────────────────────────────────
-//  Helpers
-// ─────────────────────────────────────────────
+beforeAll(testDb.connect);
+afterEach(testDb.clearAll);
+afterAll(testDb.disconnect);
 
 const BASE = '/api/v1/auth';
 
-const validUser = {
-  firstName: 'Test',
-  lastName: 'Player',
-  username: 'testplayer',
-  email: 'test@example.com',
-  password: 'Password1',
-  role: 'player',
-};
+describe('POST /auth/sync', () => {
+  it('creates a Mongo profile for a freshly verified Firebase UID', async () => {
+    const raw = await syncFirebaseUser(app, {
+      username: `sync_${process.hrtime.bigint()}`,
+      role: 'player',
+      email: `sync_${Date.now()}@auth.test`,
+    });
 
-/**
- * Registers a user and returns the response body (includes accessToken).
- */
-const registerUser = async (overrides = {}) =>
-  request(app)
-    .post(`${BASE}/register`)
-    .send({ ...validUser, ...overrides });
-
-/**
- * Registers and logs in, returning the access token.
- */
-const getAccessToken = async (overrides = {}) => {
-  const res = await registerUser(overrides);
-  return res.body.accessToken;
-};
-
-// ─────────────────────────────────────────────
-//  POST /register
-// ─────────────────────────────────────────────
-
-describe('POST /auth/register', () => {
-  it('creates a new user and returns 201 with tokens', async () => {
-    const res = await registerUser();
-
-    expect(res.status).toBe(201);
-    expect(res.body.success).toBe(true);
-    expect(res.body.accessToken).toBeDefined();
-    expect(res.body.data.user.email).toBe(validUser.email);
-    expect(res.body.data.user.password).toBeUndefined();
+    expect(raw.status).toBe(200);
+    expect(raw.body.success).toBe(true);
+    expect(raw.user.firebaseUid).toBe(raw.firebaseUid);
+    expect(raw.user.username).toBeDefined();
+    const persisted = await User.findOne({ firebaseUid: raw.firebaseUid });
+    expect(persisted).not.toBeNull();
   });
 
-  it('rejects duplicate email with 409', async () => {
-    await registerUser();
-    const res = await registerUser({ username: 'different' });
+  it('updates profile fields idempotently for an existing firebaseUid', async () => {
+    const first = await syncFirebaseUser(app, {
+      bearerToken: 'stable-registration-token-alpha',
+      firebaseUid: 'fb-stable-alpha',
+      email: `stable_${Date.now()}@auth.test`,
+      username: `stable_${process.hrtime.bigint()}`,
+      role: 'player',
+      lastName: 'Original',
+    });
+    expect(first.status).toBe(200);
 
-    expect(res.status).toBe(409);
-    expect(res.body.message).toMatch(/email/i);
+    const second = await request(app)
+      .post(`${BASE}/sync`)
+      .set('Authorization', 'Bearer stable-registration-token-alpha')
+      .send({ firstName: 'Updated', lastName: 'Synced', username: first.user.username, role: 'organizer' });
+
+    expect(second.status).toBe(200);
+    const doc = await User.findOne({ firebaseUid: 'fb-stable-alpha' });
+    expect(doc.lastName).toBe('Synced');
+    expect(doc.role).toBe('organizer');
   });
 
-  it('rejects duplicate username with 409', async () => {
-    await registerUser();
-    const res = await registerUser({ email: 'other@example.com' });
+  it('rejects organisers without valid Firebase tokens when hitting protected endpoints', async () => {
+    const res = await request(app).post(`${BASE}/sync`).send({
+      firstName: 'Hack',
+      lastName: 'Attempt',
+      username: 'bogus',
+      role: 'organizer',
+    });
 
-    expect(res.status).toBe(409);
-    expect(res.body.message).toMatch(/username/i);
+    expect(res.status).toBe(401);
   });
 
-  it('rejects a weak password missing uppercase with 422', async () => {
-    const res = await registerUser({ password: 'password1' });
-
-    expect(res.status).toBe(422);
-    expect(res.body.errors[0].field).toBe('password');
-  });
-
-  it('rejects a password shorter than 6 characters with 422', async () => {
-    const res = await registerUser({ password: 'Aa1' });
-
-    expect(res.status).toBe(422);
-  });
-
-  it('rejects a missing email with 422', async () => {
-    const res = await registerUser({ email: undefined });
-
-    expect(res.status).toBe(422);
-    expect(res.body.errors.some((e) => e.field === 'email')).toBe(true);
-  });
-
-  it('stores a bcrypt hash, not the raw password', async () => {
-    await registerUser();
-    const user = await User.findOne({ email: validUser.email }).select('+password');
-    expect(user.password).not.toBe(validUser.password);
-    expect(user.password).toMatch(/^\$2[aby]\$/);
+  it('returns validation errors when synced profile violates User model constraints', async () => {
+    const r = await syncFirebaseUser(app, {
+      bearerToken: 'tiny-username-sync',
+      email: `tiny_${Date.now()}@auth.test`,
+      username: 'ab',
+    });
+    expect(r.status).toBeGreaterThanOrEqual(400);
   });
 });
 
-// ─────────────────────────────────────────────
-//  POST /login
-// ─────────────────────────────────────────────
-
-describe('POST /auth/login', () => {
-  beforeEach(async () => {
-    await registerUser();
-  });
-
-  it('returns 200 and tokens for valid credentials', async () => {
-    const res = await request(app)
-      .post(`${BASE}/login`)
-      .send({ email: validUser.email, password: validUser.password });
-
-    expect(res.status).toBe(200);
-    expect(res.body.accessToken).toBeDefined();
-    expect(res.body.data.user.email).toBe(validUser.email);
-  });
-
-  it('returns 401 for wrong password', async () => {
-    const res = await request(app)
-      .post(`${BASE}/login`)
-      .send({ email: validUser.email, password: 'WrongPass9' });
-
-    expect(res.status).toBe(401);
-    expect(res.body.message).toMatch(/incorrect/i);
-  });
-
-  it('returns 401 for unknown email (same message — no enumeration)', async () => {
-    const res = await request(app)
-      .post(`${BASE}/login`)
-      .send({ email: 'nobody@example.com', password: 'Password1' });
-
-    expect(res.status).toBe(401);
-    expect(res.body.message).toMatch(/incorrect/i);
-  });
-
-  it('updates lastLoginAt on successful login', async () => {
-    await request(app)
-      .post(`${BASE}/login`)
-      .send({ email: validUser.email, password: validUser.password });
-
-    const user = await User.findOne({ email: validUser.email });
-    expect(user.lastLoginAt).toBeDefined();
-  });
-});
-
-// ─────────────────────────────────────────────
-//  Protected route: GET /users/me
-// ─────────────────────────────────────────────
-
-describe('GET /users/me (protect middleware)', () => {
-  it('returns 401 with no token', async () => {
+describe('GET /users/me protection', () => {
+  it('returns 401 without authorization header', async () => {
     const res = await request(app).get('/api/v1/users/me');
     expect(res.status).toBe(401);
   });
 
-  it('returns 401 with a malformed token', async () => {
+  it('returns 401 when Firebase verifier rejects synthetic token strings', async () => {
     const res = await request(app)
       .get('/api/v1/users/me')
-      .set('Authorization', 'Bearer not.a.valid.token');
+      .set('Authorization', 'Bearer not-registered-mapping');
 
     expect(res.status).toBe(401);
   });
 
-  it('returns 200 with a valid token', async () => {
-    const token = await getAccessToken();
-    const res = await request(app)
-      .get('/api/v1/users/me')
-      .set('Authorization', `Bearer ${token}`);
+  it('returns Mongo-bound user payload after onboarding through /auth/sync', async () => {
+    const seeded = await syncFirebaseUser(app, {
+      username: `gate_${process.hrtime.bigint()}`,
+      email: `gate_${Date.now()}@auth.test`,
+    });
+    expect(seeded.status).toBe(200);
+
+    const res = await request(app).get('/api/v1/users/me').set('Authorization', `Bearer ${seeded.token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.data.user.username).toBe(validUser.username);
+    expect(`${res.body.data.user._id}`).toBe(`${seeded.userId}`);
+    expect(res.body.data.user.firebaseUid).toBe(seeded.firebaseUid);
   });
 });
 
-// ─────────────────────────────────────────────
-//  POST /logout
-// ─────────────────────────────────────────────
+describe('RBAC baseline', () => {
+  it('returns 403 for non-admin callers hitting admin catalogue routes', async () => {
+    const player = await syncFirebaseUser(app, {
+      username: `nonadmin_${process.hrtime.bigint()}`,
+      role: 'player',
+    });
+    expect(player.status).toBe(200);
 
-describe('POST /auth/logout', () => {
-  it('logs out and clears the refresh token hash', async () => {
-    const token = await getAccessToken();
-
-    const res = await request(app)
-      .post(`${BASE}/logout`)
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-
-    const user = await User.findOne({ email: validUser.email }).select('+refreshTokenHash');
-    expect(user.refreshTokenHash).toBeUndefined();
-  });
-});
-
-// ─────────────────────────────────────────────
-//  POST /forgot-password  (no enumeration)
-// ─────────────────────────────────────────────
-
-describe('POST /auth/forgot-password', () => {
-  it('always returns 200 regardless of whether the email exists', async () => {
-    const res1 = await request(app)
-      .post(`${BASE}/forgot-password`)
-      .send({ email: 'does.not.exist@example.com' });
-
-    const res2 = await request(app)
-      .post(`${BASE}/forgot-password`)
-      .send({ email: validUser.email });
-
-    expect(res1.status).toBe(200);
-    expect(res2.status).toBe(200);
-    expect(res1.body.message).toBe(res2.body.message);
-  });
-});
-
-// ─────────────────────────────────────────────
-//  PATCH /reset-password/:token
-// ─────────────────────────────────────────────
-
-describe('PATCH /auth/reset-password/:token', () => {
-  it('resets password with a valid token and returns new tokens', async () => {
-    // Register and generate a reset token directly on the model
-    await registerUser();
-    const user = await User.findOne({ email: validUser.email })
-      .select('+resetPasswordToken +resetPasswordExpiry');
-
-    const rawToken = user.createPasswordResetToken();
-    await user.save({ validateBeforeSave: false });
-
-    const res = await request(app)
-      .patch(`${BASE}/reset-password/${rawToken}`)
-      .send({ password: 'NewPassword2', passwordConfirm: 'NewPassword2' });
-
-    expect(res.status).toBe(200);
-    expect(res.body.accessToken).toBeDefined();
-
-    // Old password should no longer work
-    const loginOld = await request(app)
-      .post(`${BASE}/login`)
-      .send({ email: validUser.email, password: validUser.password });
-
-    expect(loginOld.status).toBe(401);
-  });
-
-  it('rejects an invalid / expired reset token with 400', async () => {
-    const res = await request(app)
-      .patch(`${BASE}/reset-password/invalidtoken123`)
-      .send({ password: 'NewPassword2', passwordConfirm: 'NewPassword2' });
-
-    expect(res.status).toBe(400);
-  });
-});
-
-// ─────────────────────────────────────────────
-//  PATCH /change-password
-// ─────────────────────────────────────────────
-
-describe('PATCH /auth/change-password', () => {
-  it('changes password successfully with correct current password', async () => {
-    const token = await getAccessToken();
-
-    const res = await request(app)
-      .patch(`${BASE}/change-password`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        currentPassword: validUser.password,
-        newPassword: 'UpdatedPass3',
-        newPasswordConfirm: 'UpdatedPass3',
-      });
-
-    expect(res.status).toBe(200);
-    expect(res.body.accessToken).toBeDefined();
-  });
-
-  it('returns 401 when current password is wrong', async () => {
-    const token = await getAccessToken();
-
-    const res = await request(app)
-      .patch(`${BASE}/change-password`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        currentPassword: 'WrongCurrent1',
-        newPassword: 'UpdatedPass3',
-        newPasswordConfirm: 'UpdatedPass3',
-      });
-
-    expect(res.status).toBe(401);
-  });
-});
-
-// ─────────────────────────────────────────────
-//  RBAC  — restrictTo
-// ─────────────────────────────────────────────
-
-describe('RBAC — restrictTo admin', () => {
-  it('returns 403 for non-admin accessing admin route', async () => {
-    const token = await getAccessToken({ role: 'player' });
-
-    const res = await request(app)
-      .get('/api/v1/users/admin/list')
-      .set('Authorization', `Bearer ${token}`);
+    const res = await request(app).get('/api/v1/users/admin/list').set('Authorization', `Bearer ${player.token}`);
 
     expect(res.status).toBe(403);
+  });
+
+  it('allows configured admin accounts through restrictTo(admin)', async () => {
+    const admin = await syncFirebaseUser(app, {
+      username: `admin_${process.hrtime.bigint()}`,
+      role: 'admin',
+    });
+    expect(admin.status).toBe(200);
+
+    const res = await request(app).get('/api/v1/users/admin/list').set('Authorization', `Bearer ${admin.token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
   });
 });

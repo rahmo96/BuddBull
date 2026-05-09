@@ -1,71 +1,93 @@
-import 'package:buddbull/screens/auth/register_screen.dart';
+import 'package:buddbull/core/constants/app_strings.dart';
+import 'package:buddbull/core/router/app_router.dart';
+import 'package:buddbull/core/storage/shared_preferences_provider.dart';
+import 'package:buddbull/features/auth/presentation/screens/login_screen.dart';
+import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../setup.dart';
+import '../helpers/auth_router.dart';
+import '../helpers/test_bootstrap.dart';
 
 void main() {
+  setUpAll(() async {
+    await initTestFirebaseAndBinding();
+  });
+
+  Future<void> pumpRegister(WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final router = authTestRouter(initialLocation: Routes.register);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+  }
+
+  Future<void> fillValidRegistrationForm(WidgetTester tester) async {
+    await tester.enterText(
+        textFieldBelowLabel(AppStrings.firstNameLabel), 'Alex');
+    await tester.enterText(
+        textFieldBelowLabel(AppStrings.lastNameLabel), 'Rivera');
+    await tester.enterText(
+        textFieldBelowLabel(AppStrings.usernameLabel), 'alexriver');
+    await tester.enterText(
+        textFieldBelowLabel(AppStrings.emailLabel), 'alex@example.com');
+    await tester.enterText(
+        textFieldBelowLabel(AppStrings.passwordLabel), 'password01');
+    await tester.enterText(
+        textFieldBelowLabel(AppStrings.confirmPasswordLabel), 'password01');
+  }
+
+  Finder createAccountBbButtonFinder() {
+    return find.byWidgetPredicate(
+      (w) =>
+          w is BbButton && (w.label == AppStrings.registerButton),
+    );
+  }
+
   group('RegisterScreen', () {
-    testWidgets('renders all main sections', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: RegisterScreen(authService: createMockAuthService()),
-        ),
-      );
+    testWidgets('should surface required field validators on empty submit',
+        (tester) async {
+      await pumpRegister(tester);
 
-      expect(find.text('Account Details'), findsOneWidget);
-      expect(find.text('Personal Information'), findsOneWidget);
-      expect(find.text('Register & Create Profile'), findsOneWidget);
-    });
-
-    testWidgets('renders all form fields', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: RegisterScreen(authService: createMockAuthService()),
-        ),
-      );
-
-      expect(find.text('Email'), findsWidgets);
-      expect(find.text('Password'), findsOneWidget);
-      expect(find.text('First Name'), findsOneWidget);
-      expect(find.text('Last Name'), findsOneWidget);
-      expect(find.text('Gender'), findsOneWidget);
-    });
-
-    testWidgets('shows validation errors when form is empty', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: RegisterScreen(authService: createMockAuthService()),
-        ),
-      );
-
-      await tester.ensureVisible(find.text('Register & Create Profile'));
-      await tester.tap(find.text('Register & Create Profile'));
+      await tester.ensureVisible(createAccountBbButtonFinder());
+      await tester.tap(createAccountBbButtonFinder());
       await tester.pumpAndSettle();
 
-      // FormBuilderValidators show various required messages
-      final hasValidationError = find.text('This field is required').evaluate().isNotEmpty ||
-          find.text('First name is required').evaluate().isNotEmpty ||
-          find.text('Last name is required').evaluate().isNotEmpty ||
-          find.text('Gender is required').evaluate().isNotEmpty;
-      expect(hasValidationError, isTrue);
+      expect(find.text(AppStrings.fieldRequired), findsWidgets);
     });
 
-    testWidgets('gender dropdown has expected options', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: RegisterScreen(authService: createMockAuthService()),
-        ),
-      );
+    testWidgets(
+        'should show snackbar when terms are not accepted despite valid inputs',
+        (tester) async {
+      await pumpRegister(tester);
+      await fillValidRegistrationForm(tester);
 
-      await tester.ensureVisible(find.byType(FormBuilderDropdown<String>));
-      await tester.tap(find.byType(FormBuilderDropdown<String>));
+      await tester.ensureVisible(createAccountBbButtonFinder());
+      await tester.tap(createAccountBbButtonFinder());
       await tester.pumpAndSettle();
 
-      expect(find.text('Male'), findsOneWidget);
-      expect(find.text('Female'), findsOneWidget);
-      expect(find.text('Other'), findsOneWidget);
+      expect(find.text(AppStrings.acceptTerms), findsOneWidget);
+    });
+
+    testWidgets('should expose sign-in shortcut back to login', (tester) async {
+      await pumpRegister(tester);
+
+      await tester.ensureVisible(find.text(AppStrings.signInLink));
+      await tester.tap(find.text(AppStrings.signInLink));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LoginScreen), findsOneWidget);
+      expect(find.text(AppStrings.loginButton), findsOneWidget);
     });
   });
 }
