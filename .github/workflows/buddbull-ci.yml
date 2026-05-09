@@ -125,3 +125,5 @@ jobs:
           name: buddbull-release-apk
           path: frontend/build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
+
+          
