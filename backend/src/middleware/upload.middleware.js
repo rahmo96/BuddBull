@@ -92,7 +92,9 @@ const handleProfilePicUpload = (req, res, next) => {
 
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') {
-        return next(new AppError(`Profile picture must be smaller than ${MAX_PROFILE_PIC_SIZE / (1024 * 1024)} MB.`, 413));
+        return next(
+          new AppError(`Profile picture must be smaller than ${MAX_PROFILE_PIC_SIZE / (1024 * 1024)} MB.`, 413),
+        );
       }
       return next(new AppError(`Upload error: ${err.message}`, 400));
     }

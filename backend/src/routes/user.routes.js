@@ -3,8 +3,13 @@ const express = require('express');
 const UserController = require('../controllers/user.controller');
 const { protect, restrictTo } = require('../middleware/auth.middleware');
 const { handleProfilePicUpload } = require('../middleware/upload.middleware');
-const { validate, updateProfileSchema, updateUsernameSchema, searchUsersSchema, addPushTokenSchema } =
-  require('../validators/user.validator');
+const {
+  validate,
+  updateProfileSchema,
+  updateUsernameSchema,
+  searchUsersSchema,
+  addPushTokenSchema,
+} = require('../validators/user.validator');
 const { validateMongoId } = require('../validators/user.validator');
 
 const router = express.Router();

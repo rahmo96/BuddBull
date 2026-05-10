@@ -90,9 +90,8 @@ const cancelGame = catchAsync(async (req, res) => {
 const joinGame = catchAsync(async (req, res) => {
   const { game, status } = await GameService.joinGame(req.params.id, req.user._id);
 
-  const message = status === 'approved'
-    ? 'You have joined the game!'
-    : 'Your join request is pending organizer approval.';
+  const message =
+    status === 'approved' ? 'You have joined the game!' : 'Your join request is pending organizer approval.';
 
   res.status(200).json({ success: true, message, data: { status, game } });
 });
@@ -112,12 +111,7 @@ const leaveGame = catchAsync(async (req, res) => {
 // ─────────────────────────────────────────────
 
 const invitePlayer = catchAsync(async (req, res) => {
-  const game = await GameService.invitePlayer(
-    req.params.id,
-    req.user._id,
-    req.user.role,
-    req.params.userId,
-  );
+  const game = await GameService.invitePlayer(req.params.id, req.user._id, req.user.role, req.params.userId);
 
   res.status(200).json({ success: true, message: 'Invitation sent.', data: { game } });
 });
@@ -127,12 +121,7 @@ const invitePlayer = catchAsync(async (req, res) => {
 // ─────────────────────────────────────────────
 
 const approvePlayer = catchAsync(async (req, res) => {
-  const game = await GameService.approvePlayer(
-    req.params.id,
-    req.user._id,
-    req.user.role,
-    req.params.userId,
-  );
+  const game = await GameService.approvePlayer(req.params.id, req.user._id, req.user.role, req.params.userId);
 
   res.status(200).json({ success: true, message: 'Player approved.', data: { game } });
 });
@@ -158,11 +147,7 @@ const kickPlayer = catchAsync(async (req, res) => {
 // ─────────────────────────────────────────────
 
 const getPendingRequests = catchAsync(async (req, res) => {
-  const pending = await GameService.getPendingRequests(
-    req.params.id,
-    req.user._id,
-    req.user.role,
-  );
+  const pending = await GameService.getPendingRequests(req.params.id, req.user._id, req.user.role);
 
   res.status(200).json({ success: true, results: pending.length, data: { pending } });
 });
@@ -193,12 +178,7 @@ const mergeGroups = catchAsync(async (req, res) => {
 // ─────────────────────────────────────────────
 
 const completeGame = catchAsync(async (req, res) => {
-  const game = await GameService.completeGame(
-    req.params.id,
-    req.user._id,
-    req.user.role,
-    req.body,
-  );
+  const game = await GameService.completeGame(req.params.id, req.user._id, req.user.role, req.body);
 
   res.status(200).json({ success: true, message: 'Game marked as completed.', data: { game } });
 });

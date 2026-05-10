@@ -261,9 +261,7 @@ const getUnreadCounts = async (userId) => {
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 const _formatChat = (chat, userId) => {
-  const participant = (chat.participants || []).find(
-    (p) => (p.user?._id || p.user)?.toString() === userId.toString(),
-  );
+  const participant = (chat.participants || []).find((p) => (p.user?._id || p.user)?.toString() === userId.toString());
   return {
     ...chat,
     lastReadAt: participant?.lastReadAt,
@@ -279,11 +277,7 @@ const _formatMessage = (msg) => ({
   type: msg.type,
   content: msg.isDeleted ? '[Message deleted]' : msg.content,
   replyTo: msg.replyTo || null,
-  reactions: Object.fromEntries(
-    msg?.reactions instanceof Map
-      ? msg.reactions
-      : Object.entries(msg?.reactions || {}),
-  ),
+  reactions: Object.fromEntries(msg?.reactions instanceof Map ? msg.reactions : Object.entries(msg?.reactions || {})),
   readBy: (msg?.readBy || []).map((r) => (r.user?._id || r.user)?.toString()).filter(Boolean),
   isPinned: msg.isPinned,
   isDeleted: msg.isDeleted,
@@ -291,4 +285,14 @@ const _formatMessage = (msg) => ({
   isEdited: msg.isEdited || false,
 });
 
-module.exports = { getChats, getChatById, createOrGetDM, getMessages, sendMessage, pinMessage, unpinMessage, deleteMessage, getUnreadCounts };
+module.exports = {
+  getChats,
+  getChatById,
+  createOrGetDM,
+  getMessages,
+  sendMessage,
+  pinMessage,
+  unpinMessage,
+  deleteMessage,
+  getUnreadCounts,
+};

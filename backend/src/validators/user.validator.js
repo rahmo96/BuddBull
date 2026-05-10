@@ -7,9 +7,7 @@ const { validate } = require('./auth.validator');
 
 const sportInterestSchema = Joi.object({
   sport: Joi.string().trim().lowercase().min(2).max(50).required(),
-  skillLevel: Joi.string()
-    .valid('beginner', 'amateur', 'intermediate', 'advanced', 'professional')
-    .default('beginner'),
+  skillLevel: Joi.string().valid('beginner', 'amateur', 'intermediate', 'advanced', 'professional').default('beginner'),
   preferredPositions: Joi.array().items(Joi.string().trim().max(30)).max(5),
   yearsOfExperience: Joi.number().integer().min(0).max(50),
 });
@@ -69,13 +67,7 @@ const searchUsersSchema = Joi.object({
   q: Joi.string().trim().min(1).max(100),
   sport: Joi.string().trim().lowercase(),
   city: Joi.string().trim().max(100),
-  skillLevel: Joi.string().valid(
-    'beginner',
-    'amateur',
-    'intermediate',
-    'advanced',
-    'professional',
-  ),
+  skillLevel: Joi.string().valid('beginner', 'amateur', 'intermediate', 'advanced', 'professional'),
   role: Joi.string().valid('player', 'organizer'),
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(50).default(20),

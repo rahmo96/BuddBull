@@ -48,7 +48,12 @@ describe('POST /auth/sync', () => {
     const second = await request(app)
       .post(`${BASE}/sync`)
       .set('Authorization', 'Bearer stable-registration-token-alpha')
-      .send({ firstName: 'Updated', lastName: 'Synced', username: first.user.username, role: 'organizer' });
+      .send({
+        firstName: 'Updated',
+        lastName: 'Synced',
+        username: first.user.username,
+        role: 'organizer',
+      });
 
     expect(second.status).toBe(200);
     const doc = await User.findOne({ firebaseUid: 'fb-stable-alpha' });
@@ -84,9 +89,7 @@ describe('GET /users/me protection', () => {
   });
 
   it('returns 401 when Firebase verifier rejects synthetic token strings', async () => {
-    const res = await request(app)
-      .get('/api/v1/users/me')
-      .set('Authorization', 'Bearer not-registered-mapping');
+    const res = await request(app).get('/api/v1/users/me').set('Authorization', 'Bearer not-registered-mapping');
 
     expect(res.status).toBe(401);
   });

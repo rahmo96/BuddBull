@@ -1,7 +1,7 @@
+const admin = require('firebase-admin');
 const User = require('../models/User.model');
 const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
-const admin = require('firebase-admin');
 
 const getFirebaseAuth = () => {
   if (!admin.apps.length) {
@@ -74,12 +74,10 @@ const protect = catchAsync(async (req, res, next) => {
   }
 
   // 4. Attach user and token metadata to the request
-  req.user =
-    user ||
-    ({
-      firebaseUid: decodedToken.uid,
-      email: decodedToken.email,
-    });
+  req.user = user || {
+    firebaseUid: decodedToken.uid,
+    email: decodedToken.email,
+  };
   req.tokenPayload = decodedToken;
 
   return next();
@@ -168,4 +166,9 @@ const verifyOwnership =
     return next();
   };
 
-module.exports = { protect, restrictTo, optionalAuth, verifyOwnership };
+module.exports = {
+  protect,
+  restrictTo,
+  optionalAuth,
+  verifyOwnership,
+};

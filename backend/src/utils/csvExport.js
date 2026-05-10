@@ -29,9 +29,7 @@ const escapeCell = (value) => {
  */
 const toCSV = (rows, columns) => {
   const header = columns.map((c) => escapeCell(c.label)).join(',');
-  const lines = rows.map((row) =>
-    columns.map((c) => escapeCell(getValue(row, c.path))).join(','),
-  );
+  const lines = rows.map((row) => columns.map((c) => escapeCell(getValue(row, c.path))).join(','));
   return [header, ...lines].join('\r\n');
 };
 

@@ -134,7 +134,10 @@ describe('GET /games (search)', () => {
   it('filters by city (case-insensitive)', async () => {
     const { token } = await registerAndLogin(1, 'organizer');
     await createGameAs(token, { location: { neighborhood: 'Chelsea', city: 'London', country: 'GB' } });
-    await createGameAs(token, { title: 'Other Game', location: { neighborhood: 'Brooklyn', city: 'New York', country: 'US' } });
+    await createGameAs(token, {
+      title: 'Other Game',
+      location: { neighborhood: 'Brooklyn', city: 'New York', country: 'US' },
+    });
 
     const res = await request(app).get(`${GAMES}?city=london`);
 
@@ -253,7 +256,9 @@ describe('Invite & Approve flow', () => {
     const game = await createGameAs(orgToken, { requiresApproval: true });
     const gameId = game.body.data.game._id;
 
-    const invRes = await request(app).post(`${GAMES}/${gameId}/invite/${p2Id}`).set('Authorization', `Bearer ${orgToken}`);
+    const invRes = await request(app)
+      .post(`${GAMES}/${gameId}/invite/${p2Id}`)
+      .set('Authorization', `Bearer ${orgToken}`);
     expect(invRes.status).toBe(200);
 
     await request(app).post(`${GAMES}/${gameId}/join`).set('Authorization', `Bearer ${p2Token}`);
@@ -373,10 +378,13 @@ describe('PATCH /games/:id/complete', () => {
 
     await request(app).post(`${GAMES}/${gameId}/join`).set('Authorization', `Bearer ${p2Token}`);
 
-    const res = await request(app).patch(`${GAMES}/${gameId}/complete`).set('Authorization', `Bearer ${orgToken}`).send({
-      score: '3-1',
-      winnerDescription: 'Team A',
-    });
+    const res = await request(app)
+      .patch(`${GAMES}/${gameId}/complete`)
+      .set('Authorization', `Bearer ${orgToken}`)
+      .send({
+        score: '3-1',
+        winnerDescription: 'Team A',
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.data.game.status).toBe('completed');

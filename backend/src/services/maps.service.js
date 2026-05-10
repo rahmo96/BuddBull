@@ -33,15 +33,17 @@ const toAddressParts = (components = []) => {
   const findByType = (type) =>
     components.find((component) => Array.isArray(component.types) && component.types.includes(type));
 
-  const city = findByType('locality')?.long_name
-    || findByType('postal_town')?.long_name
-    || findByType('administrative_area_level_2')?.long_name
-    || '';
+  const city =
+    findByType('locality')?.long_name ||
+    findByType('postal_town')?.long_name ||
+    findByType('administrative_area_level_2')?.long_name ||
+    '';
 
-  const neighborhood = findByType('neighborhood')?.long_name
-    || findByType('sublocality')?.long_name
-    || findByType('sublocality_level_1')?.long_name
-    || city;
+  const neighborhood =
+    findByType('neighborhood')?.long_name ||
+    findByType('sublocality')?.long_name ||
+    findByType('sublocality_level_1')?.long_name ||
+    city;
 
   const state = findByType('administrative_area_level_1')?.short_name;
   const country = findByType('country')?.short_name;
@@ -88,7 +90,7 @@ const getPlaceDetails = async ({ placeId, sessionToken }) => {
     throw new AppError(body.error_message || 'Address details lookup failed.', 502);
   }
 
-  const result = body.result;
+  const { result } = body;
   const lat = result.geometry?.location?.lat;
   const lng = result.geometry?.location?.lng;
   if (typeof lat !== 'number' || typeof lng !== 'number') {
@@ -117,9 +119,7 @@ const getPlaceDetails = async ({ placeId, sessionToken }) => {
   };
 };
 
-const getStaticMapImage = async ({
-  lat, lng, zoom, width, height,
-}) => {
+const getStaticMapImage = async ({ lat, lng, zoom, width, height }) => {
   ensureApiKey();
   const url = new URL(GOOGLE_STATIC_MAP_URL);
   url.searchParams.set('center', `${lat},${lng}`);

@@ -12,9 +12,7 @@ const getPlaceDetails = catchAsync(async (req, res) => {
 });
 
 const getStaticMap = catchAsync(async (req, res) => {
-  const {
-    lat, lng, zoom, width, height,
-  } = req.query;
+  const { lat, lng, zoom, width, height } = req.query;
   const image = await MapsService.getStaticMapImage({
     lat: Number(lat),
     lng: Number(lng),

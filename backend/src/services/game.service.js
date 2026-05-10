@@ -74,7 +74,14 @@ const createGame = async (organizerId, dto) => {
   const game = new Game({
     ...dto,
     organizer: organizerId,
-    players: [{ user: organizerId, status: 'approved', role: 'co-organizer', joinedAt: new Date() }],
+    players: [
+      {
+        user: organizerId,
+        status: 'approved',
+        role: 'co-organizer',
+        joinedAt: new Date(),
+      },
+    ],
   });
 
   await game.save();
@@ -126,10 +133,19 @@ const getGame = async (gameId) => {
  */
 const searchGames = async (filters, viewer = null) => {
   const {
-    sport, city, neighborhood, skillLevel,
-    status = 'open', dateFrom, dateTo,
-    isPrivate, q, page = 1, limit = 20,
-    sortBy = 'scheduledAt', sortOrder = 'asc',
+    sport,
+    city,
+    neighborhood,
+    skillLevel,
+    status = 'open',
+    dateFrom,
+    dateTo,
+    isPrivate,
+    q,
+    page = 1,
+    limit = 20,
+    sortBy = 'scheduledAt',
+    sortOrder = 'asc',
   } = filters;
 
   const query = { deletedAt: null };
@@ -149,10 +165,7 @@ const searchGames = async (filters, viewer = null) => {
   if (neighborhood) query['location.neighborhood'] = new RegExp(neighborhood.trim(), 'i');
 
   if (skillLevel && skillLevel !== 'any') {
-    query.$or = [
-      { requiredSkillLevel: 'any' },
-      { requiredSkillLevel: skillLevel },
-    ];
+    query.$or = [{ requiredSkillLevel: 'any' }, { requiredSkillLevel: skillLevel }];
   }
 
   if (dateFrom || dateTo) {
@@ -209,10 +222,7 @@ const searchGames = async (filters, viewer = null) => {
 const getMyGames = async (userId, { status, page = 1, limit = 20 } = {}) => {
   const query = {
     deletedAt: null,
-    $or: [
-      { organizer: userId },
-      { 'players.user': userId, 'players.status': 'approved' },
-    ],
+    $or: [{ organizer: userId }, { 'players.user': userId, 'players.status': 'approved' }],
   };
 
   if (status) query.status = status;
@@ -229,7 +239,15 @@ const getMyGames = async (userId, { status, page = 1, limit = 20 } = {}) => {
     Game.countDocuments(query),
   ]);
 
-  return { games, pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / Number(limit)) } };
+  return {
+    games,
+    pagination: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      pages: Math.ceil(total / Number(limit)),
+    },
+  };
 };
 
 // ─────────────────────────────────────────────
@@ -242,16 +260,19 @@ const getMyGames = async (userId, { status, page = 1, limit = 20 } = {}) => {
  */
 const getCalendar = async (userId, { dateFrom, dateTo }) => {
   const from = dateFrom ? new Date(dateFrom) : new Date();
-  const to = dateTo ? new Date(dateTo) : (() => { const d = new Date(); d.setDate(d.getDate() + 30); return d; })();
+  const to = dateTo
+    ? new Date(dateTo)
+    : (() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 30);
+        return d;
+      })();
 
   const games = await Game.find({
     deletedAt: null,
     status: { $in: ['open', 'full', 'in_progress'] },
     scheduledAt: { $gte: from, $lte: to },
-    $or: [
-      { organizer: userId },
-      { 'players.user': userId, 'players.status': 'approved' },
-    ],
+    $or: [{ organizer: userId }, { 'players.user': userId, 'players.status': 'approved' }],
   })
     .populate('organizer', 'username firstName lastName')
     .sort({ scheduledAt: 1 })
@@ -276,10 +297,7 @@ const updateGame = async (gameId, userId, userRole, updates) => {
 
   // Prevent lowering maxPlayers below current approved count
   if (updates.maxPlayers && updates.maxPlayers < approvedCount(game)) {
-    throw new AppError(
-      `Cannot reduce max players below the current approved count (${approvedCount(game)}).`,
-      400,
-    );
+    throw new AppError(`Cannot reduce max players below the current approved count (${approvedCount(game)}).`, 400);
   }
 
   Object.assign(game, updates);
@@ -380,23 +398,15 @@ const joinGame = async (gameId, userId) => {
   }
 
   // Double-booking check — proposed window as explicit Dates / ms (see Game.findScheduleConflictGame)
-  const proposedStart =
-    game.scheduledAt instanceof Date ? game.scheduledAt : new Date(game.scheduledAt);
+  const proposedStart = game.scheduledAt instanceof Date ? game.scheduledAt : new Date(game.scheduledAt);
   if (Number.isNaN(proposedStart.getTime())) {
     throw new AppError('This game has an invalid scheduled time.', 500);
   }
   const proposedDurationMinutes = Number(game.durationMinutes);
   const durationMinutes =
-    Number.isFinite(proposedDurationMinutes) && proposedDurationMinutes >= 0
-      ? proposedDurationMinutes
-      : 0;
+    Number.isFinite(proposedDurationMinutes) && proposedDurationMinutes >= 0 ? proposedDurationMinutes : 0;
 
-  const conflictingGame = await Game.findScheduleConflictGame(
-    userId,
-    proposedStart,
-    durationMinutes,
-    game._id,
-  );
+  const conflictingGame = await Game.findScheduleConflictGame(userId, proposedStart, durationMinutes, game._id);
   if (conflictingGame) {
     throw new AppError(
       'You have a schedule conflict — another game you have joined overlaps with this time slot.',
@@ -473,7 +483,12 @@ const invitePlayer = async (gameId, organizerId, organizerRole, targetUserId) =>
   game.players.push({ user: targetUserId, status: 'invited', joinedAt: new Date() });
   await game.save();
 
-  notify('game:invite', { gameId, organizerId, targetUserId, gameTitle: game.title });
+  notify('game:invite', {
+    gameId,
+    organizerId,
+    targetUserId,
+    gameTitle: game.title,
+  });
 
   logger.info(`Invited user ${targetUserId} to game ${gameId}`);
   return game;
@@ -586,8 +601,10 @@ const mergeGroups = async (sourceGameId, targetGameId, organizerId, organizerRol
 
   assertOrganizer(source, organizerId, organizerRole);
 
-  if (source.status !== 'open') throw new AppError(`Source game status is '${source.status}'. Only open games can be merged.`, 400);
-  if (target.status !== 'open') throw new AppError(`Target game status is '${target.status}'. Only open games can be merged.`, 400);
+  if (source.status !== 'open')
+    throw new AppError(`Source game status is '${source.status}'. Only open games can be merged.`, 400);
+  if (target.status !== 'open')
+    throw new AppError(`Target game status is '${target.status}'. Only open games can be merged.`, 400);
 
   const sourceApproved = source.players.filter((p) => p.status === 'approved');
   const targetApproved = approvedCount(target);
@@ -597,7 +614,7 @@ const mergeGroups = async (sourceGameId, targetGameId, organizerId, organizerRol
     if (!expandCapacity) {
       throw new AppError(
         `Merge would result in ${combinedCount} players, exceeding target capacity of ${target.maxPlayers}. ` +
-        'Pass expandCapacity: true to automatically increase the target game capacity.',
+          'Pass expandCapacity: true to automatically increase the target game capacity.',
         400,
       );
     }
@@ -606,8 +623,7 @@ const mergeGroups = async (sourceGameId, targetGameId, organizerId, organizerRol
 
   // Deduplicate — don't add players already in target
   const existingTargetUserIds = new Set(
-    target.players.filter((p) => ['approved', 'pending', 'invited'].includes(p.status))
-      .map((p) => p.user.toString()),
+    target.players.filter((p) => ['approved', 'pending', 'invited'].includes(p.status)).map((p) => p.user.toString()),
   );
 
   for (const slot of sourceApproved) {
@@ -635,10 +651,12 @@ const mergeGroups = async (sourceGameId, targetGameId, organizerId, organizerRol
 
   await Promise.all([source.save(), target.save()]);
 
-  const allPlayerIds = [...new Set([
-    ...sourceApproved.map((p) => p.user.toString()),
-    ...target.players.filter((p) => p.status === 'approved').map((p) => p.user.toString()),
-  ])];
+  const allPlayerIds = [
+    ...new Set([
+      ...sourceApproved.map((p) => p.user.toString()),
+      ...target.players.filter((p) => p.status === 'approved').map((p) => p.user.toString()),
+    ]),
+  ];
 
   notify('game:merged', { sourceGameId, targetGameId, affectedPlayerIds: allPlayerIds });
 
@@ -677,14 +695,9 @@ const completeGame = async (gameId, organizerId, organizerRole, resultDto) => {
   await game.save();
 
   // Bulk-update stats for all approved players
-  const approvedPlayerIds = game.players
-    .filter((p) => p.status === 'approved')
-    .map((p) => p.user);
+  const approvedPlayerIds = game.players.filter((p) => p.status === 'approved').map((p) => p.user);
 
-  await User.updateMany(
-    { _id: { $in: approvedPlayerIds } },
-    { $inc: { 'stats.gamesPlayed': 1 } },
-  );
+  await User.updateMany({ _id: { $in: approvedPlayerIds } }, { $inc: { 'stats.gamesPlayed': 1 } });
 
   // Update streaks for each player (must run per-document for streak logic)
   const players = await User.find({ _id: { $in: approvedPlayerIds } });
@@ -744,7 +757,15 @@ const adminListGames = async ({ page = 1, limit = 50, status, sport } = {}) => {
     Game.countDocuments(query),
   ]);
 
-  return { games, pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / Number(limit)) } };
+  return {
+    games,
+    pagination: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      pages: Math.ceil(total / Number(limit)),
+    },
+  };
 };
 
 module.exports = {

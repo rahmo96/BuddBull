@@ -66,10 +66,7 @@ const forgotPasswordSchema = Joi.object({
 
 const resetPasswordSchema = Joi.object({
   password: password.required(),
-  passwordConfirm: Joi.any()
-    .equal(Joi.ref('password'))
-    .required()
-    .messages({ 'any.only': 'Passwords do not match.' }),
+  passwordConfirm: Joi.any().equal(Joi.ref('password')).required().messages({ 'any.only': 'Passwords do not match.' }),
 });
 
 const changePasswordSchema = Joi.object({
@@ -102,33 +99,35 @@ const refreshTokenSchema = Joi.object({
  * @param {Joi.Schema} schema
  * @param {'body'|'query'} target  Defaults to 'body'
  */
-const validate = (schema, target = 'body') => (req, res, next) => {
-  const source = target === 'query' ? req.query : req.body;
+const validate =
+  (schema, target = 'body') =>
+  (req, res, next) => {
+    const source = target === 'query' ? req.query : req.body;
 
-  const { error, value } = schema.validate(source, {
-    abortEarly: false,
-    stripUnknown: true,
-  });
-
-  if (error) {
-    const details = error.details.map((d) => ({
-      field: d.path.join('.'),
-      message: d.message,
-    }));
-    return res.status(422).json({
-      success: false,
-      message: 'Validation failed',
-      errors: details,
+    const { error, value } = schema.validate(source, {
+      abortEarly: false,
+      stripUnknown: true,
     });
-  }
 
-  if (target === 'query') {
-    req.query = value;
-  } else {
-    req.body = value;
-  }
-  return next();
-};
+    if (error) {
+      const details = error.details.map((d) => ({
+        field: d.path.join('.'),
+        message: d.message,
+      }));
+      return res.status(422).json({
+        success: false,
+        message: 'Validation failed',
+        errors: details,
+      });
+    }
+
+    if (target === 'query') {
+      req.query = value;
+    } else {
+      req.body = value;
+    }
+    return next();
+  };
 
 module.exports = {
   validate,

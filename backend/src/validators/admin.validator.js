@@ -51,16 +51,17 @@ const gameListSchema = Joi.object({
 });
 
 // ── Middleware factory ────────────────────────────────────────────────────────
-const validate = (schema, source = 'body') =>
-  (req, res, next) => {
-    const { error, value } = schema.validate(req[source], { abortEarly: false, stripUnknown: true });
-    if (error) {
-      const messages = error.details.map((d) => d.message).join('; ');
-      return res.status(400).json({ success: false, message: messages });
-    }
-    req[source] = value;
-    return next();
-  };
+const validate =
+  (schema, source = 'body') =>
+    (req, res, next) => {
+      const { error, value } = schema.validate(req[source], { abortEarly: false, stripUnknown: true });
+      if (error) {
+        const messages = error.details.map((d) => d.message).join('; ');
+        return res.status(400).json({ success: false, message: messages });
+      }
+      req[source] = value;
+      return next();
+    };
 
 module.exports = {
   dashboardQuerySchema,

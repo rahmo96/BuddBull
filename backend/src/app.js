@@ -43,8 +43,7 @@ const createApp = () => {
       origin: (origin, callback) => {
         const allowedOrigins = [clientUrl, 'http://localhost:3000', 'http://localhost:8080'];
         const isLocalDevOrigin =
-          typeof origin === 'string' &&
-          /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+          typeof origin === 'string' && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
         // Allow mobile apps that have no origin header
         if (!origin || allowedOrigins.includes(origin) || isLocalDevOrigin) return callback(null, true);
         return callback(new Error(`CORS policy violation: ${origin}`));

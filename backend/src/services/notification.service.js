@@ -80,9 +80,7 @@ const sendPushToMany = async (fcmTokens, payload) => {
       await messaging.sendEachForMulticast({
         tokens: chunk,
         notification: { title: payload.title, body: payload.body },
-        data: payload.data
-          ? Object.fromEntries(Object.entries(payload.data).map(([k, v]) => [k, String(v)]))
-          : {},
+        data: payload.data ? Object.fromEntries(Object.entries(payload.data).map(([k, v]) => [k, String(v)])) : {},
         android: { priority: 'high' },
         apns: { payload: { aps: { sound: 'default' } } },
       });

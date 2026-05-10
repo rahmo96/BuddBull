@@ -40,7 +40,12 @@ const ratePlayer = async ({ raterId, rateeId, gameId, reliabilityScore, behavior
       isAnonymous,
       isDeleted: false,
     },
-    { upsert: true, new: true, setDefaultsOnInsert: true, runValidators: true },
+    {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true,
+      runValidators: true,
+    },
   );
 
   return rating;
@@ -78,7 +83,12 @@ const getRatingsForUser = async (userId, { page = 1, limit = 20 } = {}) => {
     rater: r.isAnonymous ? null : r.rater,
   }));
 
-  return { ratings: formatted, total, page, totalPages: Math.ceil(total / limit) };
+  return {
+    ratings: formatted,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  };
 };
 
 // ── Ratings given by a user ───────────────────────────────────────────────────
@@ -93,7 +103,12 @@ const getRatingsGivenByUser = async (userId, { page = 1, limit = 20 } = {}) => {
       .lean(),
     Rating.countDocuments({ rater: userId, isDeleted: false }),
   ]);
-  return { ratings, total, page, totalPages: Math.ceil(total / limit) };
+  return {
+    ratings,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  };
 };
 
 // ── Games a user completed but has not yet rated all opponents ────────────────
@@ -121,16 +136,21 @@ const getPendingRatings = async (userId) => {
       rater: userId,
       game: game._id,
       isDeleted: false,
-    }).select('ratee').lean();
+    })
+      .select('ratee')
+      .lean();
 
     const ratedIds = new Set(existingRatings.map((r) => r.ratee.toString()));
-    const unratedPlayers = approvedPlayers.filter(
-      (p) => !ratedIds.has(p.user?._id?.toString()),
-    );
+    const unratedPlayers = approvedPlayers.filter((p) => !ratedIds.has(p.user?._id?.toString()));
 
     if (unratedPlayers.length > 0) {
       result.push({
-        game: { id: game._id, title: game.title, sport: game.sport, completedAt: game.updatedAt },
+        game: {
+          id: game._id,
+          title: game.title,
+          sport: game.sport,
+          completedAt: game.updatedAt,
+        },
         pendingPlayers: unratedPlayers.map((p) => p.user),
       });
     }
@@ -139,4 +159,10 @@ const getPendingRatings = async (userId) => {
   return result;
 };
 
-module.exports = { ratePlayer, getProfileSummary, getRatingsForUser, getRatingsGivenByUser, getPendingRatings };
+module.exports = {
+  ratePlayer,
+  getProfileSummary,
+  getRatingsForUser,
+  getRatingsGivenByUser,
+  getPendingRatings,
+};

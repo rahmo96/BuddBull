@@ -119,11 +119,7 @@ const updateMe = async (userId, updates) => {
   const forbidden = ['password', 'role', 'email', 'isVerified', 'isBanned', 'isActive'];
   forbidden.forEach((field) => delete updates[field]);
 
-  const user = await User.findByIdAndUpdate(
-    userId,
-    { $set: updates },
-    { new: true, runValidators: true },
-  ).active();
+  const user = await User.findByIdAndUpdate(userId, { $set: updates }, { new: true, runValidators: true }).active();
 
   if (!user) throw new AppError('User not found.', 404);
 
@@ -192,10 +188,7 @@ const deleteMe = async (userId, password) => {
   if (!user) throw new AppError('User not found.', 404);
 
   if (!User.schema.paths.password) {
-    throw new AppError(
-      'Account deletion is not available via this API endpoint for SSO-managed profiles.',
-      501,
-    );
+    throw new AppError('Account deletion is not available via this API endpoint for SSO-managed profiles.', 501);
   }
 
   const withSecret = await User.findById(userId).select('+password').active();
@@ -334,7 +327,9 @@ const searchUsers = async (filters) => {
 
   const [users, total] = await Promise.all([
     User.find(query)
-      .select('username firstName lastName profilePicture stats location.city location.neighborhood sportsInterests role')
+      .select(
+        'username firstName lastName profilePicture stats location.city location.neighborhood sportsInterests role',
+      )
       .sort(q ? { score: { $meta: 'textScore' } } : { 'stats.averageRating': -1 })
       .skip(skip)
       .limit(Number(limit))
@@ -387,7 +382,10 @@ const adminListUsers = async ({ page = 1, limit = 50, status, role } = {}) => {
   const query = { deletedAt: null };
   if (status === 'banned') query.isBanned = true;
   else if (status === 'inactive') query.isActive = false;
-  else if (status === 'active') { query.isActive = true; query.isBanned = false; }
+  else if (status === 'active') {
+    query.isActive = true;
+    query.isBanned = false;
+  }
   if (role) query.role = role;
 
   const skip = (Number(page) - 1) * Number(limit);
@@ -402,7 +400,15 @@ const adminListUsers = async ({ page = 1, limit = 50, status, role } = {}) => {
     User.countDocuments(query),
   ]);
 
-  return { users, pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / Number(limit)) } };
+  return {
+    users,
+    pagination: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      pages: Math.ceil(total / Number(limit)),
+    },
+  };
 };
 
 /**

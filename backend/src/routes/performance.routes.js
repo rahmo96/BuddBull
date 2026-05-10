@@ -3,8 +3,13 @@ const express = require('express');
 const PerformanceController = require('../controllers/performance.controller');
 const { protect } = require('../middleware/auth.middleware');
 const { validateMongoId } = require('../validators/user.validator');
-const { validate, createLogSchema, updateLogSchema, getLogsSchema, statsQuerySchema } =
-  require('../validators/performance.validator');
+const {
+  validate,
+  createLogSchema,
+  updateLogSchema,
+  getLogsSchema,
+  statsQuerySchema,
+} = require('../validators/performance.validator');
 
 const router = express.Router();
 
@@ -42,7 +47,12 @@ router.get('/leaderboard', PerformanceController.getLeaderboard);
  * @desc   View another user's public performance logs
  * @access Private
  */
-router.get('/user/:userId', validateMongoId('userId'), validate(getLogsSchema, 'query'), PerformanceController.getUserLogs);
+router.get(
+  '/user/:userId',
+  validateMongoId('userId'),
+  validate(getLogsSchema, 'query'),
+  PerformanceController.getUserLogs,
+);
 
 // ─────────────────────────────────────────────
 //  Root resource

@@ -197,9 +197,15 @@ ratingSchema.statics.getProfileSummary = async function (userId) {
         avgComposite: { $avg: '$compositeScore' },
         // Distribution (1-5 star buckets)
         dist1: { $sum: { $cond: [{ $lte: ['$compositeScore', 1.5] }, 1, 0] } },
-        dist2: { $sum: { $cond: [{ $and: [{ $gt: ['$compositeScore', 1.5] }, { $lte: ['$compositeScore', 2.5] }] }, 1, 0] } },
-        dist3: { $sum: { $cond: [{ $and: [{ $gt: ['$compositeScore', 2.5] }, { $lte: ['$compositeScore', 3.5] }] }, 1, 0] } },
-        dist4: { $sum: { $cond: [{ $and: [{ $gt: ['$compositeScore', 3.5] }, { $lte: ['$compositeScore', 4.5] }] }, 1, 0] } },
+        dist2: {
+          $sum: { $cond: [{ $and: [{ $gt: ['$compositeScore', 1.5] }, { $lte: ['$compositeScore', 2.5] }] }, 1, 0] },
+        },
+        dist3: {
+          $sum: { $cond: [{ $and: [{ $gt: ['$compositeScore', 2.5] }, { $lte: ['$compositeScore', 3.5] }] }, 1, 0] },
+        },
+        dist4: {
+          $sum: { $cond: [{ $and: [{ $gt: ['$compositeScore', 3.5] }, { $lte: ['$compositeScore', 4.5] }] }, 1, 0] },
+        },
         dist5: { $sum: { $cond: [{ $gt: ['$compositeScore', 4.5] }, 1, 0] } },
       },
     },
@@ -222,7 +228,14 @@ ratingSchema.statics.getProfileSummary = async function (userId) {
   ];
 
   const [result] = await this.aggregate(pipeline);
-  return result || { totalRatings: 0, avgReliability: 0, avgBehavior: 0, avgComposite: 0 };
+  return (
+    result || {
+      totalRatings: 0,
+      avgReliability: 0,
+      avgBehavior: 0,
+      avgComposite: 0,
+    }
+  );
 };
 
 // ─────────────────────────────────────────────

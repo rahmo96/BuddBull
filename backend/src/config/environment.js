@@ -28,7 +28,9 @@ const envSchema = Joi.object({
   UPLOAD_DRIVER: Joi.string().valid('local', 's3').default('local'),
   UPLOAD_DIR: Joi.string().default('uploads/'),
 
-  RATE_LIMIT_WINDOW_MS: Joi.number().integer().default(15 * 60 * 1000),
+  RATE_LIMIT_WINDOW_MS: Joi.number()
+    .integer()
+    .default(15 * 60 * 1000),
   RATE_LIMIT_MAX: Joi.number().integer().default(100),
 
   CLIENT_URL: Joi.string().uri().default('http://localhost:3000'),

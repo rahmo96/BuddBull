@@ -265,7 +265,12 @@ performanceLogSchema.statics.getStreakHistory = async function (userId, days = 3
       loggedAt: { $gte: since },
       deletedAt: null,
     },
-    { loggedAt: 1, streakAtLog: 1, sport: 1, type: 1 },
+    {
+      loggedAt: 1,
+      streakAtLog: 1,
+      sport: 1,
+      type: 1,
+    },
   ).sort({ loggedAt: 1 });
 };
 

@@ -8,9 +8,10 @@ const PerformanceService = require('../services/performance.service');
 const createLog = catchAsync(async (req, res) => {
   const log = await PerformanceService.createLog(req.user._id, req.body);
 
-  const message = log.newPersonalBests.length > 0
-    ? `Log saved! You set ${log.newPersonalBests.length} new personal best(s)!`
-    : 'Performance log saved.';
+  const message =
+    log.newPersonalBests.length > 0
+      ? `Log saved! You set ${log.newPersonalBests.length} new personal best(s)!`
+      : 'Performance log saved.';
 
   res.status(201).json({ success: true, message, data: { log } });
 });
@@ -20,12 +21,7 @@ const createLog = catchAsync(async (req, res) => {
 // ─────────────────────────────────────────────
 
 const getLogs = catchAsync(async (req, res) => {
-  const result = await PerformanceService.getLogs(
-    req.user._id,
-    req.user._id,
-    req.user.role,
-    req.query,
-  );
+  const result = await PerformanceService.getLogs(req.user._id, req.user._id, req.user.role, req.query);
 
   res.status(200).json({ success: true, ...result });
 });
@@ -70,12 +66,7 @@ const getLeaderboard = catchAsync(async (req, res) => {
 // ─────────────────────────────────────────────
 
 const getUserLogs = catchAsync(async (req, res) => {
-  const result = await PerformanceService.getLogs(
-    req.params.userId,
-    req.user._id,
-    req.user.role,
-    req.query,
-  );
+  const result = await PerformanceService.getLogs(req.params.userId, req.user._id, req.user.role, req.query);
 
   res.status(200).json({ success: true, ...result });
 });

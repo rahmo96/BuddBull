@@ -107,7 +107,10 @@ const listUsers = async ({ page = 1, limit = 20, search, role, status, sort = '-
   if (role) filter.role = role;
   if (status === 'banned') filter.isBanned = true;
   else if (status === 'active') filter.isBanned = false;
-  else if (status === 'deleted') { delete filter.isDeleted; filter.isDeleted = true; }
+  else if (status === 'deleted') {
+    delete filter.isDeleted;
+    filter.isDeleted = true;
+  }
 
   const [users, total] = await Promise.all([
     User.find(filter)
@@ -119,7 +122,12 @@ const listUsers = async ({ page = 1, limit = 20, search, role, status, sort = '-
     User.countDocuments(filter),
   ]);
 
-  return { users, total, page, totalPages: Math.ceil(total / limit) };
+  return {
+    users,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  };
 };
 
 const banUser = async (userId, { isBanned, reason } = {}) => {
@@ -165,7 +173,12 @@ const listGames = async ({ page = 1, limit = 20, sport, status, sort = '-created
     Game.countDocuments(filter),
   ]);
 
-  return { games, total, page, totalPages: Math.ceil(total / limit) };
+  return {
+    games,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  };
 };
 
 const adminDeleteGame = async (gameId, adminId) => {
@@ -198,9 +211,7 @@ const exportUsersCSV = async () => {
 };
 
 const exportGamesCSV = async () => {
-  const games = await Game.find({ isDeleted: false })
-    .populate('organizer', 'username')
-    .lean();
+  const games = await Game.find({ isDeleted: false }).populate('organizer', 'username').lean();
 
   return toCSV(games, [
     { label: 'ID', path: '_id' },
@@ -230,7 +241,9 @@ const broadcastMessage = async ({ title, body, channel = 'socket' }, io, notific
       isDeleted: false,
       isBanned: false,
       isEmailVerified: true,
-    }).select('email firstName').lean();
+    })
+      .select('email firstName')
+      .lean();
 
     const batchSize = 50;
     for (let i = 0; i < users.length; i += batchSize) {
@@ -247,8 +260,7 @@ const broadcastMessage = async ({ title, body, channel = 'socket' }, io, notific
 };
 
 // ── Sports categories ─────────────────────────────────────────────────────────
-const getSports = async () =>
-  SportCategory.find({ isActive: true }).sort({ sortOrder: 1, name: 1 }).lean();
+const getSports = async () => SportCategory.find({ isActive: true }).sort({ sortOrder: 1, name: 1 }).lean();
 
 const createSport = async (data, adminId) => {
   const sport = await SportCategory.create({ ...data, createdBy: adminId });

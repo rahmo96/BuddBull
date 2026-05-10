@@ -81,9 +81,12 @@ describe('PATCH /users/me', () => {
   it('rejects payloads that violate schema constraints', async () => {
     const { token } = await registerAndLogin();
 
-    const res = await request(app).patch(`${USER_BASE}/me`).set('Authorization', `Bearer ${token}`).send({
-      bio: 'x'.repeat(501),
-    });
+    const res = await request(app)
+      .patch(`${USER_BASE}/me`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        bio: 'x'.repeat(501),
+      });
 
     expect(res.status).toBe(422);
     expect(Array.isArray(res.body.errors)).toBe(true);
@@ -154,9 +157,7 @@ describe('GET /users/:username', () => {
   it('returns 404 for a non-existent username', async () => {
     const { token } = await registerAndLogin();
 
-    const res = await request(app)
-      .get(`${USER_BASE}/doesnotexist999`)
-      .set('Authorization', `Bearer ${token}`);
+    const res = await request(app).get(`${USER_BASE}/doesnotexist999`).set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(404);
   });

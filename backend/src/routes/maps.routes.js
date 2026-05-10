@@ -2,11 +2,7 @@ const express = require('express');
 
 const MapsController = require('../controllers/maps.controller');
 const { validate } = require('../validators/game.validator');
-const {
-  autocompleteSchema,
-  placeDetailsSchema,
-  staticMapSchema,
-} = require('../validators/maps.validator');
+const { autocompleteSchema, placeDetailsSchema, staticMapSchema } = require('../validators/maps.validator');
 
 const router = express.Router();
 

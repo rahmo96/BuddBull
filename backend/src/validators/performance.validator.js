@@ -16,9 +16,12 @@ const sportStatSchema = Joi.object({
 // ─────────────────────────────────────────────
 
 const createLogSchema = Joi.object({
-  gameId: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).allow(null).messages({
-    'string.pattern.base': 'Invalid game ID.',
-  }),
+  gameId: Joi.string()
+    .pattern(/^[0-9a-fA-F]{24}$/)
+    .allow(null)
+    .messages({
+      'string.pattern.base': 'Invalid game ID.',
+    }),
   type: Joi.string().valid('match', 'training', 'fitness').required().messages({
     'any.required': 'Log type is required.',
     'any.only': 'Type must be match, training, or fitness.',
@@ -30,10 +33,12 @@ const createLogSchema = Joi.object({
     'any.required': 'Activity date is required.',
     'date.max': 'Activity date cannot be in the future.',
   }),
-  matchOutcome: Joi.string().valid('win', 'loss', 'draw', 'no_result').when('type', {
-    is: 'match',
-    then: Joi.string().valid('win', 'loss', 'draw', 'no_result'),
-  }),
+  matchOutcome: Joi.string()
+    .valid('win', 'loss', 'draw', 'no_result')
+    .when('type', {
+      is: 'match',
+      then: Joi.string().valid('win', 'loss', 'draw', 'no_result'),
+    }),
   opponentDescription: Joi.string().trim().max(100).allow('', null),
   durationMinutes: Joi.number().integer().min(1).max(600),
   stats: Joi.array().items(sportStatSchema).max(50),

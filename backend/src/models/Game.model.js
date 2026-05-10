@@ -66,9 +66,9 @@ const gamLocationSchema = new mongoose.Schema(
         validate: {
           validator(coords) {
             return (
-              Array.isArray(coords)
-              && coords.length === 2
-              && coords.every((v) => typeof v === 'number' && Number.isFinite(v))
+              Array.isArray(coords) &&
+              coords.length === 2 &&
+              coords.every((v) => typeof v === 'number' && Number.isFinite(v))
             );
           },
           message: 'Coordinates must be [lng, lat].',
@@ -271,7 +271,12 @@ gameSchema.virtual('isUpcoming').get(function () {
 // ─────────────────────────────────────────────
 
 // Core matchmaking query: sport + city + status + date
-gameSchema.index({ sport: 1, 'location.city': 1, status: 1, scheduledAt: 1 });
+gameSchema.index({
+  sport: 1,
+  'location.city': 1,
+  status: 1,
+  scheduledAt: 1,
+});
 
 // Neighbourhood-level search
 gameSchema.index({ 'location.neighborhood': 1, sport: 1, scheduledAt: 1 });
@@ -292,7 +297,12 @@ gameSchema.index({ scheduledAt: 1, status: 1 });
 gameSchema.index({ deletedAt: 1 });
 
 // Text search on title and description
-gameSchema.index({ title: 'text', description: 'text', sport: 'text', tags: 'text' });
+gameSchema.index({
+  title: 'text',
+  description: 'text',
+  sport: 'text',
+  tags: 'text',
+});
 
 // ─────────────────────────────────────────────
 //  Pre-save Hooks
@@ -341,8 +351,7 @@ gameSchema.statics.findScheduleConflictGame = async function (
   proposedDurationMinutes,
   excludeGameId,
 ) {
-  const start =
-    proposedStart instanceof Date ? new Date(proposedStart.getTime()) : new Date(proposedStart);
+  const start = proposedStart instanceof Date ? new Date(proposedStart.getTime()) : new Date(proposedStart);
   if (Number.isNaN(start.getTime())) {
     return null;
   }
@@ -365,10 +374,7 @@ gameSchema.statics.findScheduleConflictGame = async function (
         {
           $gt: [
             {
-              $add: [
-                { $toLong: '$scheduledAt' },
-                { $multiply: [{ $ifNull: ['$durationMinutes', 0] }, 60000] },
-              ],
+              $add: [{ $toLong: '$scheduledAt' }, { $multiply: [{ $ifNull: ['$durationMinutes', 0] }, 60000] }],
             },
             proposedStartMs,
           ],

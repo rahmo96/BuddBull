@@ -38,10 +38,7 @@ describe('Account health enforced after Firebase verification', () => {
     });
     expect(onboarded.status).toBe(200);
 
-    await User.updateOne(
-      { _id: onboarded.userId },
-      { $set: { isBanned: true, banReason: 'automated qa ban' } },
-    );
+    await User.updateOne({ _id: onboarded.userId }, { $set: { isBanned: true, banReason: 'automated qa ban' } });
 
     const res = await request(app).get('/api/v1/users/me').set('Authorization', `Bearer ${onboarded.token}`);
 

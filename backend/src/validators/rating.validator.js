@@ -20,7 +20,8 @@ const getRatingsSchema = Joi.object({
   limit: Joi.number().integer().min(1).max(50).default(20),
 });
 
-const validate = (schema, source = 'body') =>
+const validate =
+  (schema, source = 'body') =>
   (req, res, next) => {
     const { error, value } = schema.validate(req[source], { abortEarly: false, stripUnknown: true });
     if (error) {

@@ -43,7 +43,12 @@ const locationSchema = new mongoose.Schema(
     // Postal code used for approximate geo-lookups; never exposed raw
     postalCode: { type: String, trim: true, select: false },
     // Maximum distance (km) the user is willing to travel
-    radiusKm: { type: Number, default: 10, min: 1, max: 200 },
+    radiusKm: {
+      type: Number,
+      default: 10,
+      min: 1,
+      max: 200,
+    },
   },
   { _id: false },
 );
@@ -170,7 +175,12 @@ const userSchema = new mongoose.Schema(
       longestStreak: { type: Number, default: 0, min: 0 },
       lastActivityDate: { type: Date },
       // Community score: average of post-game reliability + behaviour ratings
-      averageRating: { type: Number, default: 0, min: 0, max: 5 },
+      averageRating: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 5,
+      },
       totalRatings: { type: Number, default: 0, min: 0 },
     },
 
@@ -241,7 +251,12 @@ userSchema.index({ 'location.city': 1, 'sportsInterests.sport': 1 });
 // Soft-delete filter
 userSchema.index({ deletedAt: 1, isActive: 1 });
 // Text search on username, bio
-userSchema.index({ username: 'text', firstName: 'text', lastName: 'text', bio: 'text' });
+userSchema.index({
+  username: 'text',
+  firstName: 'text',
+  lastName: 'text',
+  bio: 'text',
+});
 // Leaderboard / ranking queries
 userSchema.index({ 'stats.averageRating': -1, 'stats.gamesPlayed': -1 });
 

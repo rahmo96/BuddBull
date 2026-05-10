@@ -52,9 +52,7 @@ const getFirebaseAuth = () => {
 // ── Auth middleware for socket connections ─────────────────────────────────────
 const socketAuthMiddleware = async (socket, next) => {
   try {
-    const token =
-      socket.handshake.auth?.token ||
-      socket.handshake.headers?.authorization?.replace('Bearer ', '');
+    const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.replace('Bearer ', '');
 
     if (!token) return next(new Error('Authentication required'));
 
@@ -78,8 +76,7 @@ const socketAuthMiddleware = async (socket, next) => {
 };
 
 // ── Helper: check participation ────────────────────────────────────────────────
-const getChat = async (chatId, userId) =>
-  Chat.findOne({ _id: chatId, 'participants.user': userId, isDeleted: false });
+const getChat = async (chatId, userId) => Chat.findOne({ _id: chatId, 'participants.user': userId, isDeleted: false });
 
 /** Room id from client payload: `{ chatId }` object or bare string (legacy). */
 const roomIdFromJoinPayload = (data) => {
@@ -245,9 +242,7 @@ module.exports = (io) => {
         const chat = await getChat(chatId, user._id);
         if (!chat) return socket.emit('error', { message: 'Chat not found' });
 
-        const participant = chat.participants.find(
-          (p) => p.user.toString() === user._id.toString(),
-        );
+        const participant = chat.participants.find((p) => p.user.toString() === user._id.toString());
         if (!participant?.isAdmin) {
           return socket.emit('error', { message: 'Only admins can pin messages' });
         }

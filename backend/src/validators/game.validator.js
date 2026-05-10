@@ -22,18 +22,32 @@ const locationSchema = Joi.object({
   coordinates: Joi.object({
     type: Joi.string().valid('Point').default('Point'),
     coordinates: Joi.array()
-      .ordered(
-        Joi.number().min(-180).max(180).required(),
-        Joi.number().min(-90).max(90).required(),
-      )
+      .ordered(Joi.number().min(-180).max(180).required(), Joi.number().min(-90).max(90).required())
       .required(),
   }),
 });
 
 const SPORTS = [
-  'football', 'soccer', 'basketball', 'tennis', 'volleyball', 'cricket',
-  'badminton', 'table tennis', 'rugby', 'baseball', 'hockey', 'swimming',
-  'cycling', 'running', 'gym', 'yoga', 'boxing', 'martial arts', 'golf', 'other',
+  'football',
+  'soccer',
+  'basketball',
+  'tennis',
+  'volleyball',
+  'cricket',
+  'badminton',
+  'table tennis',
+  'rugby',
+  'baseball',
+  'hockey',
+  'swimming',
+  'cycling',
+  'running',
+  'gym',
+  'yoga',
+  'boxing',
+  'martial arts',
+  'golf',
+  'other',
 ];
 
 // ─────────────────────────────────────────────
@@ -64,9 +78,7 @@ const createGameSchema = Joi.object({
     'any.required': 'Maximum player count is required.',
   }),
   minPlayersToStart: Joi.number().integer().min(2).default(2),
-  requiredSkillLevel: Joi.string()
-    .valid('any', 'beginner', 'intermediate', 'advanced', 'professional')
-    .default('any'),
+  requiredSkillLevel: Joi.string().valid('any', 'beginner', 'intermediate', 'advanced', 'professional').default('any'),
   isPrivate: Joi.boolean().default(false),
   requiresApproval: Joi.boolean().default(false),
   allowSpectators: Joi.boolean().default(true),
@@ -94,7 +106,9 @@ const searchGamesSchema = Joi.object({
   skillLevel: Joi.string().valid('any', 'beginner', 'intermediate', 'advanced', 'professional'),
   status: Joi.string().valid('open', 'full', 'in_progress', 'completed', 'cancelled').default('open'),
   dateFrom: Joi.date().iso(),
-  dateTo: Joi.date().iso().when('dateFrom', { is: Joi.exist(), then: Joi.date().greater(Joi.ref('dateFrom')) }),
+  dateTo: Joi.date()
+    .iso()
+    .when('dateFrom', { is: Joi.exist(), then: Joi.date().greater(Joi.ref('dateFrom')) }),
   isPrivate: Joi.boolean(),
   q: Joi.string().trim().max(100),
   page: Joi.number().integer().min(1).default(1),
@@ -104,20 +118,26 @@ const searchGamesSchema = Joi.object({
 });
 
 const calendarSchema = Joi.object({
-  dateFrom: Joi.date().iso().default(() => new Date()),
-  dateTo: Joi.date().iso().default(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 30);
-    return d;
-  }),
+  dateFrom: Joi.date()
+    .iso()
+    .default(() => new Date()),
+  dateTo: Joi.date()
+    .iso()
+    .default(() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 30);
+      return d;
+    }),
 });
 
 const completeGameSchema = Joi.object({
   winnerDescription: Joi.string().trim().max(200),
   score: Joi.string().trim().max(50),
-  mvpUserId: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).messages({
-    'string.pattern.base': 'Invalid MVP user ID.',
-  }),
+  mvpUserId: Joi.string()
+    .pattern(/^[0-9a-fA-F]{24}$/)
+    .messages({
+      'string.pattern.base': 'Invalid MVP user ID.',
+    }),
   notes: Joi.string().trim().max(500),
 });
 

@@ -26,10 +26,7 @@ const syncFirebaseUser = async (app, opts = {}) => {
     role: opts.role ?? 'player',
   };
 
-  const res = await request(app)
-    .post('/api/v1/auth/sync')
-    .set('Authorization', `Bearer ${bearer}`)
-    .send(body);
+  const res = await request(app).post('/api/v1/auth/sync').set('Authorization', `Bearer ${bearer}`).send(body);
 
   const user = res.body?.data?.user;
   if (res.status >= 400) {

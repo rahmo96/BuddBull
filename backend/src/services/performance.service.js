@@ -26,9 +26,7 @@ const createLog = async (userId, dto) => {
     const game = await Game.findById(dto.gameId).lean();
     if (!game) throw new AppError('Referenced game not found.', 404);
 
-    const isParticipant = game.players.some(
-      (p) => p.user.toString() === userId.toString() && p.status === 'approved',
-    );
+    const isParticipant = game.players.some((p) => p.user.toString() === userId.toString() && p.status === 'approved');
     if (!isParticipant) {
       throw new AppError('You can only log a performance for games you participated in.', 403);
     }
@@ -103,7 +101,9 @@ const detectPersonalBests = async (userId, sport, stats) => {
 
   const previousMaxes = await PerformanceLog.aggregate(pipeline);
   const maxMap = {};
-  previousMaxes.forEach((p) => { maxMap[p._id] = { maxValue: p.maxValue, unit: p.unit }; });
+  previousMaxes.forEach((p) => {
+    maxMap[p._id] = { maxValue: p.maxValue, unit: p.unit };
+  });
 
   const newPBs = [];
   for (const stat of numericStats) {
@@ -129,7 +129,8 @@ const detectPersonalBests = async (userId, sport, stats) => {
 const getLog = async (logId, userId, userRole) => {
   if (!mongoose.Types.ObjectId.isValid(logId)) throw new AppError('Invalid log ID.', 400);
 
-  const log = await PerformanceLog.findById(logId).notDeleted()
+  const log = await PerformanceLog.findById(logId)
+    .notDeleted()
     .populate('game', 'title sport scheduledAt')
     .populate('user', 'username firstName lastName');
 
@@ -180,7 +181,15 @@ const getLogs = async (userId, requesterId, requesterRole, filters = {}) => {
     PerformanceLog.countDocuments(query),
   ]);
 
-  return { logs, pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / Number(limit)) } };
+  return {
+    logs,
+    pagination: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      pages: Math.ceil(total / Number(limit)),
+    },
+  };
 };
 
 // ─────────────────────────────────────────────
@@ -251,13 +260,7 @@ const getStats = async (userId, { dateFrom, dateTo, sport } = {}) => {
   const sinceWeeks = new Date();
   sinceWeeks.setDate(sinceWeeks.getDate() - 7 * 8);
 
-  const [
-    totals,
-    weekly,
-    activityHeatmap,
-    recentPBLogs,
-    user,
-  ] = await Promise.all([
+  const [totals, weekly, activityHeatmap, recentPBLogs, user] = await Promise.all([
     PerformanceLog.aggregate([
       { $match: matchStage },
       {
@@ -423,7 +426,14 @@ const getActivityHeatmap = async (userId, days = 90) => {
       },
     },
     { $sort: { _id: 1 } },
-    { $project: { _id: 0, date: '$_id', count: 1, sports: 1 } },
+    {
+      $project: {
+        _id: 0,
+        date: '$_id',
+        count: 1,
+        sports: 1,
+      },
+    },
   ];
 
   return PerformanceLog.aggregate(pipeline);
@@ -440,7 +450,13 @@ const getActivityHeatmap = async (userId, days = 90) => {
 const getLeaderboard = async (sport, limit = 20) => {
   const pipeline = [
     { $match: { sport, deletedAt: null, isPublic: true } },
-    { $group: { _id: '$user', totalSessions: { $sum: 1 }, wins: { $sum: { $cond: [{ $eq: ['$matchOutcome', 'win'] }, 1, 0] } } } },
+    {
+      $group: {
+        _id: '$user',
+        totalSessions: { $sum: 1 },
+        wins: { $sum: { $cond: [{ $eq: ['$matchOutcome', 'win'] }, 1, 0] } },
+      },
+    },
     { $sort: { totalSessions: -1, wins: -1 } },
     { $limit: Number(limit) },
     {
@@ -449,11 +465,29 @@ const getLeaderboard = async (sport, limit = 20) => {
         localField: '_id',
         foreignField: '_id',
         as: 'userInfo',
-        pipeline: [{ $project: { username: 1, firstName: 1, lastName: 1, profilePicture: 1, 'stats.averageRating': 1, 'stats.currentStreak': 1 } }],
+        pipeline: [
+          {
+            $project: {
+              username: 1,
+              firstName: 1,
+              lastName: 1,
+              profilePicture: 1,
+              'stats.averageRating': 1,
+              'stats.currentStreak': 1,
+            },
+          },
+        ],
       },
     },
     { $unwind: '$userInfo' },
-    { $project: { _id: 0, user: '$userInfo', totalSessions: 1, wins: 1 } },
+    {
+      $project: {
+        _id: 0,
+        user: '$userInfo',
+        totalSessions: 1,
+        wins: 1,
+      },
+    },
   ];
 
   return PerformanceLog.aggregate(pipeline);

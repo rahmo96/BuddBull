@@ -6,11 +6,14 @@ const mongoId = Joi.string()
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 const sendMessageSchema = Joi.object({
-  content: Joi.string().trim().max(5000).when('type', {
-    is: Joi.valid('image', 'video', 'file'),
-    then: Joi.optional().allow(''),
-    otherwise: Joi.required(),
-  }),
+  content: Joi.string()
+    .trim()
+    .max(5000)
+    .when('type', {
+      is: Joi.valid('image', 'video', 'file'),
+      then: Joi.optional().allow(''),
+      otherwise: Joi.required(),
+    }),
   type: Joi.string().valid('text', 'image', 'video', 'file').default('text'),
   replyTo: mongoId.optional(),
 });
@@ -30,7 +33,8 @@ const getMessagesSchema = Joi.object({
 });
 
 // ── Middleware factory ────────────────────────────────────────────────────────
-const validate = (schema, source = 'body') =>
+const validate =
+  (schema, source = 'body') =>
   (req, res, next) => {
     const { error, value } = schema.validate(req[source], { abortEarly: false, stripUnknown: true });
     if (error) {
@@ -41,4 +45,10 @@ const validate = (schema, source = 'body') =>
     return next();
   };
 
-module.exports = { sendMessageSchema, createDMSchema, pinMessageSchema, getMessagesSchema, validate };
+module.exports = {
+  sendMessageSchema,
+  createDMSchema,
+  pinMessageSchema,
+  getMessagesSchema,
+  validate,
+};
