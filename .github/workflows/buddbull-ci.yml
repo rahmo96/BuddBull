@@ -50,7 +50,7 @@ jobs:
   backend:
     name: Backend (Node.js 20)
     needs: changes
-    if: needs.changes.outputs.backend == 'true'
+    if: always() && (needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -84,7 +84,7 @@ jobs:
   frontend:
     name: Frontend (Flutter stable)
     needs: changes
-    if: needs.changes.outputs.frontend == 'true'
+    if: always() && (needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     defaults:
       run:
