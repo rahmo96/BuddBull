@@ -25,3 +25,16 @@ exports.getPendingRatings = catchAsync(async (req, res) => {
   const pending = await ratingService.getPendingRatings(req.user._id);
   res.status(200).json({ success: true, data: { pending } });
 });
+
+// ── Admin: reconcile User.stats from the Rating corpus ─────────────────────────
+// Backfills legacy compositeScore and recomputes averageRating + totalRatings
+// for every user. Used to repair historical corruption caused by the
+// findOneAndUpdate / post('save') hook mismatch. Idempotent.
+exports.recalculateAllStats = catchAsync(async (req, res) => {
+  const result = await ratingService.recalculateAllStats();
+  res.status(200).json({
+    success: true,
+    message: 'Rating stats reconciliation complete.',
+    data: result,
+  });
+});

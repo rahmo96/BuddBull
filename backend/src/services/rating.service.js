@@ -2,6 +2,7 @@ const Rating = require('../models/Rating.model');
 const Game = require('../models/Game.model');
 const User = require('../models/User.model');
 const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
 
 // ── Rate a player ─────────────────────────────────────────────────────────────
 const ratePlayer = async ({ raterId, rateeId, gameId, reliabilityScore, behaviorScore, comment, isAnonymous }) => {
@@ -27,6 +28,11 @@ const ratePlayer = async ({ raterId, rateeId, gameId, reliabilityScore, behavior
     throw new AppError('The player you are rating was not in this game', 400);
   }
 
+  // The Rating schema's `pre('save')` hook computes `compositeScore`, but
+  // `findOneAndUpdate` does NOT trigger document middleware. We compute it
+  // here so every upserted document has a correct value on disk.
+  const compositeScore = parseFloat(((reliabilityScore + behaviorScore) / 2).toFixed(2));
+
   // Upsert rating (one per rater/ratee/game triplet)
   // Re-rating after a soft-delete clears the deletedAt flag.
   const rating = await Rating.findOneAndUpdate(
@@ -37,6 +43,7 @@ const ratePlayer = async ({ raterId, rateeId, gameId, reliabilityScore, behavior
       game: gameId,
       reliabilityScore,
       behaviorScore,
+      compositeScore,
       comment: comment || undefined,
       isAnonymous,
       deletedAt: null,
@@ -49,7 +56,42 @@ const ratePlayer = async ({ raterId, rateeId, gameId, reliabilityScore, behavior
     },
   );
 
+  // Roll up into the ratee's denormalised User.stats. Document middleware
+  // does not fire on findOneAndUpdate, so this MUST be called explicitly.
+  // Failures here are non-critical (the response shape doesn't depend on
+  // the rollup completing) but must be logged so we can reconcile later.
+  try {
+    await Rating.recalculateUserStats(rateeId);
+  } catch (err) {
+    logger.error(
+      `[rating] Failed to recalculate User.stats for ratee ${rateeId} after rating ${rating._id}: ${err.message}`,
+    );
+  }
+
   return rating;
+};
+
+// ── Recalculate all user rating stats (admin reconciliation) ──────────────────
+/**
+ * Triggers a full reconciliation of `User.stats.averageRating` and
+ * `User.stats.totalRatings` across every user with at least one rating,
+ * and resets users whose stats are stale. Also backfills missing
+ * `compositeScore` values on legacy rating documents.
+ *
+ * This exists because `findOneAndUpdate` bypasses Mongoose document
+ * middleware — historic ratings written through the service have
+ * `compositeScore = null` and never triggered a stats rollup. One-shot
+ * call to fix the corpus; safe to re-run.
+ */
+const recalculateAllStats = async () => {
+  const start = Date.now();
+  const result = await Rating.recalculateAllUserStats();
+  logger.info(
+    `[rating] Recalculation finished in ${Date.now() - start}ms — ` +
+      `compositeBackfilled=${result.compositeBackfilled}, usersUpdated=${result.usersUpdated}, ` +
+      `usersReset=${result.usersReset}, rateesProcessed=${result.rateesProcessed}`,
+  );
+  return result;
 };
 
 // ── Get summary (aggregate) for a user's public profile ──────────────────────
@@ -166,4 +208,5 @@ module.exports = {
   getRatingsForUser,
   getRatingsGivenByUser,
   getPendingRatings,
+  recalculateAllStats,
 };

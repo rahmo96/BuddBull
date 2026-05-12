@@ -137,42 +137,164 @@ ratingSchema.pre('save', function (next) {
 });
 
 // ─────────────────────────────────────────────
-//  Post-save Hook — roll up into User.stats
+//  Stats Rollup — Static Methods
 // ─────────────────────────────────────────────
+//
+// IMPORTANT: We intentionally do NOT use a `post('save')` hook to roll up
+// stats into `User.stats`, because the rating service writes via
+// `findOneAndUpdate({ upsert: true })`, which does not trigger document
+// middleware. Callers must invoke `Rating.recalculateUserStats(rateeId)`
+// explicitly after every write (see `rating.service.js`).
+//
+// The aggregations below compute the composite score from raw scores
+// (`reliabilityScore + behaviorScore`) rather than from the stored
+// `compositeScore` field. This makes them robust against historical rows
+// where the `pre('save')` hook never fired and `compositeScore` is null.
 
 /**
- * After a rating is saved, recompute the ratee's averageRating
- * using an aggregation to avoid race conditions from concurrent saves.
+ * Recomputes and persists `User.stats.averageRating` and
+ * `User.stats.totalRatings` for a single user, from the live Rating
+ * collection. Returns the fresh aggregates. Safe to call concurrently —
+ * each call is a single aggregation + single update, with no read/modify/
+ * write window in JavaScript land.
+ *
+ * If the user has no live ratings, their stats are reset to zero.
  */
-ratingSchema.post('save', async function () {
-  try {
-    const User = mongoose.model('User');
+ratingSchema.statics.recalculateUserStats = async function (rateeId) {
+  const User = mongoose.model('User');
+  const rateeObjectId = new mongoose.Types.ObjectId(rateeId);
 
-    const [agg] = await mongoose.model('Rating').aggregate([
-      { $match: { ratee: this.ratee, deletedAt: null, isHidden: false } },
+  const [agg] = await this.aggregate([
+    { $match: { ratee: rateeObjectId, deletedAt: null, isHidden: false } },
+    {
+      $group: {
+        _id: '$ratee',
+        averageRating: {
+          $avg: { $divide: [{ $add: ['$reliabilityScore', '$behaviorScore'] }, 2] },
+        },
+        totalRatings: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const averageRating = agg ? parseFloat(agg.averageRating.toFixed(2)) : 0;
+  const totalRatings = agg ? agg.totalRatings : 0;
+
+  await User.findByIdAndUpdate(rateeId, {
+    $set: {
+      'stats.averageRating': averageRating,
+      'stats.totalRatings': totalRatings,
+    },
+  });
+
+  return { averageRating, totalRatings };
+};
+
+/**
+ * Backfills the `compositeScore` field on every Rating document that is
+ * missing it (legacy rows written via `findOneAndUpdate` before the
+ * service started computing the field explicitly). Idempotent.
+ *
+ * Returns the number of documents touched.
+ */
+ratingSchema.statics.backfillCompositeScore = async function () {
+  const result = await this.updateMany(
+    {
+      $or: [{ compositeScore: null }, { compositeScore: { $exists: false } }],
+    },
+    [
       {
-        $group: {
-          _id: '$ratee',
-          averageRating: { $avg: '$compositeScore' },
-          totalRatings: { $sum: 1 },
+        $set: {
+          compositeScore: {
+            $round: [
+              { $divide: [{ $add: ['$reliabilityScore', '$behaviorScore'] }, 2] },
+              2,
+            ],
+          },
         },
       },
-    ]);
+    ],
+  );
+  return result.modifiedCount || 0;
+};
 
-    if (agg) {
-      await User.findByIdAndUpdate(this.ratee, {
-        'stats.averageRating': parseFloat(agg.averageRating.toFixed(2)),
-        'stats.totalRatings': agg.totalRatings,
-      });
-    }
-  } catch (_err) {
-    // Non-critical: log but do not block the response
-    // The service layer should schedule a reconciliation job for failures
+/**
+ * Full reconciliation pass over the Rating collection.
+ *
+ *   1. Backfills `compositeScore` on any legacy rows.
+ *   2. Aggregates `averageRating` + `totalRatings` for every distinct
+ *      ratee that has live ratings, and bulk-updates `User.stats`.
+ *   3. Resets stats to 0 for users whose only ratings were soft-deleted
+ *      or hidden.
+ *
+ * Designed for one-shot admin invocation. Safe to re-run.
+ *
+ * Returns counters describing what changed.
+ */
+ratingSchema.statics.recalculateAllUserStats = async function () {
+  const User = mongoose.model('User');
+
+  const compositeBackfilled = await this.backfillCompositeScore();
+
+  const aggregations = await this.aggregate([
+    { $match: { deletedAt: null, isHidden: false } },
+    {
+      $group: {
+        _id: '$ratee',
+        averageRating: {
+          $avg: { $divide: [{ $add: ['$reliabilityScore', '$behaviorScore'] }, 2] },
+        },
+        totalRatings: { $sum: 1 },
+      },
+    },
+  ]);
+
+  let usersUpdated = 0;
+  if (aggregations.length > 0) {
+    const bulkOps = aggregations.map((a) => ({
+      updateOne: {
+        filter: { _id: a._id },
+        update: {
+          $set: {
+            'stats.averageRating': parseFloat(a.averageRating.toFixed(2)),
+            'stats.totalRatings': a.totalRatings,
+          },
+        },
+      },
+    }));
+    const bulkResult = await User.bulkWrite(bulkOps, { ordered: false });
+    usersUpdated = bulkResult.modifiedCount || 0;
   }
-});
+
+  // Reset users whose previously-rolled-up stats are now stale because
+  // every rating they once had has been soft-deleted/hidden.
+  const ratedUserIds = aggregations.map((a) => a._id);
+  const resetResult = await User.updateMany(
+    {
+      _id: { $nin: ratedUserIds },
+      $or: [
+        { 'stats.totalRatings': { $gt: 0 } },
+        { 'stats.averageRating': { $gt: 0 } },
+      ],
+    },
+    {
+      $set: {
+        'stats.averageRating': 0,
+        'stats.totalRatings': 0,
+      },
+    },
+  );
+
+  return {
+    compositeBackfilled,
+    usersUpdated,
+    usersReset: resetResult.modifiedCount || 0,
+    rateesProcessed: aggregations.length,
+  };
+};
 
 // ─────────────────────────────────────────────
-//  Static Methods
+//  Profile Summary — Static Method
 // ─────────────────────────────────────────────
 
 /**

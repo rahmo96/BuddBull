@@ -2,11 +2,17 @@ const express = require('express');
 
 const router = express.Router();
 
-const { protect } = require('../middleware/auth.middleware');
+const { protect, restrictTo } = require('../middleware/auth.middleware');
 const ratingController = require('../controllers/rating.controller');
 const { ratePlayerSchema, getRatingsSchema, validate } = require('../validators/rating.validator');
 
 router.use(protect);
+
+// ── Admin: reconcile every user's denormalised rating stats ───────────────────
+// One-shot reconciliation tool. Backfills legacy `compositeScore` values and
+// recomputes `User.stats.averageRating` / `User.stats.totalRatings` for the
+// entire user base. Idempotent — safe to re-run.
+router.patch('/recalculate-all', restrictTo('admin'), ratingController.recalculateAllStats);
 
 // ── Create / update a rating ───────────────────────────────────────────────────
 router.post('/', validate(ratePlayerSchema), ratingController.ratePlayer);
