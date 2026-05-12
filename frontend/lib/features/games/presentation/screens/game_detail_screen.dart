@@ -19,15 +19,51 @@ import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:buddbull/shared/widgets/loading_overlay.dart';
 
-class GameDetailScreen extends ConsumerWidget {
+class GameDetailScreen extends ConsumerStatefulWidget {
   const GameDetailScreen({super.key, required this.gameId});
   final String gameId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GameDetailScreen> createState() => _GameDetailScreenState();
+}
+
+class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
+  /// Latches once we've observed at least one pending rating for this game.
+  /// We only auto-navigate home when an existing queue drains — never on the
+  /// initial load of a game that was already fully rated.
+  bool _hadPendingRatings = false;
+
+  /// Prevents the delayed pop from firing more than once after the queue
+  /// empties (the provider can emit multiple loading → data transitions while
+  /// other refreshes are in flight).
+  bool _autoPoppedHome = false;
+
+  /// One-shot guard: once we've seen the game in `completed` state we kick
+  /// `pendingRatingsProvider` so the rate button can appear immediately even
+  /// when the queue was loaded before the organizer marked the game complete.
+  bool _didRefreshPendingOnComplete = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final gameId = widget.gameId;
     final gameAsync = ref.watch(gameDetailProvider(gameId));
     final actionsState = ref.watch(gameActionsProvider(gameId));
     final currentUser = ref.watch(authProvider).user;
+
+    // Refresh the pending-rating queue the first time we observe this game as
+    // completed. Without this, the bottom bar would stay on "Leave Game" /
+    // empty until the user pulled to refresh, because the queue may have been
+    // cached before the game's status flipped.
+    final loadedGame = gameAsync.valueOrNull;
+    if (loadedGame != null &&
+        loadedGame.isCompleted &&
+        !_didRefreshPendingOnComplete) {
+      _didRefreshPendingOnComplete = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.invalidate(pendingRatingsProvider);
+      });
+    }
 
     ref.listen(gameActionsProvider(gameId), (prev, next) {
       if (next.error != null && next.error != prev?.error) {
@@ -39,6 +75,54 @@ class GameDetailScreen extends ConsumerWidget {
         showSuccessSnackBar(context, next.successMessage!);
         ref.read(gameActionsProvider(gameId).notifier).clearSuccess();
       }
+    });
+
+    // ── Auto-return home when this game's rating queue drains ────────────────
+    // Fires when the user finishes the last pending rating for this game *or*
+    // chooses "Don't rate this game" (which dismisses the queue server-side).
+    // A 500ms delay lets the rate sheet animate out and the success snackbar
+    // register before we leave the screen.
+    ref.listen<AsyncValue<List<PendingRatingItem>>>(pendingRatingsProvider,
+        (prev, next) {
+      if (_autoPoppedHome) return;
+
+      final game = gameAsync.valueOrNull;
+      if (game == null || !game.isCompleted) return;
+
+      final user = ref.read(authProvider).user;
+      if (user == null) return;
+      final myPlayer = game.getPlayer(user.id);
+      // Only participants can have ratings to do; organizers who weren't on
+      // the pitch should stay on the detail screen.
+      if (myPlayer?.isApproved != true) return;
+
+      final hasPendingNow = next.valueOrNull?.any(
+            (e) => e.gameId == gameId && e.pendingPlayers.isNotEmpty,
+          ) ??
+          false;
+
+      if (hasPendingNow) {
+        _hadPendingRatings = true;
+        return;
+      }
+
+      // Only act on freshly loaded data — never the AsyncLoading snapshot
+      // that retains the cached value during a refetch.
+      final settled = next is AsyncData<List<PendingRatingItem>>;
+      if (!settled || !_hadPendingRatings) return;
+
+      _autoPoppedHome = true;
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (!mounted) return;
+        if (!context.mounted) return;
+        // Prefer popping (returns the user to wherever they came from); fall
+        // back to navigating to home when this screen is the root entry.
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go(Routes.home);
+        }
+      });
     });
 
     return gameAsync.when(
@@ -830,9 +914,10 @@ bool _gameDetailBottomBarHasContent({
   if (myPlayer == null) return true;
   if (myPlayer.isPending) return true;
   if (myPlayer.isApproved && !game.isCompleted) return true;
-  if (myPlayer.isApproved && game.isCompleted) {
-    return _hasPendingRatingsForGame(pendingRatings, game.id);
-  }
+  // Approved player on a completed game: always render the bar so the
+  // "Rate Participants" affordance is visible immediately. The picker handles
+  // the edge case where the queue is empty (it shows a friendly snackbar).
+  if (myPlayer.isApproved && game.isCompleted) return true;
   return false;
 }
 
@@ -864,13 +949,9 @@ class _BottomActionBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pendingRatings = ref.watch(pendingRatingsProvider);
-    final hasPendingRatings =
-        _hasPendingRatingsForGame(pendingRatings, game.id);
-
     final hasChat =
         game.groupChatId != null && myPlayer?.isApproved == true;
-    final main = _buildMainAction(context, ref, hasPendingRatings);
+    final main = _buildMainAction(context, ref);
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -906,16 +987,19 @@ class _BottomActionBar extends ConsumerWidget {
     );
   }
 
-  /// Primary / leave / join / manage slot. Returns `null` when nothing should
-  /// occupy the second column (e.g. completed game, all opponents already rated).
+  /// Primary / leave / join / manage slot. Returns `null` only when no action
+  /// makes sense (e.g. cancelled game).
   Widget? _buildMainAction(
     BuildContext context,
     WidgetRef ref,
-    bool hasPendingRatings,
   ) {
     if (isOrganizer) {
       if (game.isCompleted) {
-        if (myPlayer?.isApproved == true && hasPendingRatings) {
+        // Organizer who played on the pitch should always get the rate CTA
+        // as soon as the game flips to completed — independent of whether
+        // `pendingRatingsProvider` has refetched yet. The picker refreshes
+        // the queue itself and falls back to `game.players` if needed.
+        if (myPlayer?.isApproved == true) {
           return BbButton(
             label: 'Rate Participants',
             onPressed: () => _openRateParticipantsPicker(
@@ -970,21 +1054,22 @@ class _BottomActionBar extends ConsumerWidget {
 
     if (myPlayer!.isApproved) {
       if (game.isCompleted) {
-        if (hasPendingRatings) {
-          return BbButton(
-            label: 'Rate Participants',
-            onPressed: () => _openRateParticipantsPicker(
-              context,
-              ref,
-              game,
-              gameId,
-              currentUserId,
-            ),
-            variant: BbButtonVariant.primary,
-            icon: Icons.star_rate_rounded,
-          );
-        }
-        return null;
+        // The moment the game flips to completed, "Leave Game" must swap to
+        // "Rate Participants" for every approved player — regardless of the
+        // pending-rating provider's current state. The picker handles the
+        // (rare) case where the queue is genuinely empty.
+        return BbButton(
+          label: 'Rate Participants',
+          onPressed: () => _openRateParticipantsPicker(
+            context,
+            ref,
+            game,
+            gameId,
+            currentUserId,
+          ),
+          variant: BbButtonVariant.primary,
+          icon: Icons.star_rate_rounded,
+        );
       }
       return BbButton(
         label: 'Leave Game',
