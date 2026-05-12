@@ -1,14 +1,15 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/services/socket_service.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/chat/data/models/chat_model.dart';
-import 'package:buddbull/features/chat/providers/chat_provider.dart';
 import 'package:buddbull/features/chat/presentation/widgets/message_bubble.dart';
 import 'package:buddbull/features/chat/presentation/widgets/pinned_message_banner.dart';
+import 'package:buddbull/features/chat/providers/chat_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String chatId;
@@ -230,9 +231,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget _buildReplyPreview() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.surface,
-        border: const Border(top: BorderSide(color: AppColors.border)),
+        border: Border(top: BorderSide(color: AppColors.border)),
       ),
       child: Row(
         children: [

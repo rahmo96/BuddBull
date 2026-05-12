@@ -1,7 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
@@ -11,6 +7,10 @@ import 'package:buddbull/features/performance/presentation/widgets/streak_banner
 import 'package:buddbull/features/performance/providers/performance_provider.dart';
 import 'package:buddbull/features/profile/presentation/widgets/stats_card.dart';
 import 'package:buddbull/features/rating/providers/rating_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shimmer/shimmer.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -102,7 +102,7 @@ class HomeScreen extends ConsumerWidget {
                               fontFamily: 'Inter',
                               fontSize: 13,
                               color:
-                                  Colors.white.withOpacity(0.75),
+                                  Colors.white.withValues(alpha: 0.75),
                             ),
                           ),
                         ],
@@ -417,9 +417,9 @@ class _QuickActionCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(
             horizontal: 8, vertical: 14),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Column(
           children: [

@@ -184,7 +184,7 @@ abstract class AppTheme {
       // ── Navigation Bar (M3) ───────────────────────────────────
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.primary.withOpacity(0.12),
+        indicatorColor: AppColors.primary.withValues(alpha: 0.12),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return const IconThemeData(color: AppColors.primary);
@@ -213,7 +213,7 @@ abstract class AppTheme {
       // ── Chip ──────────────────────────────────────────────────
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.grey100,
-        selectedColor: AppColors.primary.withOpacity(0.12),
+        selectedColor: AppColors.primary.withValues(alpha: 0.12),
         labelStyle: AppTextStyles.labelMedium,
         side: const BorderSide(color: AppColors.grey300),
         shape: RoundedRectangleBorder(

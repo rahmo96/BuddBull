@@ -1,10 +1,10 @@
+import 'package:buddbull/core/constants/app_colors.dart';
+import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/features/chat/data/models/chat_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_text_styles.dart';
-import 'package:buddbull/features/chat/data/models/chat_model.dart';
 
 class MessageBubble extends StatelessWidget {
   final MessageModel message;
@@ -124,7 +124,7 @@ class MessageBubble extends StatelessWidget {
     final pic = message.senderPicture;
     return CircleAvatar(
       radius: 14,
-      backgroundColor: AppColors.primary.withOpacity(0.15),
+      backgroundColor: AppColors.primary.withValues(alpha: 0.15),
       child: pic != null
           ? ClipOval(
               child: CachedNetworkImage(
@@ -153,7 +153,7 @@ class MessageBubble extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 4),
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.08),
+        color: AppColors.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
         border: const Border(left: BorderSide(color: AppColors.primary, width: 3)),
       ),
@@ -179,7 +179,7 @@ class MessageBubble extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),

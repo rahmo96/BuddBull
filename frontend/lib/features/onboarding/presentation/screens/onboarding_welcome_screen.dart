@@ -159,7 +159,7 @@ class _SportSkillPanel extends StatelessWidget {
         border: Border.all(color: AppColors.grey200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -190,7 +190,7 @@ class _SportSkillPanel extends StatelessWidget {
                   label: Text(skillLevelDisplayName(level)),
                   selected: skillLevel == level,
                   onSelected: (_) => onSkillSelected(level),
-                  selectedColor: option.accent.withOpacity(0.2),
+                  selectedColor: option.accent.withValues(alpha: 0.2),
                   labelStyle: AppTextStyles.labelMedium.copyWith(
                     color: skillLevel == level
                         ? option.accent
@@ -228,7 +228,7 @@ class _SportChoiceChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final borderColor = selected ? option.accent : AppColors.grey300;
     final bg =
-        selected ? option.accent.withOpacity(0.12) : AppColors.surface;
+        selected ? option.accent.withValues(alpha: 0.12) : AppColors.surface;
 
     return Material(
       color: Colors.transparent,
@@ -246,7 +246,7 @@ class _SportChoiceChip extends StatelessWidget {
             boxShadow: selected
                 ? [
                     BoxShadow(
-                      color: option.accent.withOpacity(0.2),
+                      color: option.accent.withValues(alpha: 0.2),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),

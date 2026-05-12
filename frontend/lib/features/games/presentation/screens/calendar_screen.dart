@@ -101,7 +101,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     ),
                     todayDecoration: BoxDecoration(
                       color: AppColors.primary
-                          .withOpacity(0.3),
+                          .withValues(alpha: 0.3),
                       shape: BoxShape.circle,
                     ),
                     markerDecoration: const BoxDecoration(
@@ -130,12 +130,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         AppTextStyles.titleMedium,
                     formatButtonDecoration: BoxDecoration(
                       color: AppColors.primary
-                          .withOpacity(0.1),
+                          .withValues(alpha: 0.1),
                       borderRadius:
                           BorderRadius.circular(12),
                       border: Border.all(
                           color: AppColors.primary
-                              .withOpacity(0.3)),
+                              .withValues(alpha: 0.3)),
                     ),
                     formatButtonTextStyle:
                         AppTextStyles.labelMedium.copyWith(

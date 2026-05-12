@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/performance/data/models/performance_model.dart';
+import 'package:flutter/material.dart';
 
 /// GitHub-style activity heatmap showing the last 16 weeks of activity.
 class ActivityHeatmap extends StatelessWidget {
@@ -166,7 +166,7 @@ class ActivityHeatmap extends StatelessWidget {
     if (count == 0) return AppColors.grey100;
     final t = (count / maxCount).clamp(0.0, 1.0);
     return Color.lerp(
-      AppColors.primary.withOpacity(0.25),
+      AppColors.primary.withValues(alpha: 0.25),
       AppColors.primary,
       t,
     )!;

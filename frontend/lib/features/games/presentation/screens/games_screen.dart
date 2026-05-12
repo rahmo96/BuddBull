@@ -1,7 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
@@ -11,6 +7,10 @@ import 'package:buddbull/features/games/presentation/widgets/game_card.dart';
 import 'package:buddbull/features/games/presentation/widgets/game_filter_sheet.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shimmer/shimmer.dart';
 
 const _sports = [
   'Football', 'Basketball', 'Tennis', 'Running',

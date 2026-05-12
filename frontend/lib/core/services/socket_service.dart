@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:buddbull/core/network/api_endpoints.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
@@ -89,13 +90,13 @@ class SocketService {
   // ── Connect ───────────────────────────────────────────────────────────────
   Future<void> connect() async {
     if (_socket?.connected == true) {
-      print('⚪ SOCKET connect skipped — already connected (${_socket!.id})');
+      debugPrint('⚪ SOCKET connect skipped — already connected (${_socket!.id})');
       return;
     }
 
     // Drop half-open client so a later connect() always rebuilds listeners + handshake.
     if (_socket != null) {
-      print('⚪ SOCKET disposing stale socket before new handshake');
+      debugPrint('⚪ SOCKET disposing stale socket before new handshake');
       try {
         _socket!.dispose();
       } catch (_) {}
@@ -106,17 +107,17 @@ class SocketService {
     try {
       token = await FirebaseAuth.instance.currentUser?.getIdToken();
     } on FirebaseAuthException catch (e, st) {
-      print('❌ SOCKET abort — FirebaseAuthException getting token: $e\n$st');
+      debugPrint('❌ SOCKET abort — FirebaseAuthException getting token: $e\n$st');
       try {
         await FirebaseAuth.instance.signOut();
       } catch (_) {}
       return;
     } catch (e, st) {
-      print('❌ SOCKET abort — error getting token: $e\n$st');
+      debugPrint('❌ SOCKET abort — error getting token: $e\n$st');
       return;
     }
     if (token == null) {
-      print(
+      debugPrint(
         '❌ SOCKET abort — no Firebase ID token (currentUser: ${FirebaseAuth.instance.currentUser?.uid})',
       );
       return;
@@ -126,7 +127,7 @@ class SocketService {
     _setStatus(SocketStatus.connecting);
 
     final serverUrl = ApiEndpoints.socketUrl;
-    print('🟡 SOCKET handshake → $serverUrl (same origin as ApiClient base, minus /api/v1)');
+    debugPrint('🟡 SOCKET handshake → $serverUrl (same origin as ApiClient base, minus /api/v1)');
 
     try {
       _socket = io.io(
@@ -141,14 +142,14 @@ class SocketService {
             .build(),
       );
     } catch (e, st) {
-      print('❌ SOCKET io.io() failed: $e\n$st');
+      debugPrint('❌ SOCKET io.io() failed: $e\n$st');
       _setStatus(SocketStatus.error);
       return;
     }
 
     _socket!
       ..onConnect((_) {
-        print('🟢 SOCKET CONNECTED: ${_socket!.id}');
+        debugPrint('🟢 SOCKET CONNECTED: ${_socket!.id}');
         _setStatus(SocketStatus.connected);
         // Re-join rooms after reconnect — contract: `{ 'chatId': chatId }`.
         for (final chatId in _joinedChats) {
@@ -158,11 +159,11 @@ class SocketService {
         }
       })
       ..onDisconnect((_) {
-        print('🔴 SOCKET DISCONNECTED');
+        debugPrint('🔴 SOCKET DISCONNECTED');
         _setStatus(SocketStatus.disconnected);
       })
       ..onConnectError((err) {
-        print('❌ SOCKET ERROR: $err');
+        debugPrint('❌ SOCKET ERROR: $err');
         _setStatus(SocketStatus.error);
       })
       ..on('messageRead', (data) {
@@ -212,22 +213,22 @@ class SocketService {
         } catch (_) {}
       });
 
-    print('🟡 SOCKET calling connect()…');
+    debugPrint('🟡 SOCKET calling connect()…');
     _socket!.connect();
 
     _socket!.onAny((event, data) {
-      print('⚡ GLOBAL CAUGHT: Event: $event | Data: $data');
+      debugPrint('⚡ GLOBAL CAUGHT: Event: $event | Data: $data');
     });
 
     // Register message handlers immediately after connect() so they always bind to this instance.
     _socket!.on('receive_message', (data) {
-      print('🔥 RECEIVED: $data');
+      debugPrint('🔥 RECEIVED: $data');
       try {
         _messageController.add(data);
       } catch (_) {}
     });
     _socket!.on('newMessage', (data) {
-      print('🔥 RECEIVED newMessage: $data');
+      debugPrint('🔥 RECEIVED newMessage: $data');
       try {
         _messageController.add(data);
       } catch (_) {}
@@ -236,7 +237,7 @@ class SocketService {
 
   // ── Room management ───────────────────────────────────────────────────────
   void joinChat(String chatId) {
-    print('🔵 SOCKET EMITTING JOIN ROOM: $chatId');
+    debugPrint('🔵 SOCKET EMITTING JOIN ROOM: $chatId');
     _joinedChats.add(chatId);
     if (_socket?.connected == true) {
       _socket!.emit('join_chat', <String, dynamic>{'chatId': chatId});

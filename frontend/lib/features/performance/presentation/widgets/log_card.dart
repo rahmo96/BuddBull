@@ -127,7 +127,7 @@ class LogCard extends StatelessWidget {
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: AppColors.secondaryLight
-                            .withOpacity(0.5),
+                            .withValues(alpha: 0.5),
                         borderRadius:
                             BorderRadius.circular(10),
                       ),
@@ -235,9 +235,9 @@ class _OutcomeBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(
           horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Text(
         emoji,

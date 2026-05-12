@@ -22,7 +22,7 @@ class ChatListScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: Text('Messages', style: AppTextStyles.titleLarge),
+        title: const Text('Messages', style: AppTextStyles.titleLarge),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
@@ -87,7 +87,7 @@ class ChatListScreen extends ConsumerWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.chat_bubble_outline, size: 40, color: AppColors.primary),

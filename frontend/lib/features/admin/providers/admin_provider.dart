@@ -1,6 +1,6 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:buddbull/core/network/api_client.dart';
 import 'package:buddbull/features/admin/data/admin_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final adminRepositoryProvider = Provider<AdminRepository>((ref) {
   return AdminRepository(ref.watch(apiClientProvider));

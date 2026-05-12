@@ -1,7 +1,7 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
-import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/games/data/game_repository.dart';
+import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';

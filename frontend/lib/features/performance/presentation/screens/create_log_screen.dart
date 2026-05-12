@@ -1,7 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/performance/providers/performance_provider.dart';
@@ -9,6 +5,10 @@ import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:buddbull/shared/widgets/loading_overlay.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 const _sports = [
   'Football', 'Basketball', 'Tennis', 'Running',
@@ -348,7 +348,7 @@ class _CreateLogScreenState
                         decoration: BoxDecoration(
                           color: _mood == m
                               ? AppColors.primary
-                                  .withOpacity(0.12)
+                                  .withValues(alpha: 0.12)
                               : AppColors.grey100,
                           borderRadius:
                               BorderRadius.circular(12),
@@ -513,7 +513,7 @@ class _TypeCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.primary.withOpacity(0.1)
+              ? AppColors.primary.withValues(alpha: 0.1)
               : AppColors.grey100,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(

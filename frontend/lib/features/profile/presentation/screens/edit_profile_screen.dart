@@ -111,7 +111,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Update Profile Picture', style: AppTextStyles.titleMedium),
+                const Text('Update Profile Picture', style: AppTextStyles.titleMedium),
                 const SizedBox(height: 12),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
@@ -122,10 +122,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     await _pickImage();
                   },
                 ),
-                ListTile(
+                const ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.emoji_emotions_outlined),
-                  title: const Text('Choose preset avatar'),
+                  leading: Icon(Icons.emoji_emotions_outlined),
+                  title: Text('Choose preset avatar'),
                 ),
                 const SizedBox(height: 10),
                 GridView.builder(
@@ -414,7 +414,7 @@ class _RadiusSlider extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -461,10 +461,10 @@ class _AddSportButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           border: Border.all(
-              color: AppColors.primary.withOpacity(0.5),
+              color: AppColors.primary.withValues(alpha: 0.5),
               style: BorderStyle.solid),
           borderRadius: BorderRadius.circular(20),
-          color: AppColors.primary.withOpacity(0.05),
+          color: AppColors.primary.withValues(alpha: 0.05),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -550,7 +550,7 @@ class _DangerZone extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppColors.errorLight,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.error.withOpacity(0.3)),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

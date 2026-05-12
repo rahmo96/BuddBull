@@ -1,12 +1,12 @@
+import 'package:buddbull/core/constants/app_colors.dart';
+import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/features/admin/data/admin_repository.dart';
+import 'package:buddbull/features/admin/presentation/widgets/stat_card.dart';
+import 'package:buddbull/features/admin/providers/admin_provider.dart';
+import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_text_styles.dart';
-import 'package:buddbull/shared/widgets/bb_button.dart';
-import 'package:buddbull/features/admin/data/admin_repository.dart';
-import 'package:buddbull/features/admin/providers/admin_provider.dart';
-import 'package:buddbull/features/admin/presentation/widgets/stat_card.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -36,7 +36,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: Text('Admin Dashboard', style: AppTextStyles.titleLarge),
+        title: const Text('Admin Dashboard', style: AppTextStyles.titleLarge),
         actions: [
           // Period selector
           PopupMenuButton<String>(
@@ -251,7 +251,7 @@ class _RegistrationChart extends StatelessWidget {
               dotData: const FlDotData(show: false),
               belowBarData: BarAreaData(
                 show: true,
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
               ),
             ),
           ],
@@ -412,13 +412,13 @@ class _UserRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isBanned ? Colors.red.withOpacity(0.3) : AppColors.border),
+        border: Border.all(color: isBanned ? Colors.red.withValues(alpha: 0.3) : AppColors.border),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 18,
-            backgroundColor: AppColors.primary.withOpacity(0.1),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
             child: Text(
               username.isNotEmpty ? username[0].toUpperCase() : '?',
               style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
@@ -437,7 +437,7 @@ class _UserRow extends StatelessWidget {
           if (isBanned)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+              decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
               child: Text('Banned', style: AppTextStyles.caption.copyWith(color: Colors.red)),
             ),
           PopupMenuButton<String>(

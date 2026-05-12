@@ -52,8 +52,8 @@ class PerformanceLogModel {
     final streakRaw = json['streakAtLog'];
     final streakCount = switch (streakRaw) {
       int _ => streakRaw,
-      num _ => (streakRaw as num).toInt(),
-      Map _ => _readInt((streakRaw as Map)['current']),
+      num _ => (streakRaw).toInt(),
+      Map _ => _readInt((streakRaw)['current']),
       _ => null,
     };
 

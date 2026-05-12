@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:flutter/material.dart';
 
 /// A compact KPI tile used in the admin dashboard.
 class AdminStatCard extends StatelessWidget {
@@ -38,7 +38,7 @@ class AdminStatCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: accent.withOpacity(0.12),
+                  color: accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: accent, size: 18),

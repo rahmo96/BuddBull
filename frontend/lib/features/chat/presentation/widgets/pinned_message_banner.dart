@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/chat/data/models/chat_model.dart';
+import 'package:flutter/material.dart';
 
 /// A slim banner shown at the top of a chat screen when there is a pinned message.
 class PinnedMessageBanner extends StatelessWidget {
@@ -24,7 +24,7 @@ class PinnedMessageBanner extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.08),
+          color: AppColors.primary.withValues(alpha: 0.08),
           border: const Border(
             left: BorderSide(color: AppColors.primary, width: 3),
           ),

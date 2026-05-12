@@ -1,6 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/network/api_endpoints.dart';
@@ -18,6 +15,9 @@ import 'package:buddbull/features/rating/providers/rating_provider.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:buddbull/shared/widgets/loading_overlay.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class GameDetailScreen extends ConsumerStatefulWidget {
   const GameDetailScreen({super.key, required this.gameId});
@@ -384,7 +384,7 @@ class _GameDetailAppBar extends StatelessWidget {
       ),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          color: _sportColor.withOpacity(0.9),
+          color: _sportColor.withValues(alpha: 0.9),
           child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 56, 20, 16),
@@ -603,7 +603,7 @@ class _StaticLocationMap extends StatelessWidget {
           errorBuilder: (context, _, __) => Container(
             color: AppColors.grey100,
             alignment: Alignment.center,
-            child: Text(
+            child: const Text(
               'Map preview unavailable',
               style: AppTextStyles.bodySmall,
             ),
@@ -806,9 +806,9 @@ class _RatePromptBanner extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.secondary.withOpacity(0.08),
+        color: AppColors.secondary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.secondary.withOpacity(0.4)),
+        border: Border.all(color: AppColors.secondary.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
@@ -1332,8 +1332,8 @@ Future<void> _openRateParticipantsPicker(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 12, 20, 4),
             child: Text(
               'Rate a participant',
               style: AppTextStyles.titleSmall,

@@ -100,7 +100,7 @@ class ProfileScreen extends ConsumerWidget {
                           style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 14,
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                           ),
                         ),
                         if (user.stats != null)
@@ -338,7 +338,7 @@ class _PublicProfileView extends ConsumerWidget {
                         Text(
                           '@${user.username}',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                             fontSize: 13,
                           ),
                         ),
@@ -685,7 +685,7 @@ class _HeaderRatingRow extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 12,
-            color: Colors.white.withOpacity(0.75),
+            color: Colors.white.withValues(alpha: 0.75),
           ),
         ),
       );
@@ -707,7 +707,7 @@ class _HeaderRatingRow extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: Colors.white.withOpacity(0.95),
+              color: Colors.white.withValues(alpha: 0.95),
             ),
           ),
         ],

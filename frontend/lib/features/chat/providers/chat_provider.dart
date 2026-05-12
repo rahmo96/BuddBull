@@ -1,9 +1,10 @@
 import 'dart:async';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:buddbull/core/network/api_client.dart';
 import 'package:buddbull/core/services/socket_service.dart';
 import 'package:buddbull/features/chat/data/chat_repository.dart';
 import 'package:buddbull/features/chat/data/models/chat_model.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // ── Repository provider ───────────────────────────────────────────────────────
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
@@ -171,7 +172,7 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     if (data == null || data is! Map) return;
     final Map<String, dynamic> d;
     try {
-      d = Map<String, dynamic>.from(data as Map);
+      d = Map<String, dynamic>.from(data);
     } catch (_) {
       return;
     }

@@ -32,7 +32,7 @@ class StreakBanner extends StatelessWidget {
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.3),
+                  color: AppColors.primary.withValues(alpha: 0.3),
                   blurRadius: 20,
                   offset: const Offset(0, 6),
                 ),
@@ -46,7 +46,7 @@ class StreakBanner extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -67,7 +67,7 @@ class StreakBanner extends StatelessWidget {
                   isActive ? 'Active streak' : 'No active streak',
                   style: AppTextStyles.labelMedium.copyWith(
                     color: isActive
-                        ? Colors.white.withOpacity(0.85)
+                        ? Colors.white.withValues(alpha: 0.85)
                         : AppColors.textSecondary,
                   ),
                 ),
@@ -97,7 +97,7 @@ class StreakBanner extends StatelessWidget {
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                           color: isActive
-                              ? Colors.white.withOpacity(0.8)
+                              ? Colors.white.withValues(alpha: 0.8)
                               : AppColors.textSecondary,
                         ),
                       ),
@@ -116,7 +116,7 @@ class StreakBanner extends StatelessWidget {
                 'Best',
                 style: AppTextStyles.labelSmall.copyWith(
                   color: isActive
-                      ? Colors.white.withOpacity(0.7)
+                      ? Colors.white.withValues(alpha: 0.7)
                       : AppColors.textSecondary,
                 ),
               ),

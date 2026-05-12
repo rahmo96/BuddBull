@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
-import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
-import 'package:buddbull/features/rating/providers/rating_provider.dart';
 import 'package:buddbull/features/rating/presentation/widgets/rating_stars.dart';
+import 'package:buddbull/features/rating/providers/rating_provider.dart';
+import 'package:buddbull/shared/widgets/bb_button.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Bottom sheet for submitting a post-game rating.
 ///
@@ -68,7 +68,7 @@ class _RatePlayerSheetState extends ConsumerState<RatePlayerSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Rate Player', style: AppTextStyles.titleLarge),
+                    const Text('Rate Player', style: AppTextStyles.titleLarge),
                     Text(
                       widget.rateeDisplayName,
                       style: AppTextStyles.bodySmall

@@ -1,11 +1,12 @@
+import 'dart:async';
+
+import 'package:buddbull/core/error/app_exception.dart';
 import 'package:buddbull/core/storage/shared_preferences_provider.dart';
 import 'package:buddbull/features/auth/data/auth_repository.dart';
 import 'package:buddbull/features/auth/data/models/user_model.dart';
-import 'package:buddbull/core/error/app_exception.dart';
 import 'package:buddbull/features/onboarding/data/onboarding_prefs.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';

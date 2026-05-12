@@ -1,8 +1,8 @@
-import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/material.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/performance/data/models/performance_model.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
 
 /// Bar chart showing sessions per week over the last 8 weeks.
 class ProgressChart extends StatelessWidget {
@@ -214,7 +214,7 @@ class WinRateChart extends StatelessWidget {
                   ),
                   belowBarData: BarAreaData(
                     show: true,
-                    color: AppColors.success.withOpacity(0.1),
+                    color: AppColors.success.withValues(alpha: 0.1),
                   ),
                 ),
               ],

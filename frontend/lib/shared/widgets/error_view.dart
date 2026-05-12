@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:flutter/material.dart';
 
 /// Full-page error state with retry button.
 class ErrorView extends StatelessWidget {

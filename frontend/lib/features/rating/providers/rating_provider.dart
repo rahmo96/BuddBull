@@ -1,7 +1,7 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:buddbull/core/network/api_client.dart';
-import 'package:buddbull/features/rating/data/rating_repository.dart';
 import 'package:buddbull/features/rating/data/models/rating_model.dart';
+import 'package:buddbull/features/rating/data/rating_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // ── Repository ────────────────────────────────────────────────────────────────
 final ratingRepositoryProvider = Provider<RatingRepository>((ref) {

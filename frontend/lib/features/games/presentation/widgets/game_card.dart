@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
+import 'package:flutter/material.dart';
 
 /// A rich game card used in the games list and home screen.
 class GameCard extends StatelessWidget {
@@ -27,7 +27,7 @@ class GameCard extends StatelessWidget {
           border: Border.all(color: AppColors.grey200),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -214,7 +214,7 @@ class _SportIcon extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: _sportColor(sport).withOpacity(0.12),
+        color: _sportColor(sport).withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Center(
@@ -249,9 +249,9 @@ class _StatusBadge extends StatelessWidget {
         vertical: small ? 2 : 3,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Text(
         label,
