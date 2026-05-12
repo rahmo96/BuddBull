@@ -138,6 +138,7 @@ class UserStats {
     this.gamesPlayed = 0,
     this.gamesWon = 0,
     this.averageRating = 0.0,
+    this.totalRatings = 0,
     this.currentStreak = 0,
     this.longestStreak = 0,
   });
@@ -145,6 +146,7 @@ class UserStats {
   final int gamesPlayed;
   final int gamesWon;
   final double averageRating;
+  final int totalRatings;
   final int currentStreak;
   final int longestStreak;
 
@@ -152,6 +154,7 @@ class UserStats {
         gamesPlayed: json['gamesPlayed'] as int? ?? 0,
         gamesWon: json['gamesWon'] as int? ?? 0,
         averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0.0,
+        totalRatings: json['totalRatings'] as int? ?? 0,
         currentStreak: json['currentStreak'] as int? ?? 0,
         longestStreak: json['longestStreak'] as int? ?? 0,
       );

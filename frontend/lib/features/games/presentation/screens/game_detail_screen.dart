@@ -11,6 +11,8 @@ import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/games/presentation/widgets/player_slot_row.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
 import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
+import 'package:buddbull/features/rating/presentation/widgets/rate_player_sheet.dart';
+import 'package:buddbull/features/rating/presentation/widgets/rating_stars.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:buddbull/shared/widgets/loading_overlay.dart';
@@ -55,7 +57,7 @@ class GameDetailScreen extends ConsumerWidget {
         final isOrganizer = currentUser?.id == game.organizer.id;
 
         return LoadingOverlay(
-          isLoading: actionsState.isProcessing,
+          isLoading: actionsState.isProcessing || actionsState.isCompleting,
           child: Scaffold(
             backgroundColor: AppColors.background,
             body: CustomScrollView(
@@ -142,19 +144,27 @@ class GameDetailScreen extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(width: 10),
-                            Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  game.organizer.fullName,
-                                  style: AppTextStyles.titleSmall,
-                                ),
-                                Text(
-                                  '@${game.organizer.username}',
-                                  style: AppTextStyles.bodySmall,
-                                ),
-                              ],
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    game.organizer.fullName,
+                                    style: AppTextStyles.titleSmall,
+                                  ),
+                                  Text(
+                                    '@${game.organizer.username}',
+                                    style: AppTextStyles.bodySmall,
+                                  ),
+                                  if (game.organizer.averageRating > 0) ...[
+                                    const SizedBox(height: 2),
+                                    _NameRatingBadge(
+                                      rating: game.organizer.averageRating,
+                                    ),
+                                  ],
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -176,6 +186,9 @@ class GameDetailScreen extends ConsumerWidget {
                               maxPlayers: game.maxPlayers,
                             ),
                             const SizedBox(height: 12),
+                            if (game.isCompleted &&
+                                myPlayer?.isApproved == true)
+                              const _RatePromptBanner(),
                             _PlayerList(
                               game: game,
                               isOrganizer: isOrganizer,
@@ -189,6 +202,8 @@ class GameDetailScreen extends ConsumerWidget {
                                   .read(gameActionsProvider(gameId)
                                       .notifier)
                                   .kickPlayer(uid),
+                              onRate: (p) =>
+                                  _openRatePlayerSheet(context, gameId, p),
                             ),
                           ],
                         ),
@@ -514,6 +529,7 @@ class _PlayerList extends StatelessWidget {
     required this.currentUserId,
     required this.onApprove,
     required this.onKick,
+    required this.onRate,
   });
 
   final GameModel game;
@@ -521,6 +537,7 @@ class _PlayerList extends StatelessWidget {
   final String? currentUserId;
   final ValueChanged<String> onApprove;
   final ValueChanged<String> onKick;
+  final ValueChanged<GamePlayer> onRate;
 
   @override
   Widget build(BuildContext context) {
@@ -528,6 +545,11 @@ class _PlayerList extends StatelessWidget {
         game.players.where((p) => p.isApproved).toList();
     final pending =
         game.players.where((p) => p.isPending).toList();
+
+    // Current viewer is an approved player → eligible to rate teammates.
+    final viewerIsApproved = currentUserId != null &&
+        approved.any((p) => p.userId == currentUserId);
+    final canRate = game.isCompleted && viewerIsApproved;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -541,8 +563,10 @@ class _PlayerList extends StatelessWidget {
                 player: p,
                 isCurrentUser: p.userId == currentUserId,
                 isOrganizer: isOrganizer,
+                canRate: canRate,
                 onApprove: null,
                 onKick: () => onKick(p.userId),
+                onRate: () => onRate(p),
               )),
         ],
         if (isOrganizer && pending.isNotEmpty) ...[
@@ -555,8 +579,10 @@ class _PlayerList extends StatelessWidget {
                 player: p,
                 isCurrentUser: p.userId == currentUserId,
                 isOrganizer: isOrganizer,
+                canRate: false,
                 onApprove: () => onApprove(p.userId),
                 onKick: () => onKick(p.userId),
+                onRate: () => onRate(p),
               )),
         ],
       ],
@@ -569,15 +595,19 @@ class _PlayerTile extends StatelessWidget {
     required this.player,
     required this.isCurrentUser,
     required this.isOrganizer,
+    required this.canRate,
     required this.onApprove,
     required this.onKick,
+    required this.onRate,
   });
 
   final GamePlayer player;
   final bool isCurrentUser;
   final bool isOrganizer;
+  final bool canRate;
   final VoidCallback? onApprove;
   final VoidCallback? onKick;
+  final VoidCallback onRate;
 
   String get _initials {
     final fn = player.firstName;
@@ -592,6 +622,9 @@ class _PlayerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Rating UI is hidden for the viewer's own row (no self-rating).
+    final showRateButton = canRate && !isCurrentUser && player.isApproved;
+
     return ListTile(
       contentPadding: EdgeInsets.zero,
       dense: true,
@@ -600,32 +633,124 @@ class _PlayerTile extends StatelessWidget {
         initials: _initials,
         radius: 18,
       ),
-      title: Text(
-        player.displayName + (isCurrentUser ? ' (You)' : ''),
-        style: AppTextStyles.bodyMedium,
+      title: Row(
+        children: [
+          Flexible(
+            child: Text(
+              player.displayName + (isCurrentUser ? ' (You)' : ''),
+              style: AppTextStyles.bodyMedium,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (player.averageRating > 0) ...[
+            const SizedBox(width: 6),
+            RatingStars(rating: player.averageRating, size: 12),
+            const SizedBox(width: 4),
+            Text(
+              player.averageRating.toStringAsFixed(1),
+              style: AppTextStyles.labelSmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ],
       ),
       subtitle: Text('@${player.username}',
           style: AppTextStyles.bodySmall),
-      trailing: isOrganizer && !isCurrentUser
-          ? Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (onApprove != null)
-                  IconButton(
-                    icon: const Icon(Icons.check_circle_outline_rounded,
-                        color: AppColors.success, size: 20),
-                    onPressed: onApprove,
-                    tooltip: 'Approve',
-                  ),
-                IconButton(
-                  icon: const Icon(Icons.remove_circle_outline_rounded,
-                      color: AppColors.error, size: 20),
-                  onPressed: onKick,
-                  tooltip: 'Kick',
-                ),
-              ],
-            )
-          : null,
+      trailing: _buildTrailing(showRateButton),
+    );
+  }
+
+  Widget? _buildTrailing(bool showRateButton) {
+    final hasOrganizerControls = isOrganizer && !isCurrentUser;
+    if (!hasOrganizerControls && !showRateButton) return null;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (showRateButton)
+          TextButton.icon(
+            onPressed: onRate,
+            icon: const Icon(Icons.star_outline_rounded, size: 18),
+            label: const Text('Rate'),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.secondary,
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
+          ),
+        if (hasOrganizerControls) ...[
+          if (onApprove != null)
+            IconButton(
+              icon: const Icon(Icons.check_circle_outline_rounded,
+                  color: AppColors.success, size: 20),
+              onPressed: onApprove,
+              tooltip: 'Approve',
+            ),
+          IconButton(
+            icon: const Icon(Icons.remove_circle_outline_rounded,
+                color: AppColors.error, size: 20),
+            onPressed: onKick,
+            tooltip: 'Kick',
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+// ── Post-game "rate your teammates" prompt ───────────────────────────────────
+class _RatePromptBanner extends StatelessWidget {
+  const _RatePromptBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.secondary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.secondary.withOpacity(0.4)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.star_rounded,
+              color: AppColors.secondary, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Rate participants below to share how the game went.',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Inline rating badge (stars + numeric average) ─────────────────────────────
+class _NameRatingBadge extends StatelessWidget {
+  const _NameRatingBadge({required this.rating});
+  final double rating;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        RatingStars(rating: rating, size: 12),
+        const SizedBox(width: 4),
+        Text(
+          rating.toStringAsFixed(1),
+          style: AppTextStyles.labelSmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -715,6 +840,16 @@ class _BottomActionBar extends StatelessWidget {
 
   Widget _buildMainAction() {
     if (isOrganizer) {
+      // Once the game is completed, hide management entirely — the rate flow
+      // takes over the screen affordance.
+      if (game.isCompleted) {
+        return const BbButton(
+          label: 'Game Completed',
+          onPressed: null,
+          variant: BbButtonVariant.outlined,
+          icon: Icons.check_circle_outline_rounded,
+        );
+      }
       return BbButton(
         label: 'Manage (Organiser)',
         onPressed: onManage,
@@ -796,6 +931,27 @@ Future<void> _showManageSheet(
             },
           ),
           ListTile(
+            leading: const Icon(Icons.emoji_events_outlined,
+                color: AppColors.success),
+            title: const Text('Complete Game'),
+            subtitle: const Text(
+              'Mark the game as finished and open ratings for participants.',
+            ),
+            onTap: () async {
+              final confirmed = await _confirmComplete(context);
+              if (!confirmed || !context.mounted) return;
+
+              Navigator.pop(sheetCtx);
+
+              final ok = await ref
+                  .read(gameActionsProvider(gameId).notifier)
+                  .completeGame();
+              if (!ok || !context.mounted) return;
+
+              // Success snackbar is fired by the listener in build().
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.cancel_outlined, color: AppColors.error),
             title: const Text('Cancel Game'),
             onTap: () async {
@@ -861,6 +1017,49 @@ Future<bool> _confirmCancel(BuildContext context) async {
     ),
   );
   return res ?? false;
+}
+
+Future<bool> _confirmComplete(BuildContext context) async {
+  final res = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Complete game?'),
+      content: const Text(
+        'This marks the game as finished, updates player stats, and unlocks '
+        'rating for all approved players. This action cannot be undone.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Not yet'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          style: FilledButton.styleFrom(backgroundColor: AppColors.success),
+          child: const Text('Mark completed'),
+        ),
+      ],
+    ),
+  );
+  return res ?? false;
+}
+
+/// Opens the post-game rating bottom sheet for a single ratee.
+Future<void> _openRatePlayerSheet(
+  BuildContext context,
+  String gameId,
+  GamePlayer player,
+) async {
+  await showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => RatePlayerSheet(
+      rateeId: player.userId,
+      rateeDisplayName: player.displayName,
+      gameId: gameId,
+    ),
+  );
 }
 
 Future<String?> _askCancelReason(BuildContext context) async {

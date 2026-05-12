@@ -8,6 +8,7 @@ import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar
 import 'package:buddbull/features/profile/presentation/widgets/sport_chip.dart';
 import 'package:buddbull/features/profile/presentation/widgets/stats_card.dart';
 import 'package:buddbull/features/profile/providers/profile_provider.dart';
+import 'package:buddbull/features/rating/presentation/widgets/rating_stars.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:buddbull/shared/widgets/loading_overlay.dart';
 import 'package:flutter/material.dart';
@@ -102,6 +103,11 @@ class ProfileScreen extends ConsumerWidget {
                             color: Colors.white.withOpacity(0.8),
                           ),
                         ),
+                        if (user.stats != null)
+                          _HeaderRatingRow(
+                            rating: user.stats!.averageRating,
+                            totalRatings: user.stats!.totalRatings,
+                          ),
                       ],
                     ),
                   ),
@@ -336,6 +342,11 @@ class _PublicProfileView extends ConsumerWidget {
                             fontSize: 13,
                           ),
                         ),
+                        if (user.stats != null)
+                          _HeaderRatingRow(
+                            rating: user.stats!.averageRating,
+                            totalRatings: user.stats!.totalRatings,
+                          ),
                       ],
                     ),
                   ),
@@ -653,4 +664,54 @@ double _winRate(UserModel user) {
   final stats = user.stats;
   if (stats == null || stats.gamesPlayed == 0) return 0;
   return (stats.gamesWon / stats.gamesPlayed) * 100;
+}
+
+/// Inline stars + numeric average + total ratings count, rendered under the
+/// user's name in the profile header.
+class _HeaderRatingRow extends StatelessWidget {
+  const _HeaderRatingRow({required this.rating, required this.totalRatings});
+
+  final double rating;
+  final int totalRatings;
+
+  @override
+  Widget build(BuildContext context) {
+    // No score yet → render a discreet placeholder rather than a zero rating.
+    if (totalRatings == 0 || rating <= 0) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Text(
+          'No ratings yet',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 12,
+            color: Colors.white.withOpacity(0.75),
+          ),
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          RatingStars(
+            rating: rating,
+            size: 14,
+            activeColor: const Color(0xFFFFC857),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '${rating.toStringAsFixed(1)} · $totalRatings',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.white.withOpacity(0.95),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

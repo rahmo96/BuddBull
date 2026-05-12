@@ -14,7 +14,7 @@ const ratePlayer = async ({ raterId, rateeId, gameId, reliabilityScore, behavior
     _id: gameId,
     status: 'completed',
     'players.user': { $all: [raterId, rateeId] },
-    isDeleted: false,
+    deletedAt: null,
   });
   if (!game) throw new AppError('Game not found or not completed', 404);
 
@@ -28,6 +28,7 @@ const ratePlayer = async ({ raterId, rateeId, gameId, reliabilityScore, behavior
   }
 
   // Upsert rating (one per rater/ratee/game triplet)
+  // Re-rating after a soft-delete clears the deletedAt flag.
   const rating = await Rating.findOneAndUpdate(
     { rater: raterId, ratee: rateeId, game: gameId },
     {
@@ -38,7 +39,7 @@ const ratePlayer = async ({ raterId, rateeId, gameId, reliabilityScore, behavior
       behaviorScore,
       comment: comment || undefined,
       isAnonymous,
-      isDeleted: false,
+      deletedAt: null,
     },
     {
       upsert: true,
@@ -60,7 +61,7 @@ const getProfileSummary = async (userId) => {
 // ── Paginated ratings received by a user ─────────────────────────────────────
 const getRatingsForUser = async (userId, { page = 1, limit = 20 } = {}) => {
   const RATER_FIELDS = 'firstName lastName username profilePicture';
-  const filter = { ratee: userId, isDeleted: false };
+  const filter = { ratee: userId, deletedAt: null };
 
   const [ratings, total] = await Promise.all([
     Rating.find(filter)
@@ -94,14 +95,14 @@ const getRatingsForUser = async (userId, { page = 1, limit = 20 } = {}) => {
 // ── Ratings given by a user ───────────────────────────────────────────────────
 const getRatingsGivenByUser = async (userId, { page = 1, limit = 20 } = {}) => {
   const [ratings, total] = await Promise.all([
-    Rating.find({ rater: userId, isDeleted: false })
+    Rating.find({ rater: userId, deletedAt: null })
       .populate('ratee', 'firstName lastName username profilePicture')
       .populate('game', 'title sport scheduledAt')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
       .lean(),
-    Rating.countDocuments({ rater: userId, isDeleted: false }),
+    Rating.countDocuments({ rater: userId, deletedAt: null }),
   ]);
   return {
     ratings,
@@ -118,7 +119,7 @@ const getPendingRatings = async (userId) => {
     status: 'completed',
     'players.user': userId,
     'players.status': 'approved',
-    isDeleted: false,
+    deletedAt: null,
   })
     .populate('players.user', 'firstName lastName username profilePicture')
     .lean();
@@ -135,7 +136,7 @@ const getPendingRatings = async (userId) => {
     const existingRatings = await Rating.find({
       rater: userId,
       game: game._id,
-      isDeleted: false,
+      deletedAt: null,
     })
       .select('ratee')
       .lean();

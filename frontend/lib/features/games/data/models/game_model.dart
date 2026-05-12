@@ -168,6 +168,7 @@ class GameOrganizer {
     required this.firstName,
     required this.lastName,
     this.profilePicture,
+    this.averageRating = 0.0,
   });
 
   final String id;
@@ -175,6 +176,7 @@ class GameOrganizer {
   final String firstName;
   final String lastName;
   final String? profilePicture;
+  final double averageRating;
 
   String get fullName => '$firstName $lastName';
 
@@ -184,7 +186,20 @@ class GameOrganizer {
         firstName: json['firstName'] as String,
         lastName: json['lastName'] as String,
         profilePicture: json['profilePicture'] as String?,
+        averageRating: _readAverageRating(json),
       );
+}
+
+// Backend populates `stats.averageRating`; tolerate flat `averageRating` too.
+double _readAverageRating(Map<String, dynamic> json) {
+  final stats = json['stats'];
+  if (stats is Map && stats['averageRating'] is num) {
+    return (stats['averageRating'] as num).toDouble();
+  }
+  if (json['averageRating'] is num) {
+    return (json['averageRating'] as num).toDouble();
+  }
+  return 0.0;
 }
 
 class GameLocation {
@@ -297,6 +312,7 @@ class GamePlayer {
     this.lastName,
     this.profilePicture,
     this.joinedAt,
+    this.averageRating = 0.0,
   });
 
   final String userId;
@@ -306,6 +322,7 @@ class GamePlayer {
   final String? lastName;
   final String? profilePicture;
   final DateTime? joinedAt;
+  final double averageRating;
 
   bool get isApproved => status == 'approved';
   bool get isPending => status == 'pending';
@@ -335,6 +352,7 @@ class GamePlayer {
       joinedAt: json['joinedAt'] != null
           ? DateTime.tryParse(json['joinedAt'] as String)
           : null,
+      averageRating: user != null ? _readAverageRating(user) : 0.0,
     );
   }
 }

@@ -11,7 +11,7 @@ const ratePlayerSchema = Joi.object({
   gameId: mongoId.required(),
   reliabilityScore: score.required(),
   behaviorScore: score.required(),
-  comment: Joi.string().trim().max(500).optional().allow(''),
+  comment: Joi.string().trim().max(300).optional().allow(''),
   isAnonymous: Joi.boolean().default(false),
 });
 

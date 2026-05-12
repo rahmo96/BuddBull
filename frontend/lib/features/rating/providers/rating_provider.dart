@@ -33,7 +33,8 @@ class RatePlayerState {
 
 class RatePlayerNotifier extends StateNotifier<RatePlayerState> {
   final RatingRepository _repo;
-  RatePlayerNotifier(this._repo) : super(const RatePlayerState());
+  final Ref _ref;
+  RatePlayerNotifier(this._repo, this._ref) : super(const RatePlayerState());
 
   Future<bool> rate({
     required String rateeId,
@@ -54,6 +55,11 @@ class RatePlayerNotifier extends StateNotifier<RatePlayerState> {
         isAnonymous: isAnonymous,
       );
       state = const RatePlayerState(success: true);
+      // The just-rated player drops out of the pending queue and the
+      // ratee's profile summary now includes this new score.
+      _ref.invalidate(pendingRatingsProvider);
+      _ref.invalidate(myReceivedRatingsProvider);
+      _ref.invalidate(ratingProfileProvider(rateeId));
       return true;
     } catch (e) {
       state = RatePlayerState(error: e.toString());
@@ -63,5 +69,5 @@ class RatePlayerNotifier extends StateNotifier<RatePlayerState> {
 }
 
 final ratePlayerProvider = StateNotifierProvider.autoDispose<RatePlayerNotifier, RatePlayerState>(
-  (ref) => RatePlayerNotifier(ref.watch(ratingRepositoryProvider)),
+  (ref) => RatePlayerNotifier(ref.watch(ratingRepositoryProvider), ref),
 );

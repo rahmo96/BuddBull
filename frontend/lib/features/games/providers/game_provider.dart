@@ -1,5 +1,6 @@
 import 'package:buddbull/features/games/data/game_repository.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
+import 'package:buddbull/features/rating/providers/rating_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // ── Simple fetch providers ────────────────────────────────────────────────────
@@ -137,6 +138,7 @@ class GameActionsState {
     this.isJoining = false,
     this.isLeaving = false,
     this.isProcessing = false,
+    this.isCompleting = false,
     this.error,
     this.successMessage,
     this.game,
@@ -145,6 +147,7 @@ class GameActionsState {
   final bool isJoining;
   final bool isLeaving;
   final bool isProcessing;
+  final bool isCompleting;
   final String? error;
   final String? successMessage;
   final GameModel? game;
@@ -153,6 +156,7 @@ class GameActionsState {
     bool? isJoining,
     bool? isLeaving,
     bool? isProcessing,
+    bool? isCompleting,
     String? error,
     bool clearError = false,
     String? successMessage,
@@ -163,6 +167,7 @@ class GameActionsState {
       isJoining: isJoining ?? this.isJoining,
       isLeaving: isLeaving ?? this.isLeaving,
       isProcessing: isProcessing ?? this.isProcessing,
+      isCompleting: isCompleting ?? this.isCompleting,
       error: clearError ? null : error ?? this.error,
       successMessage:
           clearSuccess ? null : successMessage ?? this.successMessage,
@@ -234,6 +239,31 @@ class GameActionsNotifier extends StateNotifier<GameActionsState> {
       _ref.invalidate(gameDetailProvider(_gameId));
     } catch (e) {
       state = state.copyWith(isProcessing: false, error: _msg(e));
+    }
+  }
+
+  /// Marks the game as completed. [result] is optional and may carry
+  /// winnerDescription / score / mvpUserId / notes — fields the backend
+  /// `completeGameSchema` accepts.
+  Future<bool> completeGame([Map<String, dynamic>? result]) async {
+    state = state.copyWith(isCompleting: true, clearError: true);
+    try {
+      final game = await _repo.completeGame(_gameId, result);
+      state = state.copyWith(
+        isCompleting: false,
+        game: game,
+        successMessage: 'Game marked as completed. Time to rate participants!',
+      );
+      _ref.invalidate(gameDetailProvider(_gameId));
+      _ref.invalidate(myGamesProvider);
+      _ref.invalidate(calendarGamesProvider);
+      // Refresh the rating queue so every participant immediately sees
+      // their newly-available "rate" opportunities.
+      _ref.invalidate(pendingRatingsProvider);
+      return true;
+    } catch (e) {
+      state = state.copyWith(isCompleting: false, error: _msg(e));
+      return false;
     }
   }
 

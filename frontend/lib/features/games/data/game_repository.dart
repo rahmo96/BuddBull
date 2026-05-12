@@ -186,10 +186,13 @@ class GameRepository {
   }
 
   // ── Complete ──────────────────────────────────────────────
-  Future<GameModel> completeGame(String id, Map<String, dynamic> result) async {
-    final body = await _api.post(
+  // Backend route is PATCH /games/:id/complete. Payload fields are all optional
+  // (winnerDescription, score, mvpUserId, notes). Pass an empty map to mark
+  // the game completed without recording a result.
+  Future<GameModel> completeGame(String id, [Map<String, dynamic>? result]) async {
+    final body = await _api.patch(
       ApiEndpoints.completeGame(id),
-      data: result,
+      data: result ?? const <String, dynamic>{},
     );
     final data = body['data'] as Map<String, dynamic>;
     return GameModel.fromJson(data['game'] as Map<String, dynamic>);
