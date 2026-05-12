@@ -97,6 +97,7 @@ abstract class ApiEndpoints {
   // ── Ratings ───────────────────────────────────────────────────
   static const String ratings = '/ratings';
   static const String pendingRatings = '/ratings/pending';
+  static const String ratingsDismiss = '/ratings/dismiss';
   static const String receivedRatings = '/ratings/received';
   static const String givenRatings = '/ratings/given';
   static String ratingSummary(String userId) => '/ratings/summary/$userId';

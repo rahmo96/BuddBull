@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
+import 'package:buddbull/features/games/providers/game_provider.dart';
 import 'package:buddbull/features/rating/providers/rating_provider.dart';
 import 'package:buddbull/features/rating/presentation/widgets/rating_stars.dart';
 
@@ -40,6 +41,7 @@ class _RatePlayerSheetState extends ConsumerState<RatePlayerSheet> {
   int _reliability = 0;
   int _behavior = 0;
   bool _isAnonymous = false;
+  bool _isDismissing = false;
   final _commentController = TextEditingController();
 
   @override
@@ -178,9 +180,41 @@ class _RatePlayerSheetState extends ConsumerState<RatePlayerSheet> {
             isLoading: rateState.isLoading,
             onPressed: (_reliability == 0 || _behavior == 0) ? null : _submit,
           ),
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton(
+              onPressed: _isDismissing || rateState.isLoading ? null : _dismissEntireGame,
+              child: Text(
+                "Don't rate this game",
+                style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _dismissEntireGame() async {
+    setState(() => _isDismissing = true);
+    try {
+      await dismissGameRatingQueue(ref, widget.gameId);
+      if (!mounted) return;
+      Navigator.pop(context, false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You will not be prompted to rate this game.'),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isDismissing = false);
+    }
   }
 
   Future<void> _submit() async {
@@ -194,6 +228,9 @@ class _RatePlayerSheetState extends ConsumerState<RatePlayerSheet> {
         );
 
     if (success && mounted) {
+      ref.invalidate(calendarGamesProvider);
+      ref.invalidate(myGamesProvider);
+      ref.invalidate(gameDetailProvider(widget.gameId));
       Navigator.pop(context, true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

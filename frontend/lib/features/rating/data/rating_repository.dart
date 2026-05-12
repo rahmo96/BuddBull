@@ -49,4 +49,11 @@ class RatingRepository {
     final raw = res['data']['pending'] as List;
     return raw.whereType<Map<String, dynamic>>().map(PendingRatingItem.fromJson).toList();
   }
+
+  Future<void> dismissGameRatings(String gameId) async {
+    await _client.post(
+      ApiEndpoints.ratingsDismiss,
+      data: {'gameId': gameId},
+    );
+  }
 }

@@ -10,6 +10,7 @@ import 'package:buddbull/features/games/providers/game_provider.dart';
 import 'package:buddbull/features/performance/presentation/widgets/streak_banner.dart';
 import 'package:buddbull/features/performance/providers/performance_provider.dart';
 import 'package:buddbull/features/profile/presentation/widgets/stats_card.dart';
+import 'package:buddbull/features/rating/providers/rating_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -18,6 +19,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider).user;
     final calendarAsync = ref.watch(calendarGamesProvider);
+    final pendingAsync = ref.watch(pendingRatingsProvider);
     final statsAsync = ref.watch(performanceStatsProvider);
 
     final hour = DateTime.now().hour;
@@ -34,6 +36,8 @@ class HomeScreen extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(calendarGamesProvider);
           ref.invalidate(performanceStatsProvider);
+          ref.invalidate(pendingRatingsProvider);
+          ref.invalidate(myGamesProvider);
         },
         child: CustomScrollView(
           slivers: [
@@ -180,12 +184,26 @@ class HomeScreen extends ConsumerWidget {
                       onAction: () => context.go('/games'),
                     ),
                     data: (games) {
-                      final upcoming = games
-                          .where((g) => g.isUpcoming)
+                      final pendingLoaded = pendingAsync.hasValue;
+                      final pendingIds = pendingAsync.valueOrNull
+                              ?.map((e) => e.gameId)
+                              .toSet() ??
+                          <String>{};
+
+                      final homeStripGames = games
+                          .where((g) {
+                            if (g.isCancelled) return false;
+                            if (g.isUpcoming || g.isInProgress) return true;
+                            if (g.isCompleted) {
+                              if (!pendingLoaded) return true;
+                              return pendingIds.contains(g.id);
+                            }
+                            return false;
+                          })
                           .take(5)
                           .toList();
 
-                      if (upcoming.isEmpty) {
+                      if (homeStripGames.isEmpty) {
                         return _EmptySection(
                           emoji: '📅',
                           message: 'No upcoming games',
@@ -198,14 +216,14 @@ class HomeScreen extends ConsumerWidget {
                         height: 220,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
-                          itemCount: upcoming.length,
+                          itemCount: homeStripGames.length,
                           separatorBuilder: (_, __) =>
                               const SizedBox(width: 12),
                           itemBuilder: (_, i) => GameCard(
-                            game: upcoming[i],
+                            game: homeStripGames[i],
                             compact: true,
                             onTap: () => context
-                                .push('/games/${upcoming[i].id}'),
+                                .push('/games/${homeStripGames[i].id}'),
                           ),
                         ),
                       );

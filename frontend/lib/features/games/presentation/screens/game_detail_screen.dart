@@ -11,8 +11,10 @@ import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/games/presentation/widgets/player_slot_row.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
 import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
+import 'package:buddbull/features/rating/data/models/rating_model.dart';
 import 'package:buddbull/features/rating/presentation/widgets/rate_player_sheet.dart';
 import 'package:buddbull/features/rating/presentation/widgets/rating_stars.dart';
+import 'package:buddbull/features/rating/providers/rating_provider.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:buddbull/shared/widgets/loading_overlay.dart';
@@ -51,10 +53,19 @@ class GameDetailScreen extends ConsumerWidget {
         ),
       ),
       data: (game) {
-        final myPlayer = currentUser != null
-            ? game.getPlayer(currentUser.id)
-            : null;
-        final isOrganizer = currentUser?.id == game.organizer.id;
+        final user = currentUser;
+        final myPlayer =
+            user != null ? game.getPlayer(user.id) : null;
+        final isOrganizer = user?.id == game.organizer.id;
+        final pendingRatingsAsync = ref.watch(pendingRatingsProvider);
+        final showBottomBar = user != null &&
+            !game.isCancelled &&
+            _gameDetailBottomBarHasContent(
+              game: game,
+              myPlayer: myPlayer,
+              isOrganizer: isOrganizer,
+              pendingRatings: pendingRatingsAsync,
+            );
 
         return LoadingOverlay(
           isLoading: actionsState.isProcessing || actionsState.isCompleting,
@@ -237,11 +248,13 @@ class GameDetailScreen extends ConsumerWidget {
             ),
 
             // ── Action button ──────────────────────────────────
-            bottomNavigationBar: currentUser != null && !game.isCancelled
+            bottomNavigationBar: showBottomBar
                 ? _BottomActionBar(
+                    gameId: gameId,
                     game: game,
                     myPlayer: myPlayer,
                     isOrganizer: isOrganizer,
+                    currentUserId: user.id,
                     actionsState: actionsState,
                     onJoin: () => ref
                         .read(gameActionsProvider(gameId).notifier)
@@ -778,12 +791,59 @@ class _ResultCard extends StatelessWidget {
   }
 }
 
+bool _gameDetailBarShowsChat(GameModel game, GamePlayer? myPlayer) =>
+    game.groupChatId != null && myPlayer?.isApproved == true;
+
+/// While [pendingRatings] is still loading, assume there may be pending
+/// opponents so the "Rate Participants" affordance stays visible until the
+/// network round-trip settles (avoids a one-frame flash to "all done").
+bool _hasPendingRatingsForGame(
+  AsyncValue<List<PendingRatingItem>> pendingRatings,
+  String gameId,
+) {
+  return pendingRatings.when(
+    data: (list) => list.any(
+      (e) => e.gameId == gameId && e.pendingPlayers.isNotEmpty,
+    ),
+    loading: () => true,
+    error: (_, __) => true,
+  );
+}
+
+/// Whether the bottom bar should render at all (avoids an empty padded strip).
+bool _gameDetailBottomBarHasContent({
+  required GameModel game,
+  required GamePlayer? myPlayer,
+  required bool isOrganizer,
+  required AsyncValue<List<PendingRatingItem>> pendingRatings,
+}) {
+  if (_gameDetailBarShowsChat(game, myPlayer)) return true;
+
+  if (isOrganizer && !game.isCompleted) return true;
+  if (isOrganizer && game.isCompleted) {
+    if (myPlayer?.isApproved == true &&
+        _hasPendingRatingsForGame(pendingRatings, game.id)) {
+      return true;
+    }
+    return true;
+  }
+  if (myPlayer == null) return true;
+  if (myPlayer.isPending) return true;
+  if (myPlayer.isApproved && !game.isCompleted) return true;
+  if (myPlayer.isApproved && game.isCompleted) {
+    return _hasPendingRatingsForGame(pendingRatings, game.id);
+  }
+  return false;
+}
+
 // ── Bottom action bar ─────────────────────────────────────────────────────────
-class _BottomActionBar extends StatelessWidget {
+class _BottomActionBar extends ConsumerWidget {
   const _BottomActionBar({
+    required this.gameId,
     required this.game,
     required this.myPlayer,
     required this.isOrganizer,
+    required this.currentUserId,
     required this.actionsState,
     required this.onJoin,
     required this.onLeave,
@@ -791,9 +851,11 @@ class _BottomActionBar extends StatelessWidget {
     required this.onManage,
   });
 
+  final String gameId;
   final GameModel game;
   final GamePlayer? myPlayer;
   final bool isOrganizer;
+  final String currentUserId;
   final GameActionsState actionsState;
   final VoidCallback onJoin;
   final VoidCallback onLeave;
@@ -801,7 +863,15 @@ class _BottomActionBar extends StatelessWidget {
   final VoidCallback onManage;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pendingRatings = ref.watch(pendingRatingsProvider);
+    final hasPendingRatings =
+        _hasPendingRatingsForGame(pendingRatings, game.id);
+
+    final hasChat =
+        game.groupChatId != null && myPlayer?.isApproved == true;
+    final main = _buildMainAction(context, ref, hasPendingRatings);
+
     return Container(
       padding: EdgeInsets.fromLTRB(
         16,
@@ -816,8 +886,7 @@ class _BottomActionBar extends StatelessWidget {
       child: Row(
         spacing: 12,
         children: [
-          // Chat button (if in game)
-          if (game.groupChatId != null && myPlayer?.isApproved == true)
+          if (hasChat)
             Expanded(
               flex: 1,
               child: BbButton(
@@ -827,22 +896,39 @@ class _BottomActionBar extends StatelessWidget {
                 icon: Icons.chat_outlined,
               ),
             ),
-
-          // Join / Leave / Status button
-          Expanded(
-            flex: 2,
-            child: _buildMainAction(),
-          ),
+          if (main != null)
+            Expanded(
+              flex: hasChat ? 2 : 1,
+              child: main,
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildMainAction() {
+  /// Primary / leave / join / manage slot. Returns `null` when nothing should
+  /// occupy the second column (e.g. completed game, all opponents already rated).
+  Widget? _buildMainAction(
+    BuildContext context,
+    WidgetRef ref,
+    bool hasPendingRatings,
+  ) {
     if (isOrganizer) {
-      // Once the game is completed, hide management entirely — the rate flow
-      // takes over the screen affordance.
       if (game.isCompleted) {
+        if (myPlayer?.isApproved == true && hasPendingRatings) {
+          return BbButton(
+            label: 'Rate Participants',
+            onPressed: () => _openRateParticipantsPicker(
+              context,
+              ref,
+              game,
+              gameId,
+              currentUserId,
+            ),
+            variant: BbButtonVariant.primary,
+            icon: Icons.star_rate_rounded,
+          );
+        }
         return const BbButton(
           label: 'Game Completed',
           onPressed: null,
@@ -883,6 +969,23 @@ class _BottomActionBar extends StatelessWidget {
     }
 
     if (myPlayer!.isApproved) {
+      if (game.isCompleted) {
+        if (hasPendingRatings) {
+          return BbButton(
+            label: 'Rate Participants',
+            onPressed: () => _openRateParticipantsPicker(
+              context,
+              ref,
+              game,
+              gameId,
+              currentUserId,
+            ),
+            variant: BbButtonVariant.primary,
+            icon: Icons.star_rate_rounded,
+          );
+        }
+        return null;
+      }
       return BbButton(
         label: 'Leave Game',
         onPressed: game.isUpcoming ? onLeave : null,
@@ -891,7 +994,7 @@ class _BottomActionBar extends StatelessWidget {
       );
     }
 
-    return const SizedBox.shrink();
+    return null;
   }
 }
 
@@ -1042,6 +1145,190 @@ Future<bool> _confirmComplete(BuildContext context) async {
     ),
   );
   return res ?? false;
+}
+
+class _RatePickerEntry {
+  const _RatePickerEntry({required this.rateeId, required this.displayName});
+  final String rateeId;
+  final String displayName;
+}
+
+/// Lists opponents the viewer still owes a rating for this [gameId], then
+/// opens [RatePlayerSheet] for the chosen player.
+Future<void> _openRateParticipantsPicker(
+  BuildContext context,
+  WidgetRef ref,
+  GameModel game,
+  String gameId,
+  String currentUserId,
+) async {
+  ref.invalidate(pendingRatingsProvider);
+  List<PendingRatingItem> list;
+  try {
+    list = await ref.read(pendingRatingsProvider.future);
+  } catch (_) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not load pending ratings. Pull to refresh and try again.'),
+        ),
+      );
+    }
+    return;
+  }
+
+  PendingRatingItem? found;
+  for (final e in list) {
+    if (e.gameId == gameId) {
+      found = e;
+      break;
+    }
+  }
+
+  final entries = <_RatePickerEntry>[];
+  if (found != null) {
+    for (final raw in found.pendingPlayers) {
+      final id = (raw['_id'] ?? raw['id'] ?? '').toString();
+      if (id.isEmpty || id == currentUserId) continue;
+      final fn = raw['firstName']?.toString() ?? '';
+      final ln = raw['lastName']?.toString() ?? '';
+      final un = raw['username']?.toString() ?? '';
+      final display = (fn.isNotEmpty && ln.isNotEmpty)
+          ? '$fn $ln'
+          : (un.isNotEmpty ? un : 'Player');
+      entries.add(_RatePickerEntry(rateeId: id, displayName: display));
+    }
+  }
+
+  if (entries.isEmpty) {
+    for (final p in game.players.where(
+      (p) => p.isApproved && p.userId != currentUserId,
+    )) {
+      entries.add(
+        _RatePickerEntry(rateeId: p.userId, displayName: p.displayName),
+      );
+    }
+  }
+
+  if (entries.isEmpty) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Everyone in this game has been rated.'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
+    return;
+  }
+
+  if (!context.mounted) return;
+
+  if (entries.length == 1) {
+    final only = entries.first;
+    await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => RatePlayerSheet(
+        rateeId: only.rateeId,
+        rateeDisplayName: only.displayName,
+        gameId: gameId,
+      ),
+    );
+    return;
+  }
+
+  await showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (sheetCtx) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+            child: Text(
+              'Rate a participant',
+              style: AppTextStyles.titleSmall,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text(
+              game.title,
+              style: AppTextStyles.bodySmall
+                  .copyWith(color: AppColors.textSecondary),
+            ),
+          ),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: entries.length,
+            separatorBuilder: (_, __) =>
+                const Divider(height: 1, color: AppColors.grey200),
+            itemBuilder: (_, i) {
+              final e = entries[i];
+              return ListTile(
+                title: Text(e.displayName, style: AppTextStyles.bodyMedium),
+                trailing: const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.primary,
+                ),
+                onTap: () async {
+                  Navigator.pop(sheetCtx);
+                  if (!context.mounted) return;
+                  await showModalBottomSheet<bool>(
+                    context: context,
+                    isScrollControlled: true,
+                    showDragHandle: true,
+                    builder: (_) => RatePlayerSheet(
+                      rateeId: e.rateeId,
+                      rateeDisplayName: e.displayName,
+                      gameId: gameId,
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            child: TextButton(
+              onPressed: () async {
+                Navigator.pop(sheetCtx);
+                if (!context.mounted) return;
+                try {
+                  await dismissGameRatingQueue(ref, gameId);
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'You will not be prompted to rate this game.',
+                      ),
+                    ),
+                  );
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(e.toString())),
+                    );
+                  }
+                }
+              },
+              child: Text(
+                "Don't rate this game",
+                style: AppTextStyles.bodySmall
+                    .copyWith(color: AppColors.textSecondary),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    ),
+  );
 }
 
 /// Opens the post-game rating bottom sheet for a single ratee.

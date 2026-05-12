@@ -20,6 +20,10 @@ const getRatingsSchema = Joi.object({
   limit: Joi.number().integer().min(1).max(50).default(20),
 });
 
+const dismissGameSchema = Joi.object({
+  gameId: mongoId.required(),
+});
+
 const validate =
   (schema, source = 'body') =>
   (req, res, next) => {
@@ -32,4 +36,4 @@ const validate =
     return next();
   };
 
-module.exports = { ratePlayerSchema, getRatingsSchema, validate };
+module.exports = { ratePlayerSchema, getRatingsSchema, dismissGameSchema, validate };

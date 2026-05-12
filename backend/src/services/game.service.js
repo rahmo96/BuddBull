@@ -220,12 +220,33 @@ const searchGames = async (filters, viewer = null) => {
  * Used for the "My Games" screen.
  */
 const getMyGames = async (userId, { status, page = 1, limit = 20 } = {}) => {
-  const query = {
+  const base = {
     deletedAt: null,
     $or: [{ organizer: userId }, { 'players.user': userId, 'players.status': 'approved' }],
   };
 
-  if (status) query.status = status;
+  let query;
+  if (status) {
+    query = { ...base, status };
+  } else {
+    const ratingService = require('./rating.service');
+    const pending = await ratingService.getPendingRatings(userId);
+    const pendingGameIds = pending.map((p) => p.game.id).filter(Boolean);
+
+    const completedWithPending =
+      pendingGameIds.length > 0
+        ? [{ _id: { $in: pendingGameIds }, status: 'completed' }]
+        : [];
+
+    query = {
+      ...base,
+      $and: [
+        {
+          $or: [{ status: { $ne: 'completed' } }, ...completedWithPending],
+        },
+      ],
+    };
+  }
 
   const skip = (Number(page) - 1) * Number(limit);
 
@@ -268,11 +289,37 @@ const getCalendar = async (userId, { dateFrom, dateTo }) => {
         return d;
       })();
 
-  const games = await Game.find({
-    deletedAt: null,
+  const ratingService = require('./rating.service');
+  const pending = await ratingService.getPendingRatings(userId);
+  const pendingGameIds = pending.map((p) => p.game.id).filter(Boolean);
+
+  const participation = {
+    $or: [{ organizer: userId }, { 'players.user': userId, 'players.status': 'approved' }],
+  };
+
+  const upcomingBranch = {
     status: { $in: ['open', 'full', 'in_progress'] },
     scheduledAt: { $gte: from, $lte: to },
-    $or: [{ organizer: userId }, { 'players.user': userId, 'players.status': 'approved' }],
+  };
+
+  const completedPendingBranch =
+    pendingGameIds.length > 0
+      ? {
+          _id: { $in: pendingGameIds },
+          status: 'completed',
+        }
+      : null;
+
+  const games = await Game.find({
+    deletedAt: null,
+    $and: [
+      participation,
+      {
+        $or: completedPendingBranch
+          ? [upcomingBranch, completedPendingBranch]
+          : [upcomingBranch],
+      },
+    ],
   })
     .populate('organizer', 'username firstName lastName')
     .sort({ scheduledAt: 1 })

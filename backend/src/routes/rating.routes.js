@@ -4,7 +4,12 @@ const router = express.Router();
 
 const { protect, restrictTo } = require('../middleware/auth.middleware');
 const ratingController = require('../controllers/rating.controller');
-const { ratePlayerSchema, getRatingsSchema, validate } = require('../validators/rating.validator');
+const {
+  ratePlayerSchema,
+  getRatingsSchema,
+  dismissGameSchema,
+  validate,
+} = require('../validators/rating.validator');
 
 router.use(protect);
 
@@ -19,6 +24,13 @@ router.post('/', validate(ratePlayerSchema), ratingController.ratePlayer);
 
 // ── My pending ratings (games where I haven't rated opponents yet) ─────────────
 router.get('/pending', ratingController.getPendingRatings);
+
+// ── Skip rating for a completed game (removes it from pending queue) ──────────
+router.post(
+  '/dismiss',
+  validate(dismissGameSchema),
+  ratingController.dismissPendingRatingsForGame,
+);
 
 // ── My received ratings ────────────────────────────────────────────────────────
 router.get('/received', validate(getRatingsSchema, 'query'), ratingController.getMyReceivedRatings);

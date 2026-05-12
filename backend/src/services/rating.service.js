@@ -1,4 +1,5 @@
 const Rating = require('../models/Rating.model');
+const RatingDismissal = require('../models/RatingDismissal.model');
 const Game = require('../models/Game.model');
 const User = require('../models/User.model');
 const AppError = require('../utils/AppError');
@@ -156,6 +157,9 @@ const getRatingsGivenByUser = async (userId, { page = 1, limit = 20 } = {}) => {
 
 // ── Games a user completed but has not yet rated all opponents ────────────────
 const getPendingRatings = async (userId) => {
+  const dismissals = await RatingDismissal.find({ rater: userId }).select('game').lean();
+  const dismissedGameIds = new Set(dismissals.map((d) => d.game.toString()));
+
   // Find all completed games the user participated in
   const completedGames = await Game.find({
     status: 'completed',
@@ -169,6 +173,7 @@ const getPendingRatings = async (userId) => {
   const result = [];
 
   for (const game of completedGames) {
+    if (dismissedGameIds.has(game._id.toString())) continue;
     const approvedPlayers = game.players.filter(
       (p) => p.status === 'approved' && p.user?._id?.toString() !== userId.toString(),
     );
@@ -202,11 +207,41 @@ const getPendingRatings = async (userId) => {
   return result;
 };
 
+/**
+ * Permanently hides a completed game from this user's pending-rating queue
+ * (they chose not to rate anyone for that match).
+ */
+const dismissPendingRatingsForGame = async (raterId, gameId) => {
+  const game = await Game.findOne({
+    _id: gameId,
+    deletedAt: null,
+    status: 'completed',
+  });
+  if (!game) throw new AppError('Game not found or not completed.', 404);
+
+  const isOrganizer = game.organizer.toString() === raterId.toString();
+  const raterPlayer = game.players.find((p) => p.user.toString() === raterId.toString());
+  const isApprovedParticipant = raterPlayer?.status === 'approved';
+
+  if (!isOrganizer && !isApprovedParticipant) {
+    throw new AppError('You were not a participant in this game.', 403);
+  }
+
+  await RatingDismissal.updateOne(
+    { rater: raterId, game: gameId },
+    { $setOnInsert: { rater: raterId, game: gameId } },
+    { upsert: true },
+  );
+
+  return { dismissed: true };
+};
+
 module.exports = {
   ratePlayer,
   getProfileSummary,
   getRatingsForUser,
   getRatingsGivenByUser,
   getPendingRatings,
+  dismissPendingRatingsForGame,
   recalculateAllStats,
 };

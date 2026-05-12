@@ -337,3 +337,13 @@ class CreateGameNotifier extends StateNotifier<CreateGameState> {
     return m?.group(1) ?? raw;
   }
 }
+
+/// Persists "don't rate this game" server-side and refreshes lists that surface
+/// the rating queue.
+Future<void> dismissGameRatingQueue(WidgetRef ref, String gameId) async {
+  await ref.read(ratingRepositoryProvider).dismissGameRatings(gameId);
+  ref.invalidate(pendingRatingsProvider);
+  ref.invalidate(calendarGamesProvider);
+  ref.invalidate(myGamesProvider);
+  ref.invalidate(gameDetailProvider(gameId));
+}

@@ -26,6 +26,11 @@ exports.getPendingRatings = catchAsync(async (req, res) => {
   res.status(200).json({ success: true, data: { pending } });
 });
 
+exports.dismissPendingRatingsForGame = catchAsync(async (req, res) => {
+  const result = await ratingService.dismissPendingRatingsForGame(req.user._id, req.body.gameId);
+  res.status(200).json({ success: true, data: result });
+});
+
 // ── Admin: reconcile User.stats from the Rating corpus ─────────────────────────
 // Backfills legacy compositeScore and recomputes averageRating + totalRatings
 // for every user. Used to repair historical corruption caused by the
