@@ -1,0 +1,177 @@
+const Notification = require('../models/Notification.model');
+const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
+
+// ─────────────────────────────────────────────
+//  Notification Inbox Service
+// ─────────────────────────────────────────────
+//
+// Persistence + live-broadcast layer for the in-app notification feed.
+//
+// We keep MongoDB writes as the source of truth and treat socket
+// emission as a best-effort side channel: if the io server isn't
+// wired in (e.g. inside Jest with no HTTP server) or the recipient
+// has no live socket, the row is still safely persisted and will
+// surface on the next pull-to-refresh.
+//
+// Socket access is injected from `server.js` via `setIo(io)` rather
+// than `require`d here to avoid a circular dependency (server.js ─→
+// socket.manager.js ─→ models ─→ notificationInbox.service.js).
+
+const DEFAULT_LIMIT = 50;
+const MAX_LIMIT = 100;
+
+// ── Socket plumbing (DI) ─────────────────────────────────────────────────────
+
+/** Socket.io server handle; null in test/process boots that skip wiring. */
+let _io = null;
+
+const setIo = (io) => {
+  _io = io || null;
+};
+
+/**
+ * Emits `notification:new` into a recipient's private socket room.
+ * Each connected user joins a room named after their Mongo `_id` in
+ * `socket.manager.js`, so a single `io.to(userId).emit(...)` reaches
+ * every device they've opened the app on.
+ */
+const _emitNotificationNew = (recipientId, payload) => {
+  if (!_io || !recipientId) return;
+  try {
+    _io.to(String(recipientId)).emit('notification:new', payload);
+  } catch (err) {
+    // Never let an emit failure roll back the DB write that succeeded.
+    logger.warn(`[notification:socket] emit failed for ${recipientId}: ${err.message}`);
+  }
+};
+
+/**
+ * Converts a Mongoose document to a plain JSON-safe shape that mirrors
+ * what `GET /notifications` would return — the frontend parser is
+ * identical for both code paths.
+ */
+const _toPayload = (doc) => {
+  if (!doc) return null;
+  const obj = typeof doc.toObject === 'function' ? doc.toObject({ getters: false }) : doc;
+  return {
+    _id: String(obj._id),
+    recipient: obj.recipient ? String(obj.recipient) : undefined,
+    type: obj.type,
+    title: obj.title,
+    body: obj.body ?? '',
+    data: obj.data ?? {},
+    read: !!obj.read,
+    readAt: obj.readAt ?? null,
+    createdAt: obj.createdAt,
+    updatedAt: obj.updatedAt,
+  };
+};
+
+/**
+ * Fetches a page of notifications for a user, newest first.
+ *
+ * The result intentionally exposes a fresh `unreadCount` so a single
+ * round trip from the client populates both the list view and the
+ * badge — avoiding a follow-up `/unread` call on every refresh.
+ */
+const listForUser = async (userId, { page = 1, limit = DEFAULT_LIMIT } = {}) => {
+  const pageNum = Math.max(1, Number(page) || 1);
+  const pageSize = Math.min(MAX_LIMIT, Math.max(1, Number(limit) || DEFAULT_LIMIT));
+  const skip = (pageNum - 1) * pageSize;
+
+  const [notifications, total, unreadCount] = await Promise.all([
+    Notification.find({ recipient: userId })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(pageSize)
+      .lean(),
+    Notification.countDocuments({ recipient: userId }),
+    Notification.unreadCountFor(userId),
+  ]);
+
+  return {
+    notifications,
+    pagination: {
+      total,
+      page: pageNum,
+      limit: pageSize,
+      pages: Math.max(1, Math.ceil(total / pageSize)),
+    },
+    unreadCount,
+  };
+};
+
+/**
+ * Flips a single notification to read.
+ *
+ * Scoped by `recipient` so a user can never mark someone else's
+ * notification read (defence-in-depth alongside the auth middleware).
+ */
+const markAsRead = async (userId, notificationId) => {
+  const updated = await Notification.findOneAndUpdate(
+    { _id: notificationId, recipient: userId },
+    { $set: { read: true, readAt: new Date() } },
+    { new: true },
+  ).lean();
+
+  if (!updated) throw new AppError('Notification not found', 404);
+  return updated;
+};
+
+/**
+ * Marks every unread notification for the current user as read.
+ * Returns the count of rows actually touched (so the client can show
+ * a friendly "X notifications cleared" toast if desired).
+ */
+const markAllAsRead = async (userId) => {
+  const res = await Notification.updateMany(
+    { recipient: userId, read: false },
+    { $set: { read: true, readAt: new Date() } },
+  );
+  return { matched: res.matchedCount ?? 0, modified: res.modifiedCount ?? 0 };
+};
+
+/**
+ * Internal helper for upcoming phases (game.service triggers, admin
+ * broadcast, rating events). Validates the type against the schema's
+ * enum implicitly via Mongoose validators and writes the row.
+ */
+const createForUser = async (recipientId, { type, title, body = '', data = {} } = {}) => {
+  if (!recipientId) throw new AppError('recipientId is required', 400);
+  if (!title) throw new AppError('title is required', 400);
+  const doc = await Notification.create({ recipient: recipientId, type, title, body, data });
+  _emitNotificationNew(recipientId, _toPayload(doc));
+  return doc;
+};
+
+/**
+ * Batch variant of [createForUser]. Used when a single domain event
+ * (e.g. a game completion) fans out to many participants. Emits one
+ * `notification:new` per recipient so each user's badge and inbox
+ * update independently.
+ */
+const createForManyUsers = async (recipientIds = [], payload) => {
+  if (!Array.isArray(recipientIds) || recipientIds.length === 0) return [];
+  const docs = recipientIds.map((id) => ({
+    recipient: id,
+    type: payload?.type ?? 'system',
+    title: payload?.title ?? '',
+    body: payload?.body ?? '',
+    data: payload?.data ?? {},
+  }));
+  const created = await Notification.insertMany(docs, { ordered: false });
+  for (const doc of created) {
+    _emitNotificationNew(doc.recipient, _toPayload(doc));
+  }
+  return created;
+};
+
+module.exports = {
+  setIo,
+  listForUser,
+  markAsRead,
+  markAllAsRead,
+  createForUser,
+  createForManyUsers,
+};

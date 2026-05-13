@@ -43,18 +43,29 @@ class SocketService {
   String? _lastToken;
 
   // ── Broadcast streams ──────────────────────────────────────────────────────
-  // Raw socket payloads for debugging + provider-side parsing.
+  // Raw socket payloads for debugging + provider-side parsing. We keep
+  // `SocketService` domain-agnostic — feature notifiers parse the JSON
+  // Map into their own typed models so this file never has to import
+  // every feature package.
   final _messageController = StreamController<dynamic>.broadcast();
   final _typingController = StreamController<TypingEvent>.broadcast();
   final _deletedController = StreamController<MessageDeletedEvent>.broadcast();
   final _pinnedController = StreamController<MessagePinnedEvent>.broadcast();
   final _statusController = StreamController<SocketStatus>.broadcast();
+  final _notificationController =
+      StreamController<Map<String, dynamic>>.broadcast();
 
   Stream<dynamic> get messageStream => _messageController.stream;
   Stream<TypingEvent> get typingStream => _typingController.stream;
   Stream<MessageDeletedEvent> get deletedStream => _deletedController.stream;
   Stream<MessagePinnedEvent> get pinnedStream => _pinnedController.stream;
   Stream<SocketStatus> get statusStream => _statusController.stream;
+
+  /// Raw `notification:new` payloads pushed by the server when a new
+  /// inbox row is persisted for the current user. Subscribers are
+  /// responsible for parsing via `NotificationModel.fromJson`.
+  Stream<Map<String, dynamic>> get notificationStream =>
+      _notificationController.stream;
 
   SocketStatus _status = SocketStatus.disconnected;
   SocketStatus get status => _status;
@@ -211,6 +222,18 @@ class SocketService {
           _pinnedController.add(
               MessagePinnedEvent(d['messageId'].toString(), isPinned: false));
         } catch (_) {}
+      })
+      ..on('notification:new', (data) {
+        // Server pushes the same JSON shape as `GET /notifications`,
+        // so the provider can reuse `NotificationModel.fromJson`.
+        try {
+          if (data is Map) {
+            _notificationController
+                .add(Map<String, dynamic>.from(data));
+          }
+        } catch (e, st) {
+          debugPrint('⚠️ SOCKET notification:new parse error: $e\n$st');
+        }
       });
 
     debugPrint('🟡 SOCKET calling connect()…');
@@ -292,6 +315,7 @@ class SocketService {
     _deletedController.close();
     _pinnedController.close();
     _statusController.close();
+    _notificationController.close();
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────

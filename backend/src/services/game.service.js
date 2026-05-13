@@ -4,6 +4,7 @@ const User = require('../models/User.model');
 const Chat = require('../models/Chat.model');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
+const notificationInboxService = require('./notificationInbox.service');
 
 // ─────────────────────────────────────────────
 //  Helpers
@@ -25,11 +26,168 @@ const assertOrganizer = (game, userId, userRole) => {
   }
 };
 
+// ─────────────────────────────────────────────
+//  Notification dispatch
+// ─────────────────────────────────────────────
+//
+// `notify(type, payload)` is the single funnel every game-lifecycle
+// event goes through. It used to be a `logger.debug` stub; it now
+// also writes a persistent row into the per-user inbox via
+// `notificationInboxService`.
+//
+// Design notes
+// ────────────
+//  - The debug log is preserved so existing observability and the
+//    test-output trail (`[notification:stub] ...` style) keep working.
+//  - Each event type is mapped to a `{ recipients, type, title, body,
+//    data }` descriptor by a dispatcher function. Single-recipient
+//    rows go through `createForUser` (one document with full
+//    Mongoose validation); multi-recipient fan-outs go through
+//    `createForManyUsers` (`insertMany` — one round trip).
+//  - Inbox writes are awaited but the entire dispatch is wrapped in
+//    a try/catch. A failing inbox insert MUST NOT break the actual
+//    game flow that triggered it — game.service callers downstream
+//    of `await notify(...)` rely on the game state being persisted
+//    even if the bell-badge update is lost.
+
+const _dispatchers = {
+  'game:invite': (p) => ({
+    recipients: [p.targetUserId],
+    type: 'gameInvite',
+    title: 'New Game Invite',
+    body: p.gameTitle
+      ? `You've been invited to "${p.gameTitle}".`
+      : 'You have been invited to a game.',
+    data: {
+      gameId: String(p.gameId),
+      organizerId: p.organizerId ? String(p.organizerId) : undefined,
+    },
+  }),
+
+  'game:joinRequest': (p) => ({
+    recipients: [p.organizerId],
+    type: 'gameJoinRequest',
+    title: 'New Join Request',
+    body: 'A player has requested to join your game.',
+    data: {
+      gameId: String(p.gameId),
+      requesterId: p.requesterId ? String(p.requesterId) : undefined,
+    },
+  }),
+
+  'game:playerJoined': (p) => ({
+    recipients: p.organizerId ? [p.organizerId] : [],
+    type: 'gamePlayerJoined',
+    title: 'New Player Joined',
+    body: 'A new player has joined your game.',
+    data: {
+      gameId: String(p.gameId),
+      userId: p.userId ? String(p.userId) : undefined,
+    },
+  }),
+
+  'game:playerLeft': (p) => ({
+    recipients: p.organizerId ? [p.organizerId] : [],
+    type: 'gamePlayerLeft',
+    title: 'A Player Left',
+    body: 'A player has left your game.',
+    data: {
+      gameId: String(p.gameId),
+      userId: p.userId ? String(p.userId) : undefined,
+    },
+  }),
+
+  'game:approved': (p) => ({
+    recipients: [p.targetUserId],
+    type: 'gameApproved',
+    title: 'Join Request Approved',
+    body: 'You are in the game!',
+    data: { gameId: String(p.gameId) },
+  }),
+
+  'game:kicked': (p) => ({
+    recipients: [p.targetUserId],
+    type: 'gameKicked',
+    title: 'Removed From Game',
+    body: p.reason
+      ? `You've been removed from a game: ${p.reason}`
+      : "You've been removed from a game.",
+    data: { gameId: String(p.gameId) },
+  }),
+
+  'game:cancelled': (p) => ({
+    recipients: p.playerIds ?? [],
+    type: 'gameCancelled',
+    title: 'Game Cancelled',
+    body: p.reason
+      ? `${p.gameTitle ? `"${p.gameTitle}" was cancelled` : 'A game was cancelled'}: ${p.reason}`
+      : `${p.gameTitle ? `"${p.gameTitle}" was cancelled.` : 'A game was cancelled.'}`,
+    data: { gameId: String(p.gameId) },
+  }),
+
+  'game:merged': (p) => ({
+    recipients: p.affectedPlayerIds ?? [],
+    type: 'gameMerged',
+    title: 'Game Merged',
+    body: 'Your game has been merged into another group.',
+    data: {
+      gameId: String(p.targetGameId),
+      sourceGameId: p.sourceGameId ? String(p.sourceGameId) : undefined,
+    },
+  }),
+
+  'game:completed': (p) => ({
+    recipients: p.approvedPlayerIds ?? [],
+    type: 'gameCompleted',
+    title: 'Game Completed',
+    body: 'Tap to rate the players.',
+    data: { gameId: String(p.gameId) },
+  }),
+};
+
 /**
- * Stubs a notification call. Wired up in Phase 7 with real FCM/email.
+ * Strips keys whose value is `undefined` so we don't litter the
+ * Mixed `data` field with empty fields.
  */
-const notify = (type, payload) => {
+const _compact = (obj) => {
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined && v !== null && v !== '') out[k] = v;
+  }
+  return out;
+};
+
+const notify = async (type, payload) => {
+  // Preserve the existing debug breadcrumb so the test log and the
+  // structured-logging dashboards both keep working.
   logger.debug(`[notification:stub] ${type} → ${JSON.stringify(payload)}`);
+
+  const buildDescriptor = _dispatchers[type];
+  if (!buildDescriptor) return;
+
+  try {
+    const desc = buildDescriptor(payload || {});
+    const recipients = (desc.recipients || []).filter(Boolean);
+    if (recipients.length === 0) return;
+
+    const inboxPayload = {
+      type: desc.type,
+      title: desc.title,
+      body: desc.body || '',
+      data: _compact(desc.data || {}),
+    };
+
+    if (recipients.length === 1) {
+      await notificationInboxService.createForUser(recipients[0], inboxPayload);
+    } else {
+      await notificationInboxService.createForManyUsers(recipients, inboxPayload);
+    }
+  } catch (err) {
+    // Never let an inbox write failure cascade into the game-flow
+    // failure that triggered it. The game state has already been
+    // persisted by the time `notify` runs.
+    logger.warn(`[notification] dispatch failed for ${type}: ${err.message}`);
+  }
 };
 
 /**
@@ -375,7 +533,7 @@ const cancelGame = async (gameId, userId, userRole, reason) => {
 
   // Notify all approved players
   const playerIds = game.players.filter((p) => p.status === 'approved').map((p) => p.user);
-  notify('game:cancelled', { gameId, playerIds, reason });
+  await notify('game:cancelled', { gameId, playerIds, reason, gameTitle: game.title });
 
   logger.info(`Game cancelled: ${gameId} — ${reason}`);
   return game;
@@ -466,11 +624,11 @@ const joinGame = async (gameId, userId) => {
   await game.save();
 
   if (playerStatus === 'pending') {
-    notify('game:joinRequest', { gameId, organizerId: game.organizer, requesterId: userId });
+    await notify('game:joinRequest', { gameId, organizerId: game.organizer, requesterId: userId });
   } else {
     // Add approved players to the group chat so they can access messages.
     await ensureGroupChatParticipant(gameId, userId, { isAdmin: false });
-    notify('game:playerJoined', { gameId, userId });
+    await notify('game:playerJoined', { gameId, userId, organizerId: game.organizer });
   }
 
   logger.info(`Player ${userId} joined game ${gameId} (status: ${playerStatus})`);
@@ -500,7 +658,7 @@ const leaveGame = async (gameId, userId) => {
   slot.resolvedAt = new Date();
   await game.save();
 
-  notify('game:playerLeft', { gameId, userId, organizerId: game.organizer });
+  await notify('game:playerLeft', { gameId, userId, organizerId: game.organizer });
 
   logger.info(`Player ${userId} left game ${gameId}`);
 };
@@ -530,7 +688,7 @@ const invitePlayer = async (gameId, organizerId, organizerRole, targetUserId) =>
   game.players.push({ user: targetUserId, status: 'invited', joinedAt: new Date() });
   await game.save();
 
-  notify('game:invite', {
+  await notify('game:invite', {
     gameId,
     organizerId,
     targetUserId,
@@ -574,7 +732,7 @@ const approvePlayer = async (gameId, organizerId, organizerRole, targetUserId) =
   // Approved players must be added to the game group chat.
   await ensureGroupChatParticipant(gameId, targetUserId, { isAdmin: false });
 
-  notify('game:approved', { gameId, targetUserId });
+  await notify('game:approved', { gameId, targetUserId });
   logger.info(`Player ${targetUserId} approved in game ${gameId}`);
   return game;
 };
@@ -603,7 +761,7 @@ const kickPlayer = async (gameId, organizerId, organizerRole, targetUserId, reas
   slot.resolvedAt = new Date();
   await game.save();
 
-  notify('game:kicked', { gameId, targetUserId, reason });
+  await notify('game:kicked', { gameId, targetUserId, reason });
   logger.info(`Player ${targetUserId} kicked from game ${gameId}. Reason: ${reason || 'none'}`);
   return game;
 };
@@ -705,7 +863,7 @@ const mergeGroups = async (sourceGameId, targetGameId, organizerId, organizerRol
     ]),
   ];
 
-  notify('game:merged', { sourceGameId, targetGameId, affectedPlayerIds: allPlayerIds });
+  await notify('game:merged', { sourceGameId, targetGameId, affectedPlayerIds: allPlayerIds });
 
   logger.info(`Merge complete: ${sourceGameId} → ${targetGameId} (${sourceApproved.length} players transferred)`);
 
@@ -755,7 +913,7 @@ const completeGame = async (gameId, organizerId, organizerRole, resultDto) => {
     }),
   );
 
-  notify('game:completed', { gameId, approvedPlayerIds });
+  await notify('game:completed', { gameId, approvedPlayerIds });
   logger.info(`Game completed: ${gameId}`);
 
   return game;

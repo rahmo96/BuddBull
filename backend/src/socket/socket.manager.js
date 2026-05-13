@@ -94,6 +94,17 @@ module.exports = (io) => {
     const { user } = socket;
     logger.info(`[Socket] connected  user=${user.username}  id=${socket.id}`);
 
+    // ── Per-user private room ────────────────────────────────────────────────
+    // Every connected user auto-joins a room keyed by their Mongo `_id` so
+    // server-side producers (notification inbox, future direct events) can
+    // target a single user with `io.to(userId).emit(...)` regardless of
+    // which chat rooms they're currently in.
+    if (user && user._id) {
+      const userRoom = String(user._id);
+      socket.join(userRoom);
+      logger.debug(`[Socket] ${user.username} joined private room ${userRoom}`);
+    }
+
     // ── join_chat ────────────────────────────────────────────────────────────
     // Room membership is keyed by chatId string only — no DB lookup required to join
     // the Socket.io room (send_message / HTTP paths still enforce participation).

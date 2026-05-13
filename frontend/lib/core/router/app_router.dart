@@ -14,6 +14,7 @@ import 'package:buddbull/features/games/presentation/screens/game_detail_screen.
 import 'package:buddbull/features/games/presentation/screens/games_screen.dart';
 import 'package:buddbull/features/home/home_scaffold.dart';
 import 'package:buddbull/features/home/presentation/home_screen.dart';
+import 'package:buddbull/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:buddbull/features/onboarding/data/onboarding_prefs.dart';
 import 'package:buddbull/features/onboarding/presentation/screens/onboarding_profile_screen.dart';
 import 'package:buddbull/features/onboarding/presentation/screens/onboarding_welcome_screen.dart';
@@ -52,6 +53,7 @@ abstract class Routes {
   static const String profile = '/profile';
   static const String editProfile = '/profile/edit';
   static String publicProfile(String id) => '/profile/$id';
+  static const String notifications = '/notifications';
 
   Routes._();
 }
@@ -250,6 +252,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.adminDashboard,
         name: 'adminDashboard',
         pageBuilder: (_, s) => _slide(s, const AdminDashboardScreen()),
+      ),
+      // ── Notifications inbox (full screen — hides bottom nav) ──
+      GoRoute(
+        path: Routes.notifications,
+        name: 'notifications',
+        pageBuilder: (_, s) => _slide(s, const NotificationsScreen()),
       ),
     ],
     errorBuilder: (context, state) =>

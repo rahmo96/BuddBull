@@ -102,6 +102,11 @@ abstract class ApiEndpoints {
   static const String givenRatings = '/ratings/given';
   static String ratingSummary(String userId) => '/ratings/summary/$userId';
 
+  // ── Notifications ─────────────────────────────────────────────
+  static const String notifications = '/notifications';
+  static const String notificationsReadAll = '/notifications/read-all';
+  static String notificationRead(String id) => '/notifications/$id/read';
+
   // ── Admin ─────────────────────────────────────────────────────
   static const String adminDashboard = '/admin/dashboard';
   static const String adminUsers = '/admin/users';

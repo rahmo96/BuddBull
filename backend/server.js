@@ -18,6 +18,7 @@ const connectDB = require('./src/config/database');
 const createApp = require('./src/app');
 const logger = require('./src/utils/logger');
 const registerSocketHandlers = require('./src/socket/socket.manager');
+const notificationInboxService = require('./src/services/notificationInbox.service');
 const { port, nodeEnv, clientUrl } = require('./src/config/environment');
 
 const startServer = async () => {
@@ -47,6 +48,12 @@ const startServer = async () => {
 
   // ── 4b. Register all socket event handlers (Phase 6) ──────────
   registerSocketHandlers(io);
+
+  // ── 4c. Wire socket emitter into the notification inbox service ──
+  // DI rather than a require() loop so the service module stays free
+  // of any transport coupling (and remains test-friendly: in Jest no
+  // io is wired and emits become silent no-ops).
+  notificationInboxService.setIo(io);
 
   // ── 5. Listen ───────────────────────────────────────────────
   server.listen(port, () => {

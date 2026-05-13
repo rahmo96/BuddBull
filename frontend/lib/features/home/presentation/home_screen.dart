@@ -3,6 +3,7 @@ import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/games/presentation/widgets/game_card.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
+import 'package:buddbull/features/notifications/providers/notification_provider.dart';
 import 'package:buddbull/features/performance/presentation/widgets/streak_banner.dart';
 import 'package:buddbull/features/performance/providers/performance_provider.dart';
 import 'package:buddbull/features/profile/presentation/widgets/stats_card.dart';
@@ -55,11 +56,8 @@ class HomeScreen extends ConsumerWidget {
                       context.push('/games/calendar'),
                   tooltip: 'My calendar',
                 ),
-                IconButton(
-                  icon: const Icon(Icons.notifications_outlined,
-                      color: Colors.white),
-                  onPressed: () {},
-                  tooltip: 'Notifications',
+                _NotificationBellAction(
+                  onTap: () => context.push('/notifications'),
                 ),
               ],
               flexibleSpace: FlexibleSpaceBar(
@@ -548,4 +546,30 @@ String _sportEmoji(String sport) {
     'cycling' => '🚴',
     _ => '🏅',
   };
+}
+
+// ── Bell icon + unread badge ──────────────────────────────────────────────────
+/// AppBar action that overlays a Material `Badge` with the current
+/// unread notification count on top of the bell icon. Subscribes only
+/// to `unreadNotificationCountProvider` so the rest of the AppBar
+/// doesn't rebuild on every inbox change.
+class _NotificationBellAction extends ConsumerWidget {
+  const _NotificationBellAction({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unread = ref.watch(unreadNotificationCountProvider);
+    return IconButton(
+      onPressed: onTap,
+      tooltip: 'Notifications',
+      icon: Badge.count(
+        count: unread,
+        isLabelVisible: unread > 0,
+        backgroundColor: AppColors.error,
+        textColor: Colors.white,
+        child: const Icon(Icons.notifications_outlined, color: Colors.white),
+      ),
+    );
+  }
 }
