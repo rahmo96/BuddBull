@@ -59,6 +59,14 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>(
   ),
 );
 
+/// Convenience view onto the currently signed-in user. Feature widgets and
+/// their tests depend on this thin provider so tests can override the
+/// current user via `overrideWithValue(...)` without constructing a fake
+/// [AuthNotifier] (which subscribes to FirebaseAuth in its constructor).
+final currentUserProvider = Provider<UserModel?>(
+  (ref) => ref.watch(authProvider).user,
+);
+
 // ── Notifier ─────────────────────────────────────────────────────────────────
 class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier(this._repo, this._prefs) : super(const AuthState()) {

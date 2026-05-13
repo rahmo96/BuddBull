@@ -48,7 +48,7 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
     final gameId = widget.gameId;
     final gameAsync = ref.watch(gameDetailProvider(gameId));
     final actionsState = ref.watch(gameActionsProvider(gameId));
-    final currentUser = ref.watch(authProvider).user;
+    final currentUser = ref.watch(currentUserProvider);
 
     // Refresh the pending-rating queue the first time we observe this game as
     // completed. Without this, the bottom bar would stay on "Leave Game" /
@@ -89,7 +89,7 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
       final game = gameAsync.valueOrNull;
       if (game == null || !game.isCompleted) return;
 
-      final user = ref.read(authProvider).user;
+      final user = ref.read(currentUserProvider);
       if (user == null) return;
       final myPlayer = game.getPlayer(user.id);
       // Only participants can have ratings to do; organizers who weren't on
