@@ -328,6 +328,78 @@ describe('DELETE /games/:id/players/:userId (kick)', () => {
 
     expect(res.status).toBe(403);
   });
+
+  it('lets a previously kicked player re-request to join (slot mutated, not duplicated)', async () => {
+    const { token: orgToken } = await registerAndLogin(1, 'organizer');
+    const { token: p2Token, userId: p2Id } = await registerAndLogin(2);
+
+    const game = await createGameAs(orgToken);
+    const gameId = game.body.data.game._id;
+
+    await request(app).post(`${GAMES}/${gameId}/join`).set('Authorization', `Bearer ${p2Token}`);
+    await request(app)
+      .delete(`${GAMES}/${gameId}/players/${p2Id}`)
+      .set('Authorization', `Bearer ${orgToken}`)
+      .send({ reason: 'kicked' });
+
+    const reJoin = await request(app).post(`${GAMES}/${gameId}/join`).set('Authorization', `Bearer ${p2Token}`);
+
+    expect(reJoin.status).toBe(200);
+    const slots = reJoin.body.data.game.players.filter(
+      (p) => `${p.user}` === `${p2Id}` || p.user?._id === `${p2Id}`,
+    );
+    expect(slots).toHaveLength(1);
+    // Public game (no isPrivate / requiresApproval), so re-join → approved.
+    expect(slots[0].status).toBe('approved');
+  });
+
+  it('GET /games/me excludes games where the viewer is only pending', async () => {
+    const { token: orgToken } = await registerAndLogin(1, 'organizer');
+    const { token: p2Token } = await registerAndLogin(2);
+    const { token: p3Token } = await registerAndLogin(3);
+
+    // Private game so p2 stays pending. p3 is also in the game (approved
+    // would be impossible — so just leave p3 alone). The regression we are
+    // guarding against: the old `players.user + players.status` dot-path
+    // query would treat the organiser's own approved slot as the "approved"
+    // half of the match and surface this game to p2.
+    const game = await createGameAs(orgToken, { isPrivate: true });
+    const gameId = game.body.data.game._id;
+
+    await request(app).post(`${GAMES}/${gameId}/join`).set('Authorization', `Bearer ${p2Token}`);
+
+    const meP2 = await request(app).get(`${GAMES}/me`).set('Authorization', `Bearer ${p2Token}`);
+    expect(meP2.status).toBe(200);
+    expect(meP2.body.games.find((g) => g._id === gameId)).toBeUndefined();
+
+    // p3 hasn't joined at all → also shouldn't see it.
+    const meP3 = await request(app).get(`${GAMES}/me`).set('Authorization', `Bearer ${p3Token}`);
+    expect(meP3.body.games.find((g) => g._id === gameId)).toBeUndefined();
+  });
+
+  it('re-join on a private game returns to pending status', async () => {
+    const { token: orgToken } = await registerAndLogin(1, 'organizer');
+    const { token: p2Token, userId: p2Id } = await registerAndLogin(2);
+
+    const game = await createGameAs(orgToken, { isPrivate: true });
+    const gameId = game.body.data.game._id;
+
+    // First request → pending → organiser rejects (kicks).
+    await request(app).post(`${GAMES}/${gameId}/join`).set('Authorization', `Bearer ${p2Token}`);
+    await request(app)
+      .delete(`${GAMES}/${gameId}/players/${p2Id}`)
+      .set('Authorization', `Bearer ${orgToken}`)
+      .send({ reason: 'rejected' });
+
+    const reJoin = await request(app).post(`${GAMES}/${gameId}/join`).set('Authorization', `Bearer ${p2Token}`);
+
+    expect(reJoin.status).toBe(200);
+    const slots = reJoin.body.data.game.players.filter(
+      (p) => `${p.user}` === `${p2Id}` || p.user?._id === `${p2Id}`,
+    );
+    expect(slots).toHaveLength(1);
+    expect(slots[0].status).toBe('pending');
+  });
 });
 
 describe('DELETE /games/:id (cancel)', () => {

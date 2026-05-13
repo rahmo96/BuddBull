@@ -5,6 +5,7 @@ const Chat = require('../models/Chat.model');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
 const notificationInboxService = require('./notificationInbox.service');
+const chatPresenceService = require('./chatPresence.service');
 
 // ─────────────────────────────────────────────
 //  Helpers
@@ -105,13 +106,26 @@ const _dispatchers = {
     data: { gameId: String(p.gameId) },
   }),
 
+  /** Organiser declined a *pending* join request (not the same as removing an approved player). */
+  'game:joinRequestDenied': (p) => ({
+    recipients: [p.targetUserId],
+    type: 'gameJoinRequestDenied',
+    title: 'Join Request Denied',
+    body: 'Your request to join the game was declined.',
+    data: {
+      gameId: String(p.gameId),
+      ...(p.reason ? { reason: String(p.reason) } : {}),
+    },
+  }),
+
+  /** An *approved* participant was removed from the roster by the organiser. */
   'game:kicked': (p) => ({
     recipients: [p.targetUserId],
     type: 'gameKicked',
     title: 'Removed From Game',
     body: p.reason
-      ? `You've been removed from a game: ${p.reason}`
-      : "You've been removed from a game.",
+      ? 'You have been removed from the game. Reason: ' + String(p.reason)
+      : 'You have been removed from the game.',
     data: { gameId: String(p.gameId) },
   }),
 
@@ -211,10 +225,65 @@ const ensureGroupChatParticipant = async (gameId, userId, { isAdmin = false } = 
     chatId = chat._id;
   }
 
+  // Two cases to cover:
+  //  1. Brand-new participant → $push.
+  //  2. Returning participant whose slot still exists but is closed
+  //     (`leftAt !== null` because they previously left/were kicked) →
+  //     clear `leftAt` so the chat gate flips back to "active".
+  //
+  // We run them as two narrow updates so each only touches the doc
+  // it actually matches.
   await Chat.updateOne(
     { _id: chatId, deletedAt: null, 'participants.user': { $ne: userId } },
     { $push: { participants: { user: userId, isAdmin, leftAt: null } } },
   );
+  await Chat.updateOne(
+    { _id: chatId, deletedAt: null },
+    { $set: { 'participants.$[slot].leftAt': null, 'participants.$[slot].isAdmin': isAdmin } },
+    { arrayFilters: [{ 'slot.user': userId, 'slot.leftAt': { $ne: null } }] },
+  );
+};
+
+// ─────────────────────────────────────────────
+//  revokeGroupChatParticipant
+// ─────────────────────────────────────────────
+
+/**
+ * Closes a player's slot in a game's group chat and notifies their
+ * live sockets so the UI immediately leaves the room. Idempotent: if
+ * the game has no chat, or the participant is already inactive, this
+ * is a no-op (we still log so audit trails stay coherent).
+ *
+ * @param {Object} game           Hydrated Game document (has `groupChat`).
+ * @param {string} userId         Affected user's Mongo `_id`.
+ * @param {'kicked' | 'left'} reason  Drives the socket event name.
+ * @param {string=} detail        Optional reason string (e.g. "no-show").
+ */
+const revokeGroupChatParticipant = async (game, userId, reason, detail) => {
+  if (!game || !userId) return;
+  const chatId = game.groupChat;
+  if (!chatId) return;
+
+  try {
+    // DB-side gate: even if the socket emit fails (or the client ignores
+    // the event) the chat HTTP/socket auth checks will refuse the user
+    // because their participant slot now has `leftAt` set.
+    await Chat.updateOne(
+      { _id: chatId, deletedAt: null },
+      { $set: { 'participants.$[slot].leftAt': new Date() } },
+      { arrayFilters: [{ 'slot.user': userId, 'slot.leftAt': null }] },
+    );
+  } catch (err) {
+    logger.warn(`[chat:presence] participant close failed (game=${game._id}, user=${userId}): ${err.message}`);
+  }
+
+  chatPresenceService.revokeChatAccess({
+    userId,
+    chatId,
+    gameId: game._id,
+    reason,
+    detail,
+  });
 };
 
 // ─────────────────────────────────────────────
@@ -378,9 +447,18 @@ const searchGames = async (filters, viewer = null) => {
  * Used for the "My Games" screen.
  */
 const getMyGames = async (userId, { status, page = 1, limit = 20 } = {}) => {
+  // Use `$elemMatch` so the two conditions apply to the SAME player slot.
+  // A plain `{ 'players.user': X, 'players.status': 'approved' }` is a
+  // dot-path predicate over the entire array — it would match any doc
+  // that contains a player with userId X AND a (different!) player with
+  // status 'approved'. That's how `pending` users were incorrectly
+  // seeing other people's approved games on the home screen.
   const base = {
     deletedAt: null,
-    $or: [{ organizer: userId }, { 'players.user': userId, 'players.status': 'approved' }],
+    $or: [
+      { organizer: userId },
+      { players: { $elemMatch: { user: userId, status: 'approved' } } },
+    ],
   };
 
   let query;
@@ -451,8 +529,13 @@ const getCalendar = async (userId, { dateFrom, dateTo }) => {
   const pending = await ratingService.getPendingRatings(userId);
   const pendingGameIds = pending.map((p) => p.game.id).filter(Boolean);
 
+  // See `getMyGames` for the $elemMatch rationale — pending players must
+  // not see games they aren't actually approved for.
   const participation = {
-    $or: [{ organizer: userId }, { 'players.user': userId, 'players.status': 'approved' }],
+    $or: [
+      { organizer: userId },
+      { players: { $elemMatch: { user: userId, status: 'approved' } } },
+    ],
   };
 
   const upcomingBranch = {
@@ -544,15 +627,22 @@ const cancelGame = async (gameId, userId, userRole, reason) => {
 // ─────────────────────────────────────────────
 
 /**
- * Adds a player to a game.
+ * Adds a player to a game (or re-adds one who previously left/was kicked).
  *
- * Checks:
- *  1. Game exists and is open
- *  2. Player isn't already in the game
- *  3. Player meets skill level requirement
+ * Status transitions on an existing slot:
+ *   approved  →  409 "already in this game"
+ *   pending   →  409 "request already pending"
+ *   invited   →  promoted to approved/pending depending on `requiresApproval`
+ *                or `isPrivate` (this is the "accept invite" path)
+ *   left      →  treated as a fresh re-join; status reset to approved/pending
+ *   kicked    →  same as left (re-request allowed)
+ *   rejected  →  organiser declined a join request; same re-join path as kicked
+ *
+ * Plus the standard validations:
+ *  1. Game exists and is not deleted
+ *  2. Game is open (not full / completed / cancelled)
+ *  3. Player meets the skill-level requirement
  *  4. No schedule conflict with any of the player's other approved games
- *
- * Status set to 'pending' if requiresApproval, else 'approved'.
  */
 const joinGame = async (gameId, userId) => {
   const game = await Game.findById(gameId).where({ deletedAt: null });
@@ -564,6 +654,10 @@ const joinGame = async (gameId, userId) => {
 
   if (game.status === 'full') throw new AppError('This game is already full.', 400);
 
+  // Helper: target status for a fresh (or re-applied) join.
+  const targetStatus = () =>
+    (game.requiresApproval || game.isPrivate) ? 'pending' : 'approved';
+
   // Already in the game?
   const existingSlot = game.players.find((p) => p.user.toString() === userId.toString());
   if (existingSlot) {
@@ -573,13 +667,27 @@ const joinGame = async (gameId, userId) => {
     if (existingSlot.status === 'pending') {
       throw new AppError('Your join request is already pending.', 409);
     }
-    if (existingSlot.status === 'kicked') throw new AppError('You have been removed from this game.', 403);
     if (existingSlot.status === 'invited') {
-      // Accept the invitation
-      existingSlot.status = game.requiresApproval ? 'pending' : 'approved';
+      // Accept the invitation.
+      existingSlot.status = targetStatus();
       existingSlot.resolvedAt = new Date();
       await game.save();
+
+      if (existingSlot.status === 'approved') {
+        await ensureGroupChatParticipant(gameId, userId, { isAdmin: false });
+        await notify('game:playerJoined', { gameId, userId, organizerId: game.organizer });
+      } else {
+        await notify('game:joinRequest', { gameId, organizerId: game.organizer, requesterId: userId });
+      }
       return { game, status: existingSlot.status };
+    }
+    if (['left', 'kicked', 'rejected'].includes(existingSlot.status)) {
+      // Re-join path. Fall through to the skill-level + schedule-conflict
+      // checks below by NOT returning here, then the post-validation block
+      // detects this slot and mutates it in place instead of pushing a dup.
+    } else {
+      // Any other unexpected slot state — never $push a second row for the same user.
+      throw new AppError('You already have a slot in this game.', 409);
     }
   }
 
@@ -623,9 +731,18 @@ const joinGame = async (gameId, userId) => {
   //   - `isPrivate`     → game is hidden from public search AND join requests queue up
   //   - `requiresApproval` → game is searchable but joins still queue up
   // Treat them as equivalent join-time gates.
-  const needsApproval = game.requiresApproval || game.isPrivate;
-  const playerStatus = needsApproval ? 'pending' : 'approved';
-  game.players.push({ user: userId, status: playerStatus, joinedAt: new Date() });
+  const playerStatus = targetStatus();
+
+  // We only reach this branch when the slot is 'left', 'kicked', or
+  // 'rejected' (organiser declined a join request) — the
+  // approved/pending/invited cases all short-circuited above.
+  if (existingSlot && ['left', 'kicked', 'rejected'].includes(existingSlot.status)) {
+    existingSlot.status = playerStatus;
+    existingSlot.joinedAt = new Date();
+    existingSlot.resolvedAt = playerStatus === 'approved' ? new Date() : undefined;
+  } else {
+    game.players.push({ user: userId, status: playerStatus, joinedAt: new Date() });
+  }
   await game.save();
 
   if (playerStatus === 'pending') {
@@ -655,13 +772,20 @@ const leaveGame = async (gameId, userId) => {
   if (game.status === 'completed') throw new AppError('Cannot leave a completed game.', 400);
 
   const slot = game.players.find((p) => p.user.toString() === userId.toString());
-  if (!slot || ['left', 'kicked'].includes(slot.status)) {
+  if (!slot || ['left', 'kicked', 'rejected'].includes(slot.status)) {
     throw new AppError('You are not in this game.', 400);
   }
 
   slot.status = 'left';
   slot.resolvedAt = new Date();
   await game.save();
+
+  // Pull the player out of the game's group chat immediately. The DB
+  // update marks their participant slot as `leftAt: now` so the socket
+  // & HTTP layers refuse subsequent message reads/writes, while the
+  // socket emit forces their open clients to leave the room and pop
+  // the chat screen.
+  await revokeGroupChatParticipant(game, userId, 'left');
 
   await notify('game:playerLeft', { gameId, userId, organizerId: game.organizer });
 
@@ -689,6 +813,25 @@ const invitePlayer = async (gameId, organizerId, organizerRole, targetUserId) =>
 
   const target = await User.findById(targetUserId).active().notBanned();
   if (!target) throw new AppError('Target user not found.', 404);
+
+  // Re-invite after a closed slot — mutate in place instead of pushing a
+  // second participant row with the same user id.
+  if (existing && ['left', 'kicked', 'rejected'].includes(existing.status)) {
+    existing.status = 'invited';
+    existing.joinedAt = new Date();
+    existing.resolvedAt = undefined;
+    await game.save();
+
+    await notify('game:invite', {
+      gameId,
+      organizerId,
+      targetUserId,
+      gameTitle: game.title,
+    });
+
+    logger.info(`Re-invited user ${targetUserId} to game ${gameId}`);
+    return game;
+  }
 
   game.players.push({ user: targetUserId, status: 'invited', joinedAt: new Date() });
   await game.save();
@@ -746,7 +889,14 @@ const approvePlayer = async (gameId, organizerId, organizerRole, targetUserId) =
 //  kickPlayer
 // ─────────────────────────────────────────────
 
-const kickPlayer = async (gameId, organizerId, organizerRole, targetUserId, reason) => {
+const kickPlayer = async (
+  gameId,
+  organizerId,
+  organizerRole,
+  targetUserId,
+  reason,
+  { terminalPlayerStatus = 'kicked' } = {},
+) => {
   const game = await Game.findById(gameId).where({ deletedAt: null });
   if (!game) throw new AppError('Game not found.', 404);
 
@@ -758,16 +908,29 @@ const kickPlayer = async (gameId, organizerId, organizerRole, targetUserId, reas
 
   const slot = game.players.find((p) => p.user.toString() === targetUserId.toString());
   if (!slot) throw new AppError('Player is not in this game.', 404);
-  if (['kicked', 'left'].includes(slot.status)) {
+  if (['kicked', 'left', 'rejected'].includes(slot.status)) {
     throw new AppError(`Player is already ${slot.status}.`, 400);
   }
 
-  slot.status = 'kicked';
+  const previousStatus = slot.status;
+
+  slot.status = terminalPlayerStatus;
   slot.resolvedAt = new Date();
   await game.save();
 
-  await   await notify('game:kicked', { gameId, targetUserId, reason });
-  logger.info(`Player ${targetUserId} kicked from game ${gameId}. Reason: ${reason || 'none'}`);
+  // Only *approved* players are in the group chat; pending/invited rejects
+  // must not emit `chat:kicked` or touch chat rows they never accessed.
+  if (previousStatus === 'approved') {
+    await revokeGroupChatParticipant(game, targetUserId, 'kicked', reason);
+  }
+
+  if (previousStatus === 'pending') {
+    await notify('game:joinRequestDenied', { gameId, targetUserId, reason });
+  } else {
+    await notify('game:kicked', { gameId, targetUserId, reason });
+  }
+
+  logger.info(`Player ${targetUserId} removed from game ${gameId} (was ${previousStatus}, now ${terminalPlayerStatus}). Reason: ${reason || 'none'}`);
   return game;
 };
 
@@ -781,7 +944,7 @@ const kickPlayer = async (gameId, organizerId, organizerRole, targetUserId, reas
  *
  * `decision`:
  *  - 'approve' → delegates to [approvePlayer] (fires `game:approved`)
- *  - 'reject'  → delegates to [kickPlayer]   (fires `game:kicked`)
+ *  - 'reject'  → delegates to [kickPlayer]   (fires `game:joinRequestDenied`)
  *
  * The slot must be in `pending` status; anything else throws 409 so a
  * stale notification (e.g. the organiser tapped Approve twice) returns
@@ -815,7 +978,9 @@ const handleJoinRequest = async (
   if (decision === 'approve') {
     return approvePlayer(gameId, organizerId, organizerRole, requesterUserId);
   }
-  return kickPlayer(gameId, organizerId, organizerRole, requesterUserId, reason);
+  return kickPlayer(gameId, organizerId, organizerRole, requesterUserId, reason, {
+    terminalPlayerStatus: 'rejected',
+  });
 };
 
 // ─────────────────────────────────────────────

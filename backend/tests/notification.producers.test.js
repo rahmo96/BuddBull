@@ -228,7 +228,9 @@ describe('game.service.notify — Phase 2 inbox writes', () => {
       const kicked = (await inboxOf(target.userId)).find((n) => n.type === 'gameKicked');
       expect(kicked).toBeDefined();
       expect(kicked.title).toBe('Removed From Game');
-      expect(kicked.body).toMatch(/no-show last time/);
+      expect(kicked.body).toBe(
+        'You have been removed from the game. Reason: no-show last time',
+      );
       expect(kicked.data).toMatchObject({ gameId: String(gameId) });
     });
 

@@ -61,8 +61,10 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
   StreamSubscription<dynamic>? _msgSub;
   StreamSubscription<MessageDeletedEvent>? _delSub;
   StreamSubscription<MessagePinnedEvent>? _pinSub;
+  StreamSubscription<ChatAccessRevokedEvent>? _accessSub;
 
-  /// Fast duplicate detection for socket + HTTP echo without scanning the full list.
+  /// After server revokes chat access, ignore further socket payloads for this room.
+  bool _accessRevoked = false;
   final Set<String> _seenMessageIds = <String>{};
 
   int _page = 1;
@@ -107,6 +109,20 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
           ));
     });
 
+    _accessSub = _socket.chatAccessRevokedStream.listen((event) {
+      if (event.chatId != chatId) return;
+      _accessRevoked = true;
+      _socket.leaveChat(chatId);
+      _seenMessageIds.clear();
+      state = const MessagesState(
+        messages: [],
+        isLoading: false,
+        isLoadingMore: false,
+        hasMore: false,
+        error: null,
+      );
+    });
+
     await loadMessages();
     if (state.messages.isNotEmpty) {
       _socket.markAsRead(chatId, state.messages.last.id);
@@ -114,10 +130,12 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
   }
 
   Future<void> loadMessages() async {
+    if (_accessRevoked) return;
     state = state.copyWith(isLoading: true, error: null);
     try {
       _page = 1;
       final msgs = await _repo.getMessages(chatId, page: _page, limit: _limit);
+      if (_accessRevoked) return;
       _seenMessageIds
         ..clear()
         ..addAll(msgs.map((m) => m.id));
@@ -132,7 +150,7 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
   }
 
   Future<void> loadMore() async {
-    if (state.isLoadingMore || !state.hasMore) return;
+    if (state.isLoadingMore || !state.hasMore || _accessRevoked) return;
     state = state.copyWith(isLoadingMore: true);
     try {
       _page++;
@@ -152,6 +170,7 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
 
   /// Send via socket (real-time); falls back to HTTP if disconnected
   Future<void> sendMessage(String content, {String? replyToId}) async {
+    if (_accessRevoked) return;
     // Always attempt HTTP send to guarantee delivery and to ensure a network request is fired.
     // Socket emission remains for real-time UX when connected.
     if (_socket.status == SocketStatus.connected) {
@@ -169,6 +188,7 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
 
   /// Cheap chat filter + defer JSON parsing so socket bursts don't block frames.
   void _onSocketMessagePayload(dynamic data) {
+    if (_accessRevoked) return;
     if (data == null || data is! Map) return;
     final Map<String, dynamic> d;
     try {
@@ -211,6 +231,7 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     _msgSub?.cancel();
     _delSub?.cancel();
     _pinSub?.cancel();
+    _accessSub?.cancel();
     super.dispose();
   }
 }
@@ -233,6 +254,7 @@ class TypingNotifier extends StateNotifier<TypingState> {
   final SocketService _socket;
   final String chatId;
   StreamSubscription<TypingEvent>? _sub;
+  StreamSubscription<ChatAccessRevokedEvent>? _accessSub;
 
   TypingNotifier(this._socket, this.chatId) : super(const TypingState()) {
     _sub = _socket.typingStream.where((e) => e.chatId == chatId).listen((event) {
@@ -243,11 +265,17 @@ class TypingNotifier extends StateNotifier<TypingState> {
         state = TypingState(typingUsernames: updated);
       }
     });
+
+    _accessSub = _socket.chatAccessRevokedStream.listen((event) {
+      if (event.chatId != chatId) return;
+      state = const TypingState();
+    });
   }
 
   @override
   void dispose() {
     _sub?.cancel();
+    _accessSub?.cancel();
     super.dispose();
   }
 }

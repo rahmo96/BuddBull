@@ -10,7 +10,7 @@
  *      `gameJoinRequest` notification to the organiser.
  *   3. The new `PATCH /:id/join-request/:userId` endpoint approves or
  *      rejects a pending slot and emits the matching downstream
- *      notification (`gameApproved` / `gameKicked`).
+ *      notification (`gameApproved` / `gameJoinRequestDenied`).
  */
 
 const request = require('supertest');
@@ -140,7 +140,7 @@ describe('PATCH /games/:id/join-request/:userId', () => {
       expect(approved.data).toMatchObject({ gameId: String(gameId) });
     });
 
-  it('rejects a pending player and fires `gameKicked` to them',
+  it('rejects a pending player and fires `gameJoinRequestDenied` to them',
     async () => {
       const { org, requester, gameId } = await seedPrivateGameWithPending();
 
@@ -153,14 +153,14 @@ describe('PATCH /games/:id/join-request/:userId', () => {
 
       const slot = res.body.data.game.players
         .find((p) => p.user.toString() === requester.userId);
-      expect(slot.status).toBe('kicked');
+      expect(slot.status).toBe('rejected');
 
-      const kicked = (await inboxOf(requester.userId))
-        .find((n) => n.type === 'gameKicked');
-      expect(kicked).toBeDefined();
-      // The reason is forwarded into the kick notification body so the
-      // requester knows *why* they weren't admitted.
-      expect(kicked.body).toMatch(/wrong skill level/);
+      const denied = (await inboxOf(requester.userId))
+        .find((n) => n.type === 'gameJoinRequestDenied');
+      expect(denied).toBeDefined();
+      expect(denied.title).toBe('Join Request Denied');
+      expect(denied.body).toBe('Your request to join the game was declined.');
+      expect(denied.data).toMatchObject({ gameId: String(gameId) });
     });
 
   it('rejects a stale request when the slot is no longer pending',

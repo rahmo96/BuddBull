@@ -32,6 +32,22 @@ class MessagePinnedEvent {
   const MessagePinnedEvent(this.messageId, {this.isPinned = true});
 }
 
+/// Server revoked this user's access to a chat room (left game, kicked, etc.).
+class ChatAccessRevokedEvent {
+  final String chatId;
+  final String? gameId;
+  /// `kicked`, `left`, or `denied` (for `room_access_denied`).
+  final String reason;
+  final String? detail;
+
+  const ChatAccessRevokedEvent({
+    required this.chatId,
+    this.gameId,
+    required this.reason,
+    this.detail,
+  });
+}
+
 // ── Socket connection status ──────────────────────────────────────────────────
 enum SocketStatus { disconnected, connecting, connected, error }
 
@@ -54,6 +70,8 @@ class SocketService {
   final _statusController = StreamController<SocketStatus>.broadcast();
   final _notificationController =
       StreamController<Map<String, dynamic>>.broadcast();
+  final _chatAccessRevokedController =
+      StreamController<ChatAccessRevokedEvent>.broadcast();
 
   Stream<dynamic> get messageStream => _messageController.stream;
   Stream<TypingEvent> get typingStream => _typingController.stream;
@@ -66,6 +84,10 @@ class SocketService {
   /// responsible for parsing via `NotificationModel.fromJson`.
   Stream<Map<String, dynamic>> get notificationStream =>
       _notificationController.stream;
+
+  /// Fired when the server closes the user's chat membership (leave/kick).
+  Stream<ChatAccessRevokedEvent> get chatAccessRevokedStream =>
+      _chatAccessRevokedController.stream;
 
   SocketStatus _status = SocketStatus.disconnected;
   SocketStatus get status => _status;
@@ -234,7 +256,10 @@ class SocketService {
         } catch (e, st) {
           debugPrint('⚠️ SOCKET notification:new parse error: $e\n$st');
         }
-      });
+      })
+      ..on('chat:kicked', (data) => _emitChatAccessRevoked(data, 'kicked'))
+      ..on('chat:left', (data) => _emitChatAccessRevoked(data, 'left'))
+      ..on('room_access_denied', (data) => _emitChatAccessRevoked(data, 'denied'));
 
     debugPrint('🟡 SOCKET calling connect()…');
     _socket!.connect();
@@ -316,6 +341,7 @@ class SocketService {
     _pinnedController.close();
     _statusController.close();
     _notificationController.close();
+    _chatAccessRevokedController.close();
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────
@@ -326,6 +352,24 @@ class SocketService {
   void _setStatus(SocketStatus status) {
     _status = status;
     if (!_statusController.isClosed) _statusController.add(status);
+  }
+
+  void _emitChatAccessRevoked(dynamic data, String reason) {
+    if (_chatAccessRevokedController.isClosed) return;
+    try {
+      if (data is! Map) return;
+      final d = Map<String, dynamic>.from(data);
+      final chatId = d['chatId']?.toString();
+      if (chatId == null || chatId.isEmpty) return;
+      _chatAccessRevokedController.add(ChatAccessRevokedEvent(
+        chatId: chatId,
+        gameId: d['gameId']?.toString(),
+        reason: (d['reason'] ?? reason).toString(),
+        detail: d['detail']?.toString(),
+      ));
+    } catch (e, st) {
+      debugPrint('⚠️ SOCKET chat access revoked parse error: $e\n$st');
+    }
   }
 }
 

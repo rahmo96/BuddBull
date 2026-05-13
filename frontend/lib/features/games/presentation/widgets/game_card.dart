@@ -75,11 +75,30 @@ class _FullContent extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          game.title,
-                          style: AppTextStyles.titleSmall,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                game.title,
+                                style: AppTextStyles.titleSmall,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (game.isPrivate || game.requiresApproval) ...[
+                              const SizedBox(width: 6),
+                              Tooltip(
+                                message: game.isPrivate
+                                    ? 'Private game'
+                                    : 'Requires organiser approval',
+                                child: const Icon(
+                                  Icons.lock_rounded,
+                                  size: 14,
+                                  color: AppColors.grey500,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -92,7 +111,13 @@ class _FullContent extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _StatusBadge(status: game.status),
+                  // Once a game's slots are filled we override the status pill
+                  // with a louder red "FULL" indicator — it conveys "you can't
+                  // join" more directly than the muted server-side 'full' state.
+                  if (game.isFull && !game.isCompleted && !game.isCancelled)
+                    const _FullBadge()
+                  else
+                    _StatusBadge(status: game.status),
                 ],
               ),
               const SizedBox(height: 12),
@@ -165,14 +190,31 @@ class _CompactContent extends StatelessWidget {
                     _SportIcon(sport: game.sport, size: 30),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        game.sport,
-                        style: AppTextStyles.labelMedium.copyWith(
-                          color: _sportColor(game.sport),
-                        ),
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              game.sport,
+                              style: AppTextStyles.labelMedium.copyWith(
+                                color: _sportColor(game.sport),
+                              ),
+                            ),
+                          ),
+                          if (game.isPrivate || game.requiresApproval) ...[
+                            const SizedBox(width: 4),
+                            const Icon(
+                              Icons.lock_rounded,
+                              size: 12,
+                              color: AppColors.grey500,
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    _StatusBadge(status: game.status, small: true),
+                    if (game.isFull && !game.isCompleted && !game.isCancelled)
+                      const _FullBadge(small: true)
+                    else
+                      _StatusBadge(status: game.status, small: true),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -259,6 +301,34 @@ class _StatusBadge extends StatelessWidget {
             .copyWith(
           color: color,
           fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _FullBadge extends StatelessWidget {
+  const _FullBadge({this.small = false});
+  final bool small;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: small ? 6 : 8,
+        vertical: small ? 2 : 3,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.statusFull,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        'FULL',
+        style: (small ? AppTextStyles.labelSmall : AppTextStyles.labelMedium)
+            .copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
         ),
       ),
     );

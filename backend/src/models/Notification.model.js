@@ -30,6 +30,7 @@ const NOTIFICATION_TYPES = [
   'gameInvite',
   'gameApproved',
   'gameJoinRequest',
+  'gameJoinRequestDenied',
   'gamePlayerJoined',
   'gamePlayerLeft',
   'gameKicked',

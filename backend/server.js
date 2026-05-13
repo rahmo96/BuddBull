@@ -19,6 +19,7 @@ const createApp = require('./src/app');
 const logger = require('./src/utils/logger');
 const registerSocketHandlers = require('./src/socket/socket.manager');
 const notificationInboxService = require('./src/services/notificationInbox.service');
+const chatPresenceService = require('./src/services/chatPresence.service');
 const { port, nodeEnv, clientUrl } = require('./src/config/environment');
 
 const startServer = async () => {
@@ -54,6 +55,13 @@ const startServer = async () => {
   // of any transport coupling (and remains test-friendly: in Jest no
   // io is wired and emits become silent no-ops).
   notificationInboxService.setIo(io);
+
+  // ── 4d. Wire socket emitter into the chat presence helper ────────
+  // Same DI pattern as above — game.service.js calls
+  // chatPresenceService.revokeChatAccess(...) when a player leaves or
+  // is kicked so the kicked socket immediately stops receiving
+  // messages and the client gets a `chat:kicked` push.
+  chatPresenceService.setIo(io);
 
   // ── 5. Listen ───────────────────────────────────────────────
   server.listen(port, () => {

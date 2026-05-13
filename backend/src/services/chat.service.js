@@ -9,8 +9,13 @@ const logger = require('../utils/logger');
 const PARTICIPANT_FIELDS = 'firstName lastName username profilePicture';
 const SENDER_FIELDS = 'firstName lastName username profilePicture';
 
+// `$elemMatch` ties the user-id and active-membership checks to the same
+// participant slot. Without it a player whose slot has `leftAt: <date>`
+// would still match if any *other* participant has `leftAt: null` — the
+// classic dot-path-over-array pitfall. This gates GET /chats, /messages,
+// /chats/:id and the chat-read endpoint.
 const participantFilter = (userId) => ({
-  'participants.user': userId,
+  participants: { $elemMatch: { user: userId, leftAt: null } },
   isActive: true,
   deletedAt: null,
 });

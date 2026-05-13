@@ -19,6 +19,8 @@ class GameModel {
     this.tags = const [],
     this.result,
     this.createdAt,
+    this.isPrivate = false,
+    this.requiresApproval = false,
   });
 
   final String id;
@@ -37,6 +39,8 @@ class GameModel {
   final List<String> tags;
   final GameResult? result;
   final DateTime? createdAt;
+  final bool isPrivate;
+  final bool requiresApproval;
 
   // ── Computed ──────────────────────────────────────────────
   int get approvedCount => players.where((p) => p.status == 'approved').length;
@@ -106,6 +110,8 @@ class GameModel {
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'] as String)
           : null,
+      isPrivate: json['isPrivate'] as bool? ?? false,
+      requiresApproval: json['requiresApproval'] as bool? ?? false,
     );
   }
 
@@ -317,7 +323,7 @@ class GamePlayer {
 
   final String userId;
   final String username;
-  final String status; // approved | pending | invited | kicked | left
+  final String status; // approved | pending | invited | kicked | left | rejected
   final String? firstName;
   final String? lastName;
   final String? profilePicture;
@@ -326,6 +332,11 @@ class GamePlayer {
 
   bool get isApproved => status == 'approved';
   bool get isPending => status == 'pending';
+  bool get isRejected => status == 'rejected';
+
+  /// Can tap Join / Request again after leave, kick, or join-request rejection.
+  bool get canJoinAgain =>
+      status == 'rejected' || status == 'left' || status == 'kicked';
 
   String get displayName => (firstName != null && lastName != null)
       ? '$firstName $lastName'

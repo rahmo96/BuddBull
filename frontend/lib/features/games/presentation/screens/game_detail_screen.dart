@@ -125,6 +125,25 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
       });
     });
 
+    ref.listen(gameDetailProvider(gameId), (prev, next) {
+      final user = ref.read(currentUserProvider);
+      if (user == null || !context.mounted) return;
+      final prevPlayer = prev?.valueOrNull?.getPlayer(user.id);
+      final nextPlayer = next.valueOrNull?.getPlayer(user.id);
+      if (nextPlayer?.isRejected != true) return;
+      if (prevPlayer?.isRejected == true) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Your request to join was declined. You can try again below.',
+            ),
+          ),
+        );
+      });
+    });
+
     return gameAsync.when(
       loading: () => const Scaffold(
         body: Center(child: BbLoadingIndicator()),
@@ -913,6 +932,7 @@ bool _gameDetailBottomBarHasContent({
   }
   if (myPlayer == null) return true;
   if (myPlayer.isPending) return true;
+  if (myPlayer.canJoinAgain) return true;
   if (myPlayer.isApproved && !game.isCompleted) return true;
   // Approved player on a completed game: always render the bar so the
   // "Rate Participants" affordance is visible immediately. The picker handles
@@ -1036,19 +1056,37 @@ class _BottomActionBar extends ConsumerWidget {
           variant: BbButtonVariant.outlined,
         );
       }
+      final isPrivate = game.isPrivate || game.requiresApproval;
       return BbButton(
-        label: 'Request to Join',
+        label: isPrivate ? 'Request to Join' : 'Join Game',
         onPressed: game.isUpcoming ? onJoin : null,
         isLoading: actionsState.isJoining,
       );
     }
 
     if (myPlayer!.isPending) {
+      // Clear status banner + a quieter "withdraw" affordance, instead of the
+      // cramped outlined pill we used to show. Users repeatedly mis-read the
+      // old "Request Pending…" button as an action button.
+      return _PendingRequestPanel(
+        onWithdraw: onLeave,
+        isWithdrawing: actionsState.isLeaving,
+      );
+    }
+
+    if (myPlayer!.canJoinAgain) {
+      if (game.isFull) {
+        return const BbButton(
+          label: 'Game is Full',
+          onPressed: null,
+          variant: BbButtonVariant.outlined,
+        );
+      }
+      final isPrivate = game.isPrivate || game.requiresApproval;
       return BbButton(
-        label: 'Request Pending…',
-        onPressed: onLeave,
-        variant: BbButtonVariant.outlined,
-        isLoading: actionsState.isLeaving,
+        label: isPrivate ? 'Request to Join' : 'Join Game',
+        onPressed: game.isUpcoming ? onJoin : null,
+        isLoading: actionsState.isJoining,
       );
     }
 
@@ -1080,6 +1118,66 @@ class _BottomActionBar extends ConsumerWidget {
     }
 
     return null;
+  }
+}
+
+/// Banner shown to a viewer whose join request is still queued in the
+/// organiser's approval list. Replaces the old cramped "Request Pending…"
+/// pill — players were mistaking it for a CTA, and there was no place to
+/// explain that the organiser has to approve the request.
+class _PendingRequestPanel extends StatelessWidget {
+  const _PendingRequestPanel({
+    required this.onWithdraw,
+    required this.isWithdrawing,
+  });
+
+  final VoidCallback onWithdraw;
+  final bool isWithdrawing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.warning.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.hourglass_top_rounded,
+              size: 18, color: AppColors.warning),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              'Your request is pending approval',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: isWithdrawing ? null : onWithdraw,
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.error,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: const Size(0, 32),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: isWithdrawing
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Withdraw'),
+          ),
+        ],
+      ),
+    );
   }
 }
 

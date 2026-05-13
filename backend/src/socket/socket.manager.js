@@ -13,6 +13,9 @@
  * Events (server → client):
  *   joined_chat     { chatId }
  *   receive_message { message }
+ *   chat:kicked     { chatId, gameId?, reason, detail? } — membership revoked (kick / reject)
+ *   chat:left       { chatId, gameId?, reason, detail? } — user left the game
+ *   room_access_denied { chatId, gameId?, ... } — alias handled like chat:kicked on clients
  *   message_pinned  { messageId }
  *   message_unpinned{ messageId }
  *   message_deleted { messageId }
@@ -76,7 +79,18 @@ const socketAuthMiddleware = async (socket, next) => {
 };
 
 // ── Helper: check participation ────────────────────────────────────────────────
-const getChat = async (chatId, userId) => Chat.findOne({ _id: chatId, 'participants.user': userId, isDeleted: false });
+//
+// We tie the two conditions ("this user is in the participants array"
+// AND "their slot is still active") to the SAME element via $elemMatch.
+// Without it, a stale dot-path predicate would happily match a doc
+// where *some* participant has userId X and *some* (different) one has
+// `leftAt: null` — letting a kicked player still pump messages.
+const getChat = async (chatId, userId) =>
+  Chat.findOne({
+    _id: chatId,
+    deletedAt: null,
+    participants: { $elemMatch: { user: userId, leftAt: null } },
+  });
 
 /** Room id from client payload: `{ chatId }` object or bare string (legacy). */
 const roomIdFromJoinPayload = (data) => {

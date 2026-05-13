@@ -407,6 +407,9 @@ class _LeadingIcon extends StatelessWidget {
         return (Icons.mail_outline_rounded, AppColors.info);
       case 'gameApproved':
         return (Icons.check_circle_outline_rounded, AppColors.success);
+      case 'gameJoinRequestDenied':
+      case 'gameKicked':
+        return (Icons.person_off_outlined, AppColors.error);
       case 'gameReminder':
         return (Icons.alarm_rounded, AppColors.warning);
       case 'gameCancelled':

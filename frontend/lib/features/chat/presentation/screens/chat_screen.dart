@@ -2,14 +2,17 @@ import 'dart:async';
 
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/core/services/socket_service.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/chat/data/models/chat_model.dart';
 import 'package:buddbull/features/chat/presentation/widgets/message_bubble.dart';
 import 'package:buddbull/features/chat/presentation/widgets/pinned_message_banner.dart';
 import 'package:buddbull/features/chat/providers/chat_provider.dart';
+import 'package:buddbull/features/games/providers/game_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String chatId;
@@ -27,6 +30,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Timer? _typingTimer;
   bool _isTyping = false;
   DateTime? _lastLoadMoreAt;
+  StreamSubscription<ChatAccessRevokedEvent>? _chatAccessSub;
 
   @override
   void initState() {
@@ -38,11 +42,35 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       await socket.connect();
       if (!mounted) return;
       socket.joinChat(widget.chatId);
+
+      _chatAccessSub?.cancel();
+      _chatAccessSub = socket.chatAccessRevokedStream.listen((event) {
+        if (event.chatId != widget.chatId) return;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) return;
+          ref.invalidate(chatListProvider);
+          ref.invalidate(chatDetailProvider(widget.chatId));
+          ref.invalidate(messagesProvider(widget.chatId));
+          ref.invalidate(calendarGamesProvider);
+          ref.invalidate(myGamesProvider);
+          final gid = event.gameId;
+          if (gid != null && gid.isNotEmpty) {
+            ref.invalidate(gameDetailProvider(gid));
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('You are no longer a participant in this chat.'),
+            ),
+          );
+          context.go(Routes.games);
+        });
+      });
     });
   }
 
   @override
   void dispose() {
+    _chatAccessSub?.cancel();
     _controller.dispose();
     ref.read(socketServiceProvider).leaveChat(widget.chatId);
     _scrollController.removeListener(_onScroll);

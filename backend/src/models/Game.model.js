@@ -17,7 +17,7 @@ const playerSlotSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['invited', 'pending', 'approved', 'kicked', 'left'],
+      enum: ['invited', 'pending', 'approved', 'kicked', 'left', 'rejected'],
       default: 'pending',
     },
     role: {
@@ -363,8 +363,9 @@ gameSchema.statics.findScheduleConflictGame = async function (
   const proposedEndMs = proposedStartMs + durationMinutes * 60 * 1000;
 
   const filter = {
-    'players.user': userId,
-    'players.status': 'approved',
+    // $elemMatch keeps "this user is approved in this game" tied to the
+    // same player slot — see notes in game.service#getMyGames.
+    players: { $elemMatch: { user: userId, status: 'approved' } },
     status: { $in: ['open', 'full', 'in_progress'] },
     deletedAt: null,
     scheduledAt: { $lt: new Date(proposedEndMs) },
