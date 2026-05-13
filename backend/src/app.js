@@ -81,19 +81,29 @@ const createApp = () => {
   app.use(compression());
 
   // ── Global rate limiter ───────────────────────────────────────
-  app.use(
-    '/api/',
-    rateLimit({
-      windowMs: rateLimitConfig.windowMs,
-      max: rateLimitConfig.max,
-      standardHeaders: true,
-      legacyHeaders: false,
-      message: {
-        success: false,
-        message: 'Too many requests — please try again later.',
-      },
-    }),
-  );
+  // Only enforce in production. Local dev (Flutter hot-reload bursts,
+  // pull-to-refresh test loops) and Jest (which fires hundreds of
+  // Supertest requests per suite) would otherwise trip the limiter
+  // and produce confusing `429`s that aren't real bugs.
+  if (nodeEnv === 'production') {
+    app.use(
+      '/api/',
+      rateLimit({
+        windowMs: rateLimitConfig.windowMs,
+        max: rateLimitConfig.max,
+        standardHeaders: true,
+        legacyHeaders: false,
+        message: {
+          success: false,
+          message: 'Too many requests — please try again later.',
+        },
+      }),
+    );
+  } else {
+    logger.warn(
+      `[rate-limit] disabled in '${nodeEnv}' — set NODE_ENV=production to enforce ${rateLimitConfig.max} req/${rateLimitConfig.windowMs}ms.`,
+    );
+  }
 
   // ── Static file serving (local profile pictures) ─────────────
   app.use('/uploads', express.static(path.join(process.cwd(), upload.dir)));

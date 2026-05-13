@@ -145,6 +145,14 @@ const kickPlayerSchema = Joi.object({
   reason: Joi.string().trim().max(300),
 });
 
+const joinRequestDecisionSchema = Joi.object({
+  decision: Joi.string().valid('approve', 'reject').required().messages({
+    'any.required': "decision is required ('approve' | 'reject').",
+    'any.only': "decision must be 'approve' or 'reject'.",
+  }),
+  reason: Joi.string().trim().max(300).allow('', null),
+});
+
 const mergeSchema = Joi.object({
   expandCapacity: Joi.boolean().default(false),
 });
@@ -163,6 +171,7 @@ module.exports = {
   calendarSchema,
   completeGameSchema,
   kickPlayerSchema,
+  joinRequestDecisionSchema,
   mergeSchema,
   cancelSchema,
   SPORTS,

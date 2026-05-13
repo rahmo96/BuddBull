@@ -143,6 +143,30 @@ const kickPlayer = catchAsync(async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
+//  PATCH /api/v1/games/:id/join-request/:userId
+// ─────────────────────────────────────────────
+
+const handleJoinRequest = catchAsync(async (req, res) => {
+  const game = await GameService.handleJoinRequest(
+    req.params.id,
+    req.user._id,
+    req.user.role,
+    req.params.userId,
+    req.body.decision,
+    req.body.reason,
+  );
+
+  res.status(200).json({
+    success: true,
+    message:
+      req.body.decision === 'approve'
+        ? 'Join request approved.'
+        : 'Join request rejected.',
+    data: { game },
+  });
+});
+
+// ─────────────────────────────────────────────
 //  GET /api/v1/games/:id/players/pending
 // ─────────────────────────────────────────────
 
@@ -206,6 +230,7 @@ module.exports = {
   invitePlayer,
   approvePlayer,
   kickPlayer,
+  handleJoinRequest,
   getPendingRequests,
   mergeGroups,
   completeGame,

@@ -31,7 +31,11 @@ const envSchema = Joi.object({
   RATE_LIMIT_WINDOW_MS: Joi.number()
     .integer()
     .default(15 * 60 * 1000),
-  RATE_LIMIT_MAX: Joi.number().integer().default(100),
+  // Bumped from 100 → 500 to leave headroom for production clients
+  // doing legitimate burst activity (pull-to-refresh, socket reconnect
+  // followed by an inbox + games + ratings fetch). Override via the
+  // `RATE_LIMIT_MAX` env var when deploying behind aggressive WAFs.
+  RATE_LIMIT_MAX: Joi.number().integer().default(500),
 
   CLIENT_URL: Joi.string().uri().default('http://localhost:3000'),
   GOOGLE_MAPS_API_KEY: Joi.string().allow('').default(''),

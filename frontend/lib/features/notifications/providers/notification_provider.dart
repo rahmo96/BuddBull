@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:buddbull/core/network/api_client.dart';
 import 'package:buddbull/core/services/socket_service.dart';
+import 'package:buddbull/features/games/data/game_repository.dart';
 import 'package:buddbull/features/notifications/data/notification_model.dart';
 import 'package:buddbull/features/notifications/data/notification_repository.dart';
 import 'package:flutter/foundation.dart';
@@ -80,8 +81,12 @@ const Object _unset = Object();
 
 // ── Notifier ──────────────────────────────────────────────────────────────────
 class NotificationsNotifier extends StateNotifier<NotificationsState> {
-  NotificationsNotifier(this._repo, {Stream<Map<String, dynamic>>? liveStream})
-      : super(const NotificationsState()) {
+  NotificationsNotifier(
+    this._repo, {
+    Stream<Map<String, dynamic>>? liveStream,
+    GameRepository? gameRepository,
+  })  : _gameRepo = gameRepository,
+        super(const NotificationsState()) {
     // Fire-and-forget initial load so the badge is populated as soon as
     // the bell icon mounts. Errors land in `state.error` instead of
     // crashing the splash.
@@ -101,6 +106,7 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
   }
 
   final NotificationRepository _repo;
+  final GameRepository? _gameRepo;
   StreamSubscription<Map<String, dynamic>>? _socketSub;
 
   /// Reloads the inbox from the server. Safe to call from pull-to-
@@ -192,6 +198,77 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
     }
   }
 
+  /// Approve / reject the join request carried by a `gameJoinRequest`
+  /// notification, directly from the inbox tile.
+  ///
+  /// Optimistically removes the row from the visible list (and clears
+  /// it from the badge if unread) so the UI stays snappy. On failure
+  /// we roll back to the previous state and surface a humanised error
+  /// for the caller to display.
+  ///
+  /// Returns `true` on success, `false` on failure — the screen uses
+  /// this to decide between success-toast and error-snackbar.
+  Future<bool> handleJoinRequest(String notificationId, String decision) async {
+    assert(decision == 'approve' || decision == 'reject');
+    if (_gameRepo == null) {
+      // A handler-free notifier (used in some lightweight tests) can't
+      // hit the network — surface a soft failure rather than throwing.
+      state = state.copyWith(error: 'Game repository unavailable.');
+      return false;
+    }
+
+    final idx = state.notifications.indexWhere((n) => n.id == notificationId);
+    if (idx < 0) return false;
+    final target = state.notifications[idx];
+    if (target.type != 'gameJoinRequest') return false;
+
+    final gameId = target.gameId;
+    final requesterId = target.data['requesterId']?.toString();
+    if (gameId == null || gameId.isEmpty || requesterId == null || requesterId.isEmpty) {
+      state = state.copyWith(error: 'Invalid join-request payload.');
+      return false;
+    }
+
+    // Snapshot for rollback.
+    final prevList = state.notifications;
+    final prevUnread = state.unreadCount;
+
+    final without = [...state.notifications]..removeAt(idx);
+    state = state.copyWith(
+      notifications: without,
+      unreadCount:
+          target.isUnread ? (prevUnread - 1).clamp(0, prevUnread) : prevUnread,
+      isMutating: true,
+    );
+
+    try {
+      await _gameRepo.handleJoinRequest(
+        gameId: gameId,
+        userId: requesterId,
+        decision: decision,
+      );
+      // Server has already persisted the action; also flip the row to
+      // read on the server so a refresh from another device stays
+      // consistent.
+      if (target.isUnread) {
+        unawaited(_repo.markAsRead(target.id).catchError((Object _) {
+          // Non-fatal — the UI is already in the post-action state.
+          return target;
+        }));
+      }
+      state = state.copyWith(isMutating: false);
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        notifications: prevList,
+        unreadCount: prevUnread,
+        isMutating: false,
+        error: _humanise(e),
+      );
+      return false;
+    }
+  }
+
   /// Handles a `notification:new` payload pushed from the server.
   ///
   /// Behaviour:
@@ -262,7 +339,12 @@ final notificationsProvider =
     StateNotifierProvider<NotificationsNotifier, NotificationsState>((ref) {
   final repo = ref.watch(notificationRepositoryProvider);
   final liveStream = ref.watch(notificationLiveStreamProvider);
-  return NotificationsNotifier(repo, liveStream: liveStream);
+  final gameRepo = ref.watch(gameRepositoryProvider);
+  return NotificationsNotifier(
+    repo,
+    liveStream: liveStream,
+    gameRepository: gameRepo,
+  );
 });
 
 /// Convenience selector for the bell badge so widgets don't rebuild on

@@ -46,6 +46,9 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
   TimeOfDay _time = const TimeOfDay(hour: 18, minute: 0);
   int _durationMinutes = 60;
   int _maxPlayers = 10;
+  /// Visible-only-to-invitees + every join routes through organiser approval.
+  /// Backed by `Game.isPrivate` on the server.
+  bool _isPrivate = false;
   Timer? _debounce;
   int _autocompleteRequestId = 0;
   bool _isFetchingSuggestions = false;
@@ -208,6 +211,7 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
       },
       'maxPlayers': _maxPlayers,
       'requiredSkillLevel': _skillLevel,
+      'isPrivate': _isPrivate,
     };
 
     final ok = await ref
@@ -438,6 +442,49 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
                   label: '$_maxPlayers',
                   onChanged: (v) =>
                       setState(() => _maxPlayers = v.round()),
+                ),
+                const SizedBox(height: 20),
+
+                // ── Privacy toggle ───────────────────────────
+                const _SectionLabel(label: 'Visibility'),
+                const SizedBox(height: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.grey100,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.grey300),
+                  ),
+                  child: SwitchListTile.adaptive(
+                    value: _isPrivate,
+                    onChanged: (v) => setState(() => _isPrivate = v),
+                    activeThumbColor: AppColors.primary,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+                    title: Text(
+                      'Private Game (Requires Approval)',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        _isPrivate
+                            ? 'Hidden from public search. Every join request will require your approval.'
+                            : 'Public — anyone can find and join this game.',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    secondary: Icon(
+                      _isPrivate
+                          ? Icons.lock_outline_rounded
+                          : Icons.public_rounded,
+                      color: _isPrivate
+                          ? AppColors.primary
+                          : AppColors.textSecondary,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 20),
 

@@ -619,7 +619,12 @@ const joinGame = async (gameId, userId) => {
     );
   }
 
-  const playerStatus = game.requiresApproval ? 'pending' : 'approved';
+  // A game needs organiser approval if either flag is set:
+  //   - `isPrivate`     → game is hidden from public search AND join requests queue up
+  //   - `requiresApproval` → game is searchable but joins still queue up
+  // Treat them as equivalent join-time gates.
+  const needsApproval = game.requiresApproval || game.isPrivate;
+  const playerStatus = needsApproval ? 'pending' : 'approved';
   game.players.push({ user: userId, status: playerStatus, joinedAt: new Date() });
   await game.save();
 
@@ -761,9 +766,56 @@ const kickPlayer = async (gameId, organizerId, organizerRole, targetUserId, reas
   slot.resolvedAt = new Date();
   await game.save();
 
-  await notify('game:kicked', { gameId, targetUserId, reason });
+  await   await notify('game:kicked', { gameId, targetUserId, reason });
   logger.info(`Player ${targetUserId} kicked from game ${gameId}. Reason: ${reason || 'none'}`);
   return game;
+};
+
+// ─────────────────────────────────────────────
+//  handleJoinRequest  (approve / reject)
+// ─────────────────────────────────────────────
+
+/**
+ * Organiser action on a pending join request — the producer behind the
+ * "Approve" / "Reject" quick-action buttons in the notification inbox.
+ *
+ * `decision`:
+ *  - 'approve' → delegates to [approvePlayer] (fires `game:approved`)
+ *  - 'reject'  → delegates to [kickPlayer]   (fires `game:kicked`)
+ *
+ * The slot must be in `pending` status; anything else throws 409 so a
+ * stale notification (e.g. the organiser tapped Approve twice) returns
+ * a clean error instead of silently double-acting.
+ */
+const handleJoinRequest = async (
+  gameId,
+  organizerId,
+  organizerRole,
+  requesterUserId,
+  decision,
+  reason,
+) => {
+  if (!['approve', 'reject'].includes(decision)) {
+    throw new AppError("Decision must be 'approve' or 'reject'.", 400);
+  }
+
+  const game = await Game.findById(gameId).where({ deletedAt: null });
+  if (!game) throw new AppError('Game not found.', 404);
+  assertOrganizer(game, organizerId, organizerRole);
+
+  const slot = game.players.find((p) => p.user.toString() === requesterUserId.toString());
+  if (!slot) throw new AppError('Player is not in this game.', 404);
+  if (slot.status !== 'pending') {
+    throw new AppError(
+      `Cannot ${decision} a player whose request is already '${slot.status}'.`,
+      409,
+    );
+  }
+
+  if (decision === 'approve') {
+    return approvePlayer(gameId, organizerId, organizerRole, requesterUserId);
+  }
+  return kickPlayer(gameId, organizerId, organizerRole, requesterUserId, reason);
 };
 
 // ─────────────────────────────────────────────
@@ -986,6 +1038,7 @@ module.exports = {
   invitePlayer,
   approvePlayer,
   kickPlayer,
+  handleJoinRequest,
   mergeGroups,
   completeGame,
   getPendingRequests,

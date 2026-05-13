@@ -54,12 +54,24 @@ abstract class ApiEndpoints {
   static String game(String id) => '/games/$id';
   static String joinGame(String id) => '/games/$id/join';
   static String leaveGame(String id) => '/games/$id/leave';
-  static String invitePlayer(String id) => '/games/$id/invite';
-  static String approvePlayer(String id) => '/games/$id/approve';
-  static String kickPlayer(String id) => '/games/$id/kick';
+  static String invitePlayer(String gameId, String userId) =>
+      '/games/$gameId/invite/$userId';
+  static String approvePlayer(String gameId, String userId) =>
+      '/games/$gameId/players/$userId/approve';
+  static String kickPlayer(String gameId, String userId) =>
+      '/games/$gameId/players/$userId';
+
+  /// PATCH endpoint that approves or rejects a pending join request in a
+  /// single call. Body: `{ decision: 'approve' | 'reject', reason? }`.
+  /// Drives the Approve/Reject quick actions on `gameJoinRequest`
+  /// notifications.
+  static String gameJoinRequest(String gameId, String userId) =>
+      '/games/$gameId/join-request/$userId';
+
   static String completeGame(String id) => '/games/$id/complete';
   static String mergeGroups(String id) => '/games/$id/merge';
-  static String gamePendingRequests(String id) => '/games/$id/pending';
+  static String gamePendingRequests(String id) =>
+      '/games/$id/players/pending';
 
   // ── Maps ──────────────────────────────────────────────────────
   static const String mapsAutocomplete = '/maps/autocomplete';

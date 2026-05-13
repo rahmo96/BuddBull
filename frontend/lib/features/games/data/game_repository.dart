@@ -166,20 +166,47 @@ class GameRepository {
   }
 
   // ── Approve player ────────────────────────────────────────
+  // Real backend route: `PATCH /games/:id/players/:userId/approve`
+  // (no body — both ids are in the URL).
   Future<GameModel> approvePlayer(String gameId, String userId) async {
-    final body = await _api.post(
-      ApiEndpoints.approvePlayer(gameId),
-      data: {'userId': userId},
-    );
+    final body = await _api.patch(ApiEndpoints.approvePlayer(gameId, userId));
     final data = body['data'] as Map<String, dynamic>;
     return GameModel.fromJson(data['game'] as Map<String, dynamic>);
   }
 
   // ── Kick player ───────────────────────────────────────────
-  Future<GameModel> kickPlayer(String gameId, String userId) async {
-    final body = await _api.post(
-      ApiEndpoints.kickPlayer(gameId),
-      data: {'userId': userId},
+  // Real backend route: `DELETE /games/:id/players/:userId`.
+  Future<GameModel> kickPlayer(String gameId, String userId,
+      {String? reason}) async {
+    final body = await _api.delete(
+      ApiEndpoints.kickPlayer(gameId, userId),
+      data: reason == null ? null : <String, dynamic>{'reason': reason},
+    );
+    final data = body['data'] as Map<String, dynamic>;
+    return GameModel.fromJson(data['game'] as Map<String, dynamic>);
+  }
+
+  /// Approve / reject a pending join request in a single call.
+  ///
+  /// Powers the bell-inbox "Approve" / "Reject" quick actions. Mapped
+  /// to the backend's `PATCH /games/:id/join-request/:userId` endpoint
+  /// which internally routes to the same approve/kick code paths and
+  /// fires the matching downstream notification (`gameApproved` /
+  /// `gameKicked`).
+  Future<GameModel> handleJoinRequest({
+    required String gameId,
+    required String userId,
+    required String decision,
+    String? reason,
+  }) async {
+    assert(decision == 'approve' || decision == 'reject',
+        "decision must be 'approve' or 'reject'");
+    final body = await _api.patch(
+      ApiEndpoints.gameJoinRequest(gameId, userId),
+      data: <String, dynamic>{
+        'decision': decision,
+        if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+      },
     );
     final data = body['data'] as Map<String, dynamic>;
     return GameModel.fromJson(data['game'] as Map<String, dynamic>);

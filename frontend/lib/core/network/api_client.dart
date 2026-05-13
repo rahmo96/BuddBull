@@ -102,9 +102,16 @@ class ApiClient {
     }
   }
 
-  Future<void> delete(String path, {dynamic data}) async {
+  /// Performs an HTTP DELETE.
+  ///
+  /// Returns the parsed JSON body so callers that need the updated
+  /// resource (e.g. `kickPlayer` wants the refreshed Game doc) can read
+  /// it directly. Callers that don't need the body — `leaveGame`,
+  /// `deleteAccount`, etc — can simply ignore the return value.
+  Future<Map<String, dynamic>> delete(String path, {dynamic data}) async {
     try {
-      await _dio.delete<void>(path, data: data);
+      final res = await _dio.delete<Map<String, dynamic>>(path, data: data);
+      return _unwrap(res);
     } on DioException catch (e) {
       throw _mapDioError(e);
     }

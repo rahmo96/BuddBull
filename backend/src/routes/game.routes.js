@@ -11,6 +11,7 @@ const {
   calendarSchema,
   completeGameSchema,
   kickPlayerSchema,
+  joinRequestDecisionSchema,
   mergeSchema,
   cancelSchema,
 } = require('../validators/game.validator');
@@ -147,6 +148,22 @@ router.delete(
   validateMongoId('userId'),
   validate(kickPlayerSchema),
   GameController.kickPlayer,
+);
+
+/**
+ * @route  PATCH /api/v1/games/:id/join-request/:userId
+ * @desc   Organiser approves or rejects a pending join request — drives
+ *         the "Approve / Reject" quick actions on `gameJoinRequest`
+ *         notifications.
+ * @access Private — organiser or admin
+ */
+router.patch(
+  '/:id/join-request/:userId',
+  protect,
+  validateMongoId('id'),
+  validateMongoId('userId'),
+  validate(joinRequestDecisionSchema),
+  GameController.handleJoinRequest,
 );
 
 // ─────────────────────────────────────────────

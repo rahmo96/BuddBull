@@ -5,6 +5,7 @@ import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/notifications/data/notification_model.dart';
 import 'package:buddbull/features/notifications/providers/notification_provider.dart';
+import 'package:buddbull/features/rating/providers/rating_provider.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,11 +14,26 @@ import 'package:go_router/go_router.dart';
 /// Inbox view backed by `notificationsProvider`. Tapping a row marks it
 /// read and, when possible, deep-links into the relevant context
 /// (game detail, chat room, public profile).
-class NotificationsScreen extends ConsumerWidget {
+///
+/// `gameJoinRequest` rows additionally expose inline "Approve" /
+/// "Reject" buttons that route to the new
+/// `PATCH /games/:id/join-request/:userId` endpoint without forcing the
+/// organiser to open the Game Detail screen.
+///
+/// `gameCompleted` rows perform a smart-sync check before navigating:
+/// if `pendingRatingsProvider` confirms the user has already finished
+/// rating that game, we surface a SnackBar and stay on the inbox.
+class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NotificationsScreen> createState() =>
+      _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(notificationsProvider);
     final notifier = ref.read(notificationsProvider.notifier);
 
@@ -98,17 +114,56 @@ class NotificationsScreen extends ConsumerWidget {
         final n = state.notifications[index];
         return _NotificationTile(
           notification: n,
-          onTap: () => _handleTap(context, n, notifier),
+          isMutating: state.isMutating,
+          onTap: () => _handleTap(context, n),
+          onApproveJoinRequest: () => _handleJoinRequestDecision(
+            context: context,
+            notificationId: n.id,
+            decision: 'approve',
+          ),
+          onRejectJoinRequest: () => _handleJoinRequestDecision(
+            context: context,
+            notificationId: n.id,
+            decision: 'reject',
+          ),
         );
       },
     );
   }
 
-  Future<void> _handleTap(
-    BuildContext context,
-    NotificationModel n,
-    NotificationsNotifier notifier,
-  ) async {
+  Future<void> _handleTap(BuildContext context, NotificationModel n) async {
+    final notifier = ref.read(notificationsProvider.notifier);
+
+    // ── Smart Sync ───────────────────────────────────────────────────────
+    // A `gameCompleted` notification deep-links to the rating screen, but
+    // if the user already finished (or dismissed) the rating queue for
+    // that game we shouldn't drag them back in. Read the cached pending
+    // list synchronously — by the time the bell badge is tapped, the
+    // rating submit/dismiss flow has already invalidated this provider,
+    // so the cached value is fresh.
+    if (n.type == 'gameCompleted') {
+      final gameId = n.gameId;
+      final pending = ref.read(pendingRatingsProvider);
+      final pendingList = pending.value;
+      final stillHasPending = gameId != null &&
+          gameId.isNotEmpty &&
+          pendingList != null &&
+          pendingList.any((p) => p.gameId == gameId);
+
+      if (pendingList != null && !stillHasPending) {
+        if (n.isUnread) unawaited(notifier.markAsRead(n.id));
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("You've already rated the players for this game."),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
+    }
+
     if (n.isUnread) {
       // Fire-and-forget — the optimistic update inside the notifier
       // means we don't need to await before navigating.
@@ -116,6 +171,34 @@ class NotificationsScreen extends ConsumerWidget {
     }
     final target = _routeFor(n);
     if (target != null && context.mounted) context.push(target);
+  }
+
+  Future<void> _handleJoinRequestDecision({
+    required BuildContext context,
+    required String notificationId,
+    required String decision,
+  }) async {
+    final notifier = ref.read(notificationsProvider.notifier);
+    final ok = await notifier.handleJoinRequest(notificationId, decision);
+    if (!context.mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    if (ok) {
+      messenger.showSnackBar(SnackBar(
+        content: Text(decision == 'approve'
+            ? 'Player approved.'
+            : 'Join request rejected.'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ));
+    } else {
+      final err = ref.read(notificationsProvider).error ?? 'Action failed.';
+      messenger.showSnackBar(SnackBar(
+        content: Text(err),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.error,
+      ));
+    }
   }
 
   String? _routeFor(NotificationModel n) {
@@ -134,10 +217,25 @@ class _NotificationTile extends StatelessWidget {
   const _NotificationTile({
     required this.notification,
     required this.onTap,
+    required this.isMutating,
+    this.onApproveJoinRequest,
+    this.onRejectJoinRequest,
   });
 
   final NotificationModel notification;
   final VoidCallback onTap;
+  final bool isMutating;
+
+  /// Both callbacks are only invoked when the tile shows the inline
+  /// quick-action row (`type == 'gameJoinRequest'` and unread).
+  final VoidCallback? onApproveJoinRequest;
+  final VoidCallback? onRejectJoinRequest;
+
+  bool get _showQuickActions =>
+      notification.type == 'gameJoinRequest' &&
+      notification.isUnread &&
+      onApproveJoinRequest != null &&
+      onRejectJoinRequest != null;
 
   @override
   Widget build(BuildContext context) {
@@ -148,59 +246,77 @@ class _NotificationTile extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _LeadingIcon(type: notification.type, isUnread: isUnread),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _LeadingIcon(type: notification.type, isUnread: isUnread),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(
-                            notification.title,
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              fontWeight: isUnread ? FontWeight.w700 : FontWeight.w500,
-                              color: AppColors.textPrimary,
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                notification.title,
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  fontWeight: isUnread ? FontWeight.w700 : FontWeight.w500,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _relativeTime(notification.createdAt),
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (notification.body.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            notification.body,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                              fontWeight: isUnread ? FontWeight.w500 : FontWeight.w400,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _relativeTime(notification.createdAt),
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
-                            fontSize: 11,
-                          ),
-                        ),
+                        ],
                       ],
                     ),
-                    if (notification.body.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        notification.body,
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                          fontWeight: isUnread ? FontWeight.w500 : FontWeight.w400,
-                        ),
+                  ),
+                  if (isUnread) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 8,
+                      height: 8,
+                      margin: const EdgeInsets.only(top: 6),
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
                       ),
-                    ],
+                    ),
                   ],
-                ),
+                ],
               ),
-              if (isUnread) ...[
-                const SizedBox(width: 8),
-                Container(
-                  width: 8,
-                  height: 8,
-                  margin: const EdgeInsets.only(top: 6),
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
+              if (_showQuickActions) ...[
+                const SizedBox(height: 10),
+                Padding(
+                  // Align the buttons with the title text (leading icon
+                  // takes 40px, gap 12px → 52px indent).
+                  padding: const EdgeInsets.only(left: 52),
+                  child: _JoinRequestQuickActions(
+                    isMutating: isMutating,
+                    onApprove: onApproveJoinRequest!,
+                    onReject: onRejectJoinRequest!,
                   ),
                 ),
               ],
@@ -208,6 +324,59 @@ class _NotificationTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _JoinRequestQuickActions extends StatelessWidget {
+  const _JoinRequestQuickActions({
+    required this.isMutating,
+    required this.onApprove,
+    required this.onReject,
+  });
+
+  final bool isMutating;
+  final VoidCallback onApprove;
+  final VoidCallback onReject;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: FilledButton.tonalIcon(
+            onPressed: isMutating ? null : onApprove,
+            icon: const Icon(Icons.check_rounded, size: 18),
+            label: const Text('Approve'),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.success.withValues(alpha: 0.15),
+              foregroundColor: AppColors.success,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: isMutating ? null : onReject,
+            icon: const Icon(Icons.close_rounded, size: 18),
+            label: const Text('Reject'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.error,
+              side: BorderSide(
+                color: AppColors.error.withValues(alpha: 0.4),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
