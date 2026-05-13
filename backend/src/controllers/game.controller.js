@@ -208,32 +208,6 @@ const completeGame = catchAsync(async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
-//  Hide / archive a game from the viewer's home feed (per-user, idempotent).
-// ─────────────────────────────────────────────
-
-const dismissGame = catchAsync(async (req, res) => {
-  const result = await GameService.dismissGame(req.params.id, req.user._id);
-
-  res.status(200).json({
-    success: true,
-    message: result.alreadyDismissed
-      ? 'Game was already dismissed.'
-      : 'Game dismissed from your home feed.',
-    data: result,
-  });
-});
-
-const undismissGame = catchAsync(async (req, res) => {
-  const result = await GameService.undismissGame(req.params.id, req.user._id);
-
-  res.status(200).json({
-    success: true,
-    message: result.removed ? 'Game restored to your home feed.' : 'Game was not dismissed.',
-    data: result,
-  });
-});
-
-// ─────────────────────────────────────────────
 //  Admin: GET /api/v1/games/admin/list
 // ─────────────────────────────────────────────
 
@@ -261,6 +235,4 @@ module.exports = {
   mergeGroups,
   completeGame,
   adminListGames,
-  dismissGame,
-  undismissGame,
 };

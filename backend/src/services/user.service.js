@@ -426,6 +426,25 @@ const setBanStatus = async (targetId, isBanned, reason) => {
   return user;
 };
 
+/**
+ * Logs 48h rolling-streak inputs, then applies {@link User#updateStreak}.
+ * Called when a training log is saved or a match is completed.
+ */
+const updateTrainingStreakWithDebugLog = (user, at = new Date()) => {
+  const stats = user.stats || {};
+  const last = stats.lastActivityDate;
+  const now = at instanceof Date ? at : new Date(at);
+  const hoursPassed = last
+    ? ((now.getTime() - last.getTime()) / (1000 * 60 * 60)).toFixed(2)
+    : 'n/a';
+  logger.info(
+    `Current Streak: ${stats.currentStreak ?? 0}, Last Activity: ${
+      last ? last.toISOString() : 'none'
+    }, Hours Passed: ${hoursPassed}`,
+  );
+  user.updateStreak(at);
+};
+
 module.exports = {
   getMe,
   getPublicProfile,
@@ -444,4 +463,5 @@ module.exports = {
   removePushToken,
   adminListUsers,
   setBanStatus,
+  updateTrainingStreakWithDebugLog,
 };

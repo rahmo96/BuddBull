@@ -269,28 +269,6 @@ class GameActionsNotifier extends StateNotifier<GameActionsState> {
     }
   }
 
-  /// Per-user dismiss/archive: removes the game from the viewer's home
-  /// + calendar feed without leaving or deleting it. The notifier
-  /// surfaces success/error through the same shared state slots so the
-  /// existing `ref.listen` on Game Detail can show feedback.
-  Future<bool> dismiss() async {
-    state = state.copyWith(isProcessing: true, clearError: true);
-    try {
-      await _repo.dismissGame(_gameId);
-      state = state.copyWith(
-        isProcessing: false,
-        successMessage: 'Game hidden from your home feed.',
-      );
-      _ref.invalidate(myGamesProvider);
-      _ref.invalidate(calendarGamesProvider);
-      return true;
-    } catch (e) {
-      state = state.copyWith(isProcessing: false, error: _msg(e));
-      return false;
-    }
-  }
-
-  /// Marks the game as completed. [result] is optional and may carry
   /// winnerDescription / score / mvpUserId / notes — fields the backend
   /// `completeGameSchema` accepts.
   Future<bool> completeGame([Map<String, dynamic>? result]) async {

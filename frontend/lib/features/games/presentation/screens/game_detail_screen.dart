@@ -1326,27 +1326,6 @@ Future<void> _showManageSheet(
                     }
                   },
           ),
-          // Per-user dismiss — keeps the DB row intact but hides the game
-          // from "My Games"/Calendar for this viewer. Useful for stuck
-          // legacy games that you can no longer interact with.
-          ListTile(
-            leading: const Icon(Icons.visibility_off_outlined),
-            title: const Text('Hide from my home feed'),
-            subtitle: const Text(
-              'Remove this game from your home + calendar. '
-              'Other players still see it.',
-            ),
-            onTap: () async {
-              Navigator.pop(sheetCtx);
-              final ok = await ref
-                  .read(gameActionsProvider(gameId).notifier)
-                  .dismiss();
-              if (!ok || !context.mounted) return;
-              await Future<void>.delayed(const Duration(milliseconds: 60));
-              if (!context.mounted) return;
-              context.go(Routes.home);
-            },
-          ),
           const SizedBox(height: 8),
         ],
       ),

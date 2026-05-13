@@ -4,6 +4,7 @@ const Game = require('../models/Game.model');
 const User = require('../models/User.model');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
+const userService = require('./user.service');
 
 // ─────────────────────────────────────────────
 //  createLog
@@ -56,7 +57,7 @@ const createLog = async (userId, dto) => {
   // ── Streak snapshot ───────────────────────────────────────
   const user = await User.findById(userId);
   if (user) {
-    user.updateStreak();
+    userService.updateTrainingStreakWithDebugLog(user);
     log.streakAtLog = {
       current: user.stats.currentStreak,
       isStreakDay: true,

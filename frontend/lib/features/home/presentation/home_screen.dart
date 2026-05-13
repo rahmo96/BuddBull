@@ -258,6 +258,7 @@ class HomeScreen extends ConsumerWidget {
                             children: logs
                                 .take(3)
                                 .map((log) => Container(
+                                      key: ValueKey(log.id),
                                       margin: const EdgeInsets
                                           .only(bottom: 8),
                                       padding:
@@ -331,8 +332,8 @@ class HomeScreen extends ConsumerWidget {
 //
 // Sources from `myGamesProvider` so we strictly show games the user is a
 // participant in (backend already filters to `status: 'approved'` via
-// `$elemMatch`). We additionally drop cancelled/completed games here so the
-// home strip stays focused on what's next on the calendar.
+// `$elemMatch`). Completed games are listed only while ratings are still
+// pending; the strip stays aligned with GET /ratings/pending.
 class _UpcomingMineStrip extends ConsumerWidget {
   const _UpcomingMineStrip({
     required this.pendingAsync,
@@ -361,15 +362,13 @@ class _UpcomingMineStrip extends ConsumerWidget {
             pendingAsync.valueOrNull?.map((e) => e.gameId).toSet() ??
                 <String>{};
 
-        // Keep upcoming + in-progress, and "completed games that still
-        // owe ratings" so the strip is the natural place to start the
-        // rate flow. Pending join-requests must not surface here.
+        // Upcoming / in-progress, plus completed games only while this user
+        // still owes peer ratings (aligned with GET /ratings/pending).
         final strip = games.where((g) {
           if (g.isCancelled) return false;
           if (g.isUpcoming || g.isInProgress) return true;
           if (g.isCompleted) {
-            if (!pendingLoaded) return true;
-            return pendingIds.contains(g.id);
+            return pendingLoaded && pendingIds.contains(g.id);
           }
           return false;
         }).toList()
@@ -391,17 +390,15 @@ class _UpcomingMineStrip extends ConsumerWidget {
             scrollDirection: Axis.horizontal,
             itemCount: shortlist.length,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
-            // Section-scoped key keeps two strips that may briefly hold the
-            // same game (during a state transition) from colliding in the
-            // element tree — Flutter throws "GlobalKey was used multiple
-            // times" if anything underneath (avatar Hero, etc.) ends up
-            // keyed by the game id alone.
-            itemBuilder: (_, i) => GameCard(
-              key: ValueKey('upcoming_${shortlist[i].id}'),
-              game: shortlist[i],
-              compact: true,
-              onTap: () => onTap(shortlist[i].id),
-            ),
+            itemBuilder: (_, i) {
+              final game = shortlist[i];
+              return GameCard(
+                key: ValueKey('upcoming_${game.id}'),
+                game: game,
+                compact: true,
+                onTap: () => onTap(game.id),
+              );
+            },
           ),
         );
       },
@@ -467,12 +464,15 @@ class _ExploreStrip extends ConsumerWidget {
             scrollDirection: Axis.horizontal,
             itemCount: filtered.length,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (_, i) => GameCard(
-              key: ValueKey('explore_${filtered[i].id}'),
-              game: filtered[i],
-              compact: true,
-              onTap: () => onTap(filtered[i].id),
-            ),
+            itemBuilder: (_, i) {
+              final game = filtered[i];
+              return GameCard(
+                key: ValueKey('explore_${game.id}'),
+                game: game,
+                compact: true,
+                onTap: () => onTap(game.id),
+              );
+            },
           ),
         );
       },
