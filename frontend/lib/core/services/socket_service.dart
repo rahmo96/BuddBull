@@ -32,6 +32,25 @@ class MessagePinnedEvent {
   const MessagePinnedEvent(this.messageId, {this.isPinned = true});
 }
 
+/// Server fan-out from `send_message`: tells the recipient their badge
+/// should increment for `chatId`. Carries enough context (preview + timestamp)
+/// for the chat list to refresh inline without a full HTTP round-trip.
+class ChatUnreadUpdateEvent {
+  final String chatId;
+  final String? messageId;
+  final String? preview;
+  final DateTime? sentAt;
+  final String? senderId;
+
+  const ChatUnreadUpdateEvent({
+    required this.chatId,
+    this.messageId,
+    this.preview,
+    this.sentAt,
+    this.senderId,
+  });
+}
+
 /// Server revoked this user's access to a chat room (left game, kicked, etc.).
 class ChatAccessRevokedEvent {
   final String chatId;
@@ -72,6 +91,8 @@ class SocketService {
       StreamController<Map<String, dynamic>>.broadcast();
   final _chatAccessRevokedController =
       StreamController<ChatAccessRevokedEvent>.broadcast();
+  final _chatUnreadController =
+      StreamController<ChatUnreadUpdateEvent>.broadcast();
 
   Stream<dynamic> get messageStream => _messageController.stream;
   Stream<TypingEvent> get typingStream => _typingController.stream;
@@ -88,6 +109,11 @@ class SocketService {
   /// Fired when the server closes the user's chat membership (leave/kick).
   Stream<ChatAccessRevokedEvent> get chatAccessRevokedStream =>
       _chatAccessRevokedController.stream;
+
+  /// Fired for every new message in a chat the user participates in
+  /// (sender is filtered out server-side).
+  Stream<ChatUnreadUpdateEvent> get chatUnreadStream =>
+      _chatUnreadController.stream;
 
   SocketStatus _status = SocketStatus.disconnected;
   SocketStatus get status => _status;
@@ -259,7 +285,8 @@ class SocketService {
       })
       ..on('chat:kicked', (data) => _emitChatAccessRevoked(data, 'kicked'))
       ..on('chat:left', (data) => _emitChatAccessRevoked(data, 'left'))
-      ..on('room_access_denied', (data) => _emitChatAccessRevoked(data, 'denied'));
+      ..on('room_access_denied', (data) => _emitChatAccessRevoked(data, 'denied'))
+      ..on('chat:unread_update', _emitChatUnread);
 
     debugPrint('🟡 SOCKET calling connect()…');
     _socket!.connect();
@@ -342,6 +369,7 @@ class SocketService {
     _statusController.close();
     _notificationController.close();
     _chatAccessRevokedController.close();
+    _chatUnreadController.close();
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────
@@ -352,6 +380,25 @@ class SocketService {
   void _setStatus(SocketStatus status) {
     _status = status;
     if (!_statusController.isClosed) _statusController.add(status);
+  }
+
+  void _emitChatUnread(dynamic data) {
+    if (_chatUnreadController.isClosed) return;
+    try {
+      if (data is! Map) return;
+      final d = Map<String, dynamic>.from(data);
+      final chatId = d['chatId']?.toString();
+      if (chatId == null || chatId.isEmpty) return;
+      _chatUnreadController.add(ChatUnreadUpdateEvent(
+        chatId: chatId,
+        messageId: d['messageId']?.toString(),
+        preview: d['preview']?.toString(),
+        sentAt: DateTime.tryParse(d['sentAt']?.toString() ?? ''),
+        senderId: d['senderId']?.toString(),
+      ));
+    } catch (e, st) {
+      debugPrint('⚠️ SOCKET chat:unread_update parse error: $e\n$st');
+    }
   }
 
   void _emitChatAccessRevoked(dynamic data, String reason) {

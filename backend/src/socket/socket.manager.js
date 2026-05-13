@@ -207,6 +207,39 @@ module.exports = (io) => {
         socket.emit('newMessage', plain);
         socket.broadcast.to(chatId).emit('receive_message', receivePayload);
         socket.broadcast.to(chatId).emit('newMessage', plain);
+
+        // ── Unread fan-out ────────────────────────────────────────────
+        // Push an inexpensive `chat:unread_update` event to every active
+        // participant except the sender, regardless of whether they have
+        // a socket in this chat room (e.g. the user is on the Home tab
+        // and only listens on their private user room). The frontend
+        // bumps the badge optimistically and reconciles via the HTTP
+        // `/chats/unread` snapshot on the next refresh.
+        try {
+          const recipients = (chat.participants || [])
+            .filter(
+              (p) =>
+                p.leftAt == null &&
+                p.user?.toString() !== user._id.toString(),
+            )
+            .map((p) => p.user.toString());
+
+          const unreadEvent = {
+            chatId: String(chatId),
+            messageId: String(plain._id || plain.id || ''),
+            preview:
+              type === 'text'
+                ? String(content || '').slice(0, 80)
+                : `[${type}]`,
+            sentAt: plain.createdAt || plain.sentAt || new Date().toISOString(),
+            senderId: String(user._id),
+          };
+          for (const recipientId of recipients) {
+            io.to(recipientId).emit('chat:unread_update', unreadEvent);
+          }
+        } catch (err) {
+          logger.warn(`[Socket] chat:unread_update fan-out failed: ${err.message}`);
+        }
       } catch (err) {
         logger.error('[Socket] send_message error:', err);
         socket.emit('error', { message: 'Failed to send message' });

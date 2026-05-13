@@ -43,6 +43,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       if (!mounted) return;
       socket.joinChat(widget.chatId);
 
+      // Opening the room clears the unread badge for this specific chat.
+      // The backend's `getChatById` also stamps `lastReadAt`, so the next
+      // `/chats` refresh stays consistent across devices.
+      ref.read(chatUnreadProvider.notifier).markChatRead(widget.chatId);
+
       _chatAccessSub?.cancel();
       _chatAccessSub = socket.chatAccessRevokedStream.listen((event) {
         if (event.chatId != widget.chatId) return;

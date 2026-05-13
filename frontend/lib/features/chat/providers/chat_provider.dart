@@ -16,6 +16,74 @@ final chatListProvider = FutureProvider<List<ChatModel>>((ref) async {
   return ref.watch(chatRepositoryProvider).getChats();
 });
 
+// ── Unread counters ───────────────────────────────────────────────────────────
+//
+// Per-chat unread counts + a derived total used by the bottom-nav badge.
+// Hydrated from `/chats` (which now ships `unreadCount` per row) and kept
+// live via the `chat:unread_update` socket event. `markChatRead` drops a
+// given chat's count to zero immediately when the user opens that chat.
+class ChatUnreadNotifier extends StateNotifier<Map<String, int>> {
+  ChatUnreadNotifier(this._ref) : super(const {}) {
+    _socketSub = _ref
+        .read(socketServiceProvider)
+        .chatUnreadStream
+        .listen(_onUnreadEvent);
+    _bootstrap();
+  }
+
+  final Ref _ref;
+  StreamSubscription<ChatUnreadUpdateEvent>? _socketSub;
+
+  /// Sum across every chat — drives the BottomNavigationBar badge.
+  int get totalUnread =>
+      state.values.fold<int>(0, (sum, n) => sum + (n > 0 ? n : 0));
+
+  Future<void> _bootstrap() async {
+    try {
+      final chats = await _ref.read(chatRepositoryProvider).getChats();
+      state = {
+        for (final c in chats) c.id: c.unreadCount,
+      };
+    } catch (_) {
+      // Soft-fail: socket events still keep us live until the next pull.
+    }
+  }
+
+  void _onUnreadEvent(ChatUnreadUpdateEvent e) {
+    state = {
+      ...state,
+      e.chatId: (state[e.chatId] ?? 0) + 1,
+    };
+  }
+
+  /// Drop the badge for `chatId` to zero — called when the user opens
+  /// the room. The server-side `getChatById` already stamps `lastReadAt`.
+  void markChatRead(String chatId) {
+    if ((state[chatId] ?? 0) == 0) return;
+    state = {...state, chatId: 0};
+  }
+
+  /// Force a re-fetch (e.g. after the user pulls to refresh the chat list).
+  Future<void> refresh() => _bootstrap();
+
+  @override
+  void dispose() {
+    _socketSub?.cancel();
+    super.dispose();
+  }
+}
+
+final chatUnreadProvider =
+    StateNotifierProvider<ChatUnreadNotifier, Map<String, int>>((ref) {
+  return ChatUnreadNotifier(ref);
+});
+
+/// Total badge count for the bottom-nav chat icon.
+final totalUnreadChatCountProvider = Provider<int>((ref) {
+  final counts = ref.watch(chatUnreadProvider);
+  return counts.values.fold<int>(0, (sum, n) => sum + (n > 0 ? n : 0));
+});
+
 // ── Single chat detail ────────────────────────────────────────────────────────
 final chatDetailProvider = FutureProvider.family<ChatModel, String>((ref, chatId) async {
   return ref.watch(chatRepositoryProvider).getChatById(chatId);

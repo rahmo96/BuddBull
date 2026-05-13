@@ -3,6 +3,7 @@ import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/services/socket_service.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
+import 'package:buddbull/features/chat/providers/chat_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -102,7 +103,7 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
 }
 
 // ── Branded nav bar ───────────────────────────────────────────────────────────
-class _BrandedNavBar extends StatelessWidget {
+class _BrandedNavBar extends ConsumerWidget {
   const _BrandedNavBar({
     required this.tabs,
     required this.selectedIndex,
@@ -114,7 +115,8 @@ class _BrandedNavBar extends StatelessWidget {
   final ValueChanged<int> onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unreadTotal = ref.watch(totalUnreadChatCountProvider);
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.surface,
@@ -139,6 +141,7 @@ class _BrandedNavBar extends StatelessWidget {
                   tab: tabs[i],
                   selected: selectedIndex == i,
                   onTap: () => onTap(i),
+                  badgeCount: tabs[i].route == '/chats' ? unreadTotal : 0,
                 ),
               ),
             ),
@@ -154,11 +157,13 @@ class _NavItem extends StatelessWidget {
     required this.tab,
     required this.selected,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   final _TabItem tab;
   final bool selected;
   final VoidCallback onTap;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -177,11 +182,16 @@ class _NavItem extends StatelessWidget {
                 scale: anim,
                 child: child,
               ),
-              child: Icon(
-                selected ? tab.selectedIcon : tab.icon,
+              child: Badge(
                 key: ValueKey(selected),
-                color: selected ? AppColors.primary : AppColors.grey500,
-                size: 24,
+                isLabelVisible: badgeCount > 0,
+                label: Text(badgeCount > 99 ? '99+' : '$badgeCount'),
+                backgroundColor: AppColors.error,
+                child: Icon(
+                  selected ? tab.selectedIcon : tab.icon,
+                  color: selected ? AppColors.primary : AppColors.grey500,
+                  size: 24,
+                ),
               ),
             ),
             const SizedBox(height: 3),

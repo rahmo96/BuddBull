@@ -87,7 +87,28 @@ const getChats = async (userId) => {
     .sort({ 'lastMessage.sentAt': -1, updatedAt: -1 })
     .lean();
 
-  return chats.map((c) => _formatChat(c, userId));
+  if (chats.length === 0) return [];
+
+  // Hydrate each chat with the viewer's unread count in one round trip
+  // per chat. The chat-list screen needs this for per-row badges, and
+  // the bottom-nav badge sums it up — so the alternative (separate
+  // `/chats/unread` poll) would double the cold-start cost.
+  const counts = await Promise.all(
+    chats.map((chat) => {
+      const participant = (chat.participants || []).find(
+        (p) => (p.user?._id || p.user)?.toString() === userId.toString(),
+      );
+      const lastRead = participant?.lastReadAt || new Date(0);
+      return Message.countDocuments({
+        chat: chat._id,
+        createdAt: { $gt: lastRead },
+        sender: { $ne: userId },
+        isDeleted: false,
+      });
+    }),
+  );
+
+  return chats.map((c, i) => ({ ..._formatChat(c, userId), unreadCount: counts[i] }));
 };
 
 // ── Get a single chat ─────────────────────────────────────────────────────────

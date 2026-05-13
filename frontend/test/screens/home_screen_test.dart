@@ -7,6 +7,8 @@ import 'package:buddbull/features/notifications/data/notification_repository.dar
 import 'package:buddbull/features/notifications/providers/notification_provider.dart';
 import 'package:buddbull/features/performance/data/models/performance_model.dart';
 import 'package:buddbull/features/performance/providers/performance_provider.dart';
+import 'package:buddbull/features/rating/data/models/rating_model.dart';
+import 'package:buddbull/features/rating/providers/rating_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -27,6 +29,10 @@ void main() {
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
           calendarGamesProvider.overrideWith((ref) async => <GameModel>[]),
+          myGamesProvider.overrideWith((ref) async => <GameModel>[]),
+          exploreGamesProvider.overrideWith((ref) async => <GameModel>[]),
+          pendingRatingsProvider
+              .overrideWith((ref) async => <PendingRatingItem>[]),
           performanceStatsProvider.overrideWith((ref) async {
             return UserPerformanceStats.empty();
           }),

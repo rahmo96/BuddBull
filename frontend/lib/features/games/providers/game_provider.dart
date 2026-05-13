@@ -1,3 +1,4 @@
+import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/games/data/game_repository.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/rating/providers/rating_provider.dart';
@@ -17,6 +18,32 @@ final myGamesProvider =
 final calendarGamesProvider =
     FutureProvider.autoDispose<List<GameModel>>((ref) {
   return ref.watch(gameRepositoryProvider).getCalendar();
+});
+
+/// Public, open games the current viewer is not already part of, filtered
+/// to their home city when we know one. Powers the Home Screen's
+/// "Explore Near You" horizontal strip. We keep the city filter optional
+/// (and a generic top-N fallback) so users without a profile city still
+/// see something useful instead of an empty section.
+final exploreGamesProvider =
+    FutureProvider.autoDispose<List<GameModel>>((ref) async {
+  final repo = ref.watch(gameRepositoryProvider);
+  final user = ref.watch(currentUserProvider);
+  final city = user?.location?.city;
+
+  final params = GameSearchParams(
+    city: (city != null && city.isNotEmpty) ? city : null,
+    limit: 10,
+  );
+
+  final games = await repo.searchGames(params);
+
+  // Fallback: no nearby matches → drop the city filter so the strip
+  // doesn't read as broken for users with a quiet metro.
+  if (games.isEmpty && city != null && city.isNotEmpty) {
+    return repo.searchGames(const GameSearchParams(limit: 10));
+  }
+  return games;
 });
 
 // ── Game search state ─────────────────────────────────────────────────────────
@@ -239,6 +266,27 @@ class GameActionsNotifier extends StateNotifier<GameActionsState> {
       _ref.invalidate(gameDetailProvider(_gameId));
     } catch (e) {
       state = state.copyWith(isProcessing: false, error: _msg(e));
+    }
+  }
+
+  /// Per-user dismiss/archive: removes the game from the viewer's home
+  /// + calendar feed without leaving or deleting it. The notifier
+  /// surfaces success/error through the same shared state slots so the
+  /// existing `ref.listen` on Game Detail can show feedback.
+  Future<bool> dismiss() async {
+    state = state.copyWith(isProcessing: true, clearError: true);
+    try {
+      await _repo.dismissGame(_gameId);
+      state = state.copyWith(
+        isProcessing: false,
+        successMessage: 'Game hidden from your home feed.',
+      );
+      _ref.invalidate(myGamesProvider);
+      _ref.invalidate(calendarGamesProvider);
+      return true;
+    } catch (e) {
+      state = state.copyWith(isProcessing: false, error: _msg(e));
+      return false;
     }
   }
 

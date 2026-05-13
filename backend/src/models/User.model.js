@@ -302,27 +302,50 @@ userSchema.methods.passwordChangedAfter = function (jwtIssuedAt) {
 };
 
 /**
- * Updates the rolling streak based on the last activity date.
- * Call after a game is completed.
+ * Updates the rolling streak based on the last activity timestamp.
+ *
+ * Streak rule (training-streak v2 — 2026-Q2):
+ *  - First-ever activity (`lastActivityDate` empty) → streak resets to 1.
+ *  - Subsequent activity within 48h of the previous one → +1.
+ *  - More than 48h since the previous one → reset to 1 (the chain is broken).
+ *  - Same instant or "now < last" (clock skew, retroactive logs) → no-op,
+ *    we keep `currentStreak` and `lastActivityDate` untouched.
+ *
+ * Both timestamps are compared as absolute UTC milliseconds — no
+ * calendar-day arithmetic, so DST transitions and timezone changes
+ * never silently break a player's streak.
+ *
+ * Optional `at` argument lets callers replay the calculation against
+ * a specific completion time (used in tests and the recalc CLI).
  */
-userSchema.methods.updateStreak = function () {
-  const now = new Date();
-  const last = this.stats.lastActivityDate;
+const STREAK_WINDOW_MS = 48 * 60 * 60 * 1000;
+
+userSchema.methods.updateStreak = function (at = new Date()) {
+  const now = at instanceof Date ? at : new Date(at);
+  if (Number.isNaN(now.getTime())) return;
+
+  const stats = this.stats || (this.stats = {});
+  const last = stats.lastActivityDate;
+
   if (!last) {
-    this.stats.currentStreak = 1;
+    stats.currentStreak = 1;
   } else {
-    const daysDiff = Math.floor((now - last) / (1000 * 60 * 60 * 24));
-    if (daysDiff === 1) {
-      this.stats.currentStreak += 1;
-    } else if (daysDiff > 1) {
-      this.stats.currentStreak = 1;
+    const diffMs = now.getTime() - last.getTime();
+    if (diffMs < 0) {
+      // Retroactive / out-of-order completion. Don't penalise the player.
+      return;
     }
-    // daysDiff === 0: same-day activity, streak unchanged
+    if (diffMs <= STREAK_WINDOW_MS) {
+      stats.currentStreak = (stats.currentStreak || 0) + 1;
+    } else {
+      stats.currentStreak = 1;
+    }
   }
-  if (this.stats.currentStreak > this.stats.longestStreak) {
-    this.stats.longestStreak = this.stats.currentStreak;
+
+  if (stats.currentStreak > (stats.longestStreak || 0)) {
+    stats.longestStreak = stats.currentStreak;
   }
-  this.stats.lastActivityDate = now;
+  stats.lastActivityDate = now;
 };
 
 // ─────────────────────────────────────────────

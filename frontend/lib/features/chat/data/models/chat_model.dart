@@ -210,6 +210,32 @@ class ChatModel extends Equatable {
     this.updatedAt,
   });
 
+  ChatModel copyWith({
+    int? unreadCount,
+    LastMessagePreview? lastMessage,
+    DateTime? lastReadAt,
+    DateTime? updatedAt,
+  }) {
+    return ChatModel(
+      id: id,
+      type: type,
+      name: name,
+      description: description,
+      avatar: avatar,
+      gameId: gameId,
+      gameTitle: gameTitle,
+      participants: participants,
+      lastMessage: lastMessage ?? this.lastMessage,
+      pinnedMessages: pinnedMessages,
+      messageCount: messageCount,
+      unreadCount: unreadCount ?? this.unreadCount,
+      isMuted: isMuted,
+      isAdmin: isAdmin,
+      lastReadAt: lastReadAt ?? this.lastReadAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
   /// For DMs, return the other participant's display name
   String chatTitle(String currentUserId) {
     if (type == 'dm') {

@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Game = require('../models/Game.model');
 const User = require('../models/User.model');
 const Chat = require('../models/Chat.model');
+const GameDismissal = require('../models/GameDismissal.model');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
 const notificationInboxService = require('./notificationInbox.service');
@@ -461,6 +462,13 @@ const getMyGames = async (userId, { status, page = 1, limit = 20 } = {}) => {
     ],
   };
 
+  // Per-user "archive" filter so users can dismiss stale games (e.g.
+  // long-completed ones with no outstanding ratings) without us deleting
+  // them from the DB. The list of dismissed gameIds is small (~one per
+  // archived game), so an `$nin` is fine.
+  const dismissed = await GameDismissal.find({ user: userId }).select('game').lean();
+  const dismissedIds = dismissed.map((d) => d.game);
+
   let query;
   if (status) {
     query = { ...base, status };
@@ -469,19 +477,30 @@ const getMyGames = async (userId, { status, page = 1, limit = 20 } = {}) => {
     const pending = await ratingService.getPendingRatings(userId);
     const pendingGameIds = pending.map((p) => p.game.id).filter(Boolean);
 
-    const completedWithPending =
-      pendingGameIds.length > 0
-        ? [{ _id: { $in: pendingGameIds }, status: 'completed' }]
-        : [];
+    // A completed game is sticky on "My Games" only when it still owes
+    // the viewer something:
+    //   1. They organised it AND it isn't archived yet (so the organizer
+    //      keeps a back-door to "View summary"/rate participants).
+    //   2. OR they still owe peer ratings.
+    // Otherwise it falls out of the home strip and lives only in /games.
+    const completedBranches = [];
+    if (pendingGameIds.length > 0) {
+      completedBranches.push({ _id: { $in: pendingGameIds }, status: 'completed' });
+    }
+    completedBranches.push({ organizer: userId, status: 'completed' });
 
     query = {
       ...base,
       $and: [
         {
-          $or: [{ status: { $ne: 'completed' } }, ...completedWithPending],
+          $or: [{ status: { $ne: 'completed' } }, ...completedBranches],
         },
       ],
     };
+  }
+
+  if (dismissedIds.length > 0) {
+    query = { ...query, _id: { $nin: dismissedIds } };
   }
 
   const skip = (Number(page) - 1) * Number(limit);
@@ -551,8 +570,12 @@ const getCalendar = async (userId, { dateFrom, dateTo }) => {
         }
       : null;
 
+  const dismissed = await GameDismissal.find({ user: userId }).select('game').lean();
+  const dismissedIds = dismissed.map((d) => d.game);
+
   const games = await Game.find({
     deletedAt: null,
+    ...(dismissedIds.length > 0 ? { _id: { $nin: dismissedIds } } : {}),
     $and: [
       participation,
       {
@@ -567,6 +590,45 @@ const getCalendar = async (userId, { dateFrom, dateTo }) => {
     .lean();
 
   return games;
+};
+
+// ─────────────────────────────────────────────
+//  dismissGame  /  undismissGame
+// ─────────────────────────────────────────────
+
+/**
+ * Marks a game as "archived" for `userId` so it stops appearing on the
+ * viewer's home/calendar feeds. Idempotent — calling it twice is fine
+ * and the second call resolves with `{ dismissed: true, alreadyDismissed: true }`.
+ *
+ * We deliberately do not touch the underlying Game document or the
+ * user's player slot. Other participants still see the game and the
+ * organiser can still manage it.
+ */
+const dismissGame = async (gameId, userId) => {
+  const game = await Game.findById(gameId).select('_id deletedAt').lean();
+  if (!game || game.deletedAt) throw new AppError('Game not found.', 404);
+
+  try {
+    await GameDismissal.create({ user: userId, game: gameId });
+    return { dismissed: true, alreadyDismissed: false };
+  } catch (err) {
+    // Unique-index violation → already dismissed; treat as success.
+    if (err && err.code === 11000) {
+      return { dismissed: true, alreadyDismissed: true };
+    }
+    throw err;
+  }
+};
+
+/**
+ * Reverses `dismissGame`. Currently unused by the UI but exposed so
+ * future "Undo" affordances can lift the archive without us needing
+ * another migration.
+ */
+const undismissGame = async (gameId, userId) => {
+  const res = await GameDismissal.deleteOne({ user: userId, game: gameId });
+  return { dismissed: false, removed: res.deletedCount > 0 };
 };
 
 // ─────────────────────────────────────────────
@@ -1208,4 +1270,6 @@ module.exports = {
   completeGame,
   getPendingRequests,
   adminListGames,
+  dismissGame,
+  undismissGame,
 };

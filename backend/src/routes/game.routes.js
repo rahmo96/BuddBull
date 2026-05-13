@@ -201,4 +201,15 @@ router.patch(
   GameController.completeGame,
 );
 
+/**
+ * @route  POST /api/v1/games/:id/dismiss
+ * @desc   Hide a game from the viewer's home feed without leaving or
+ *         deleting it. Idempotent. Mirrored by DELETE to restore.
+ * @access Private
+ */
+router
+  .route('/:id/dismiss')
+  .post(protect, validateMongoId('id'), GameController.dismissGame)
+  .delete(protect, validateMongoId('id'), GameController.undismissGame);
+
 module.exports = router;

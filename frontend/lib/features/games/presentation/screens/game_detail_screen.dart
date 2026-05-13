@@ -367,7 +367,7 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
                         .leave(),
                     onOpenChat: () =>
                         context.push('/chats/${game.groupChatId}'),
-                    onManage: () => _showManageSheet(context, ref, gameId),
+                    onManage: () => _showManageSheet(context, ref, game),
                   )
                 : null,
           ),
@@ -1198,8 +1198,18 @@ String _sportEmoji(String sport) {
 Future<void> _showManageSheet(
   BuildContext context,
   WidgetRef ref,
-  String gameId,
+  GameModel game,
 ) async {
+  final gameId = game.id;
+  // Lifecycle gates — the backend will refuse these anyway, but we
+  // don't even render the affordance for a finished/cancelled game.
+  // That stops users from generating the 422 "leave a completed game"
+  // and 400 "cannot update/cancel a game with status …" errors that
+  // previously surfaced as raw red snackbars.
+  final canEdit = !game.isCompleted && !game.isCancelled;
+  final canComplete = !game.isCompleted && !game.isCancelled;
+  final canCancel = !game.isCompleted && !game.isCancelled;
+
   await showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
@@ -1210,70 +1220,131 @@ Future<void> _showManageSheet(
           ListTile(
             leading: const Icon(Icons.edit_outlined),
             title: const Text('Edit Game'),
-            onTap: () {
-              Navigator.pop(sheetCtx);
-              if (!context.mounted) return;
-              context.push('/games/$gameId/edit');
-            },
+            enabled: canEdit,
+            onTap: !canEdit
+                ? null
+                : () {
+                    Navigator.pop(sheetCtx);
+                    if (!context.mounted) return;
+                    context.push('/games/$gameId/edit');
+                  },
           ),
+          if (game.isCompleted)
+            // Already completed — replace "Complete Game" with a clear
+            // CTA back to the rating flow. Tapping closes the sheet and
+            // hands off to the same picker the bottom action bar uses.
+            ListTile(
+              leading: const Icon(Icons.star_rate_rounded,
+                  color: AppColors.primary),
+              title: const Text('View Summary / Rate Players'),
+              subtitle: const Text(
+                'Game is finished — open the rating flow for participants.',
+              ),
+              onTap: () {
+                Navigator.pop(sheetCtx);
+                if (!context.mounted) return;
+                final currentUserId =
+                    ref.read(currentUserProvider)?.id ?? '';
+                _openRateParticipantsPicker(
+                  context,
+                  ref,
+                  game,
+                  gameId,
+                  currentUserId,
+                );
+              },
+            )
+          else
+            ListTile(
+              leading: const Icon(Icons.emoji_events_outlined,
+                  color: AppColors.success),
+              title: const Text('Complete Game'),
+              subtitle: const Text(
+                'Mark the game as finished and open ratings for participants.',
+              ),
+              enabled: canComplete,
+              onTap: !canComplete
+                  ? null
+                  : () async {
+                      final confirmed = await _confirmComplete(context);
+                      if (!confirmed || !context.mounted) return;
+
+                      Navigator.pop(sheetCtx);
+
+                      final ok = await ref
+                          .read(gameActionsProvider(gameId).notifier)
+                          .completeGame();
+                      if (!ok || !context.mounted) return;
+                    },
+            ),
           ListTile(
-            leading: const Icon(Icons.emoji_events_outlined,
-                color: AppColors.success),
-            title: const Text('Complete Game'),
+            leading: Icon(
+              Icons.cancel_outlined,
+              color: canCancel
+                  ? AppColors.error
+                  : AppColors.grey400,
+            ),
+            title: Text(
+              game.isCancelled ? 'Game already cancelled' : 'Cancel Game',
+            ),
+            enabled: canCancel,
+            onTap: !canCancel
+                ? null
+                : () async {
+                    final confirmed = await _confirmCancel(context);
+                    if (!confirmed || !context.mounted) return;
+
+                    final reason = await _askCancelReason(context);
+                    if (reason == null ||
+                        reason.trim().isEmpty ||
+                        !context.mounted) {
+                      return;
+                    }
+
+                    FocusScope.of(context).unfocus();
+                    Navigator.pop(sheetCtx);
+
+                    try {
+                      await ref.read(gameRepositoryProvider).cancelGame(
+                            gameId,
+                            reason: reason.trim(),
+                          );
+                      ref.invalidate(gameDetailProvider(gameId));
+                      ref.invalidate(myGamesProvider);
+                      ref.invalidate(calendarGamesProvider);
+                      if (!context.mounted) return;
+
+                      showSuccessSnackBar(context, 'Game cancelled.');
+
+                      await Future<void>.delayed(
+                          const Duration(milliseconds: 80));
+                      if (!context.mounted) return;
+                      context.go(Routes.home);
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      showErrorSnackBar(context, e.toString());
+                    }
+                  },
+          ),
+          // Per-user dismiss — keeps the DB row intact but hides the game
+          // from "My Games"/Calendar for this viewer. Useful for stuck
+          // legacy games that you can no longer interact with.
+          ListTile(
+            leading: const Icon(Icons.visibility_off_outlined),
+            title: const Text('Hide from my home feed'),
             subtitle: const Text(
-              'Mark the game as finished and open ratings for participants.',
+              'Remove this game from your home + calendar. '
+              'Other players still see it.',
             ),
             onTap: () async {
-              final confirmed = await _confirmComplete(context);
-              if (!confirmed || !context.mounted) return;
-
               Navigator.pop(sheetCtx);
-
               final ok = await ref
                   .read(gameActionsProvider(gameId).notifier)
-                  .completeGame();
+                  .dismiss();
               if (!ok || !context.mounted) return;
-
-              // Success snackbar is fired by the listener in build().
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.cancel_outlined, color: AppColors.error),
-            title: const Text('Cancel Game'),
-            onTap: () async {
-              // Keep a strict teardown order to avoid "used after disposed" / "attached is not true".
-              final confirmed = await _confirmCancel(context);
-              if (!confirmed || !context.mounted) return;
-
-              final reason = await _askCancelReason(context);
-              if (reason == null || reason.trim().isEmpty || !context.mounted) return;
-
-              // Keyboard cleanup before any async/network work.
-              FocusScope.of(context).unfocus();
-
-              // Close the bottom sheet BEFORE triggering navigation.
-              Navigator.pop(sheetCtx);
-
-              try {
-                await ref.read(gameRepositoryProvider).cancelGame(
-                      gameId,
-                      reason: reason.trim(),
-                    );
-                ref.invalidate(gameDetailProvider(gameId));
-                ref.invalidate(myGamesProvider);
-                ref.invalidate(calendarGamesProvider);
-                if (!context.mounted) return;
-
-                showSuccessSnackBar(context, 'Game cancelled.');
-
-                // Small delay lets route stack settle after modal teardown.
-                await Future<void>.delayed(const Duration(milliseconds: 80));
-                if (!context.mounted) return;
-                context.go(Routes.home);
-              } catch (e) {
-                if (!context.mounted) return;
-                showErrorSnackBar(context, e.toString());
-              }
+              await Future<void>.delayed(const Duration(milliseconds: 60));
+              if (!context.mounted) return;
+              context.go(Routes.home);
             },
           ),
           const SizedBox(height: 8),

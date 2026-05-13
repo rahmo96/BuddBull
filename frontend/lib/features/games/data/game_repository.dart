@@ -212,6 +212,18 @@ class GameRepository {
     return GameModel.fromJson(data['game'] as Map<String, dynamic>);
   }
 
+  // ── Dismiss / restore on the home feed ────────────────────
+  /// Hides this game from the current viewer's home/calendar feed
+  /// without leaving or deleting it. Idempotent.
+  Future<void> dismissGame(String id) async {
+    await _api.post(ApiEndpoints.dismissGame(id));
+  }
+
+  /// Reverses [dismissGame].
+  Future<void> undismissGame(String id) async {
+    await _api.delete(ApiEndpoints.dismissGame(id));
+  }
+
   // ── Complete ──────────────────────────────────────────────
   // Backend route is PATCH /games/:id/complete. Payload fields are all optional
   // (winnerDescription, score, mvpUserId, notes). Pass an empty map to mark

@@ -73,6 +73,11 @@ abstract class ApiEndpoints {
   static String gamePendingRequests(String id) =>
       '/games/$id/players/pending';
 
+  /// Per-user "archive" toggle. POST hides the game from the viewer's
+  /// home feed, DELETE restores it. The underlying game document is
+  /// untouched — this is purely a viewer-side filter.
+  static String dismissGame(String id) => '/games/$id/dismiss';
+
   // ── Maps ──────────────────────────────────────────────────────
   static const String mapsAutocomplete = '/maps/autocomplete';
   static const String mapsPlaceDetails = '/maps/place-details';

@@ -7,6 +7,7 @@ import 'package:buddbull/features/notifications/providers/notification_provider.
 import 'package:buddbull/features/performance/presentation/widgets/streak_banner.dart';
 import 'package:buddbull/features/performance/providers/performance_provider.dart';
 import 'package:buddbull/features/profile/presentation/widgets/stats_card.dart';
+import 'package:buddbull/features/rating/data/models/rating_model.dart';
 import 'package:buddbull/features/rating/providers/rating_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,7 +20,6 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider).user;
-    final calendarAsync = ref.watch(calendarGamesProvider);
     final pendingAsync = ref.watch(pendingRatingsProvider);
     final statsAsync = ref.watch(performanceStatsProvider);
 
@@ -39,6 +39,7 @@ class HomeScreen extends ConsumerWidget {
           ref.invalidate(performanceStatsProvider);
           ref.invalidate(pendingRatingsProvider);
           ref.invalidate(myGamesProvider);
+          ref.invalidate(exploreGamesProvider);
         },
         child: CustomScrollView(
           slivers: [
@@ -166,66 +167,31 @@ class HomeScreen extends ConsumerWidget {
                     orElse: () => const SizedBox.shrink(),
                   ),
 
-                  // ── Upcoming games ────────────────────────
+                  // ── My Upcoming Games ─────────────────────
                   _SectionHeader(
-                    title: 'Upcoming Games',
+                    title: 'My Upcoming Games',
                     actionLabel: 'See all',
                     onAction: () => context.go('/games'),
                   ),
                   const SizedBox(height: 10),
-                  calendarAsync.when(
-                    loading: _UpcomingShimmer.new,
-                    error: (_, __) => _EmptySection(
-                      emoji: '📅',
-                      message: 'No upcoming games',
-                      actionLabel: 'Browse games',
-                      onAction: () => context.go('/games'),
-                    ),
-                    data: (games) {
-                      final pendingLoaded = pendingAsync.hasValue;
-                      final pendingIds = pendingAsync.valueOrNull
-                              ?.map((e) => e.gameId)
-                              .toSet() ??
-                          <String>{};
+                  _UpcomingMineStrip(
+                    pendingAsync: pendingAsync,
+                    onSeeAll: () => context.go('/games'),
+                    onTap: (id) => context.push('/games/$id'),
+                  ),
+                  const SizedBox(height: 20),
 
-                      final homeStripGames = games
-                          .where((g) {
-                            if (g.isCancelled) return false;
-                            if (g.isUpcoming || g.isInProgress) return true;
-                            if (g.isCompleted) {
-                              if (!pendingLoaded) return true;
-                              return pendingIds.contains(g.id);
-                            }
-                            return false;
-                          })
-                          .take(5)
-                          .toList();
-
-                      if (homeStripGames.isEmpty) {
-                        return _EmptySection(
-                          emoji: '📅',
-                          message: 'No upcoming games',
-                          actionLabel: 'Browse games',
-                          onAction: () => context.go('/games'),
-                        );
-                      }
-
-                      return SizedBox(
-                        height: 220,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: homeStripGames.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(width: 12),
-                          itemBuilder: (_, i) => GameCard(
-                            game: homeStripGames[i],
-                            compact: true,
-                            onTap: () => context
-                                .push('/games/${homeStripGames[i].id}'),
-                          ),
-                        ),
-                      );
-                    },
+                  // ── Explore Near You ──────────────────────
+                  _SectionHeader(
+                    title: 'Explore Near You',
+                    actionLabel: 'Browse all',
+                    onAction: () => context.go('/games'),
+                  ),
+                  const SizedBox(height: 10),
+                  _ExploreStrip(
+                    currentUserId: user?.id,
+                    onBrowse: () => context.go('/games'),
+                    onTap: (id) => context.push('/games/$id'),
                   ),
                   const SizedBox(height: 20),
 
@@ -357,6 +323,159 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ── My Upcoming Games strip ───────────────────────────────────────────────────
+//
+// Sources from `myGamesProvider` so we strictly show games the user is a
+// participant in (backend already filters to `status: 'approved'` via
+// `$elemMatch`). We additionally drop cancelled/completed games here so the
+// home strip stays focused on what's next on the calendar.
+class _UpcomingMineStrip extends ConsumerWidget {
+  const _UpcomingMineStrip({
+    required this.pendingAsync,
+    required this.onSeeAll,
+    required this.onTap,
+  });
+
+  final AsyncValue<List<PendingRatingItem>> pendingAsync;
+  final VoidCallback onSeeAll;
+  final void Function(String gameId) onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final myGamesAsync = ref.watch(myGamesProvider);
+    return myGamesAsync.when(
+      loading: _UpcomingShimmer.new,
+      error: (_, __) => _EmptySection(
+        emoji: '📅',
+        message: 'No upcoming games',
+        actionLabel: 'Browse games',
+        onAction: onSeeAll,
+      ),
+      data: (games) {
+        final pendingLoaded = pendingAsync.hasValue;
+        final pendingIds =
+            pendingAsync.valueOrNull?.map((e) => e.gameId).toSet() ??
+                <String>{};
+
+        // Keep upcoming + in-progress, and "completed games that still
+        // owe ratings" so the strip is the natural place to start the
+        // rate flow. Pending join-requests must not surface here.
+        final strip = games.where((g) {
+          if (g.isCancelled) return false;
+          if (g.isUpcoming || g.isInProgress) return true;
+          if (g.isCompleted) {
+            if (!pendingLoaded) return true;
+            return pendingIds.contains(g.id);
+          }
+          return false;
+        }).toList()
+          ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+        final shortlist = strip.take(8).toList();
+
+        if (shortlist.isEmpty) {
+          return _EmptySection(
+            emoji: '📅',
+            message: 'No upcoming games',
+            actionLabel: 'Browse games',
+            onAction: onSeeAll,
+          );
+        }
+
+        return SizedBox(
+          height: 220,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: shortlist.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            // Section-scoped key keeps two strips that may briefly hold the
+            // same game (during a state transition) from colliding in the
+            // element tree — Flutter throws "GlobalKey was used multiple
+            // times" if anything underneath (avatar Hero, etc.) ends up
+            // keyed by the game id alone.
+            itemBuilder: (_, i) => GameCard(
+              key: ValueKey('upcoming_${shortlist[i].id}'),
+              game: shortlist[i],
+              compact: true,
+              onTap: () => onTap(shortlist[i].id),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ── Explore Near You strip ────────────────────────────────────────────────────
+//
+// Renders public games the viewer is NOT already participating in, biased
+// toward their home city. We deliberately filter out the viewer's own
+// approved/pending/invited slots client-side as a defence-in-depth measure
+// (server is the source of truth) so a freshly-joined game vanishes from
+// "Explore" right after Join without waiting for a `searchGames` refetch.
+class _ExploreStrip extends ConsumerWidget {
+  const _ExploreStrip({
+    required this.currentUserId,
+    required this.onBrowse,
+    required this.onTap,
+  });
+
+  final String? currentUserId;
+  final VoidCallback onBrowse;
+  final void Function(String gameId) onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final exploreAsync = ref.watch(exploreGamesProvider);
+    return exploreAsync.when(
+      loading: _UpcomingShimmer.new,
+      error: (_, __) => _EmptySection(
+        emoji: '🔍',
+        message: "Couldn't load nearby games",
+        actionLabel: 'Browse all',
+        onAction: onBrowse,
+      ),
+      data: (games) {
+        final filtered = games.where((g) {
+          if (g.isCancelled || g.isCompleted) return false;
+          if (g.isPrivate) return false;
+          if (currentUserId == null) return true;
+          // Hide games the viewer is already linked to in any active state.
+          final slot = g.getPlayer(currentUserId!);
+          if (slot == null) {
+            // Organisers aren't always in the players[] array; hide their own games too.
+            return g.organizer.id != currentUserId;
+          }
+          return !(slot.isApproved || slot.isPending || slot.status == 'invited');
+        }).take(10).toList();
+
+        if (filtered.isEmpty) {
+          return _EmptySection(
+            emoji: '🔍',
+            message: 'Nothing nearby right now',
+            actionLabel: 'Browse all',
+            onAction: onBrowse,
+          );
+        }
+
+        return SizedBox(
+          height: 220,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: filtered.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (_, i) => GameCard(
+              key: ValueKey('explore_${filtered[i].id}'),
+              game: filtered[i],
+              compact: true,
+              onTap: () => onTap(filtered[i].id),
+            ),
+          ),
+        );
+      },
     );
   }
 }

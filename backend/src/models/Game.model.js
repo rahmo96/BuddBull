@@ -130,7 +130,14 @@ const gameSchema = new mongoose.Schema(
       type: Date,
       required: [true, 'Scheduled date/time is required'],
       validate: {
+        // Only enforce the "future" rule when the field is being set (new
+        // doc) or explicitly modified. Without this guard ANY save on an
+        // existing game whose `scheduledAt` is now in the past — leaving a
+        // game, kicking a player, marking it completed — fails Mongoose
+        // validation and surfaces as a 422 to the client. That was the
+        // "Trying to leave/complete an old game returns 422" bug.
         validator(date) {
+          if (!this.isNew && !this.isModified('scheduledAt')) return true;
           return date > new Date();
         },
         message: 'Game must be scheduled in the future',
