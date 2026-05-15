@@ -8,16 +8,67 @@ import 'package:buddbull/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+/// Must match backend FCM `android.notification.channel_id`
+/// (`backend/src/services/notification.service.js`).
+const String kBuddbullAndroidNotificationChannelId = 'buddbull_default';
+
+/// Channel registered from [PushNotificationService] **and** from
+/// [firebaseMessagingBackgroundHandler] so FCM can target this id in a cold /
+/// background isolate before the main app runs.
+///
+/// `AndroidNotificationChannel` has no `Priority` field; use
+/// [kBuddbullAndroidHeadsUpDetails] when calling `show()`. FCM heads-up uses
+/// channel importance plus server `android.notification` priority.
+const AndroidNotificationChannel kBuddbullAndroidNotificationChannel =
+    AndroidNotificationChannel(
+  kBuddbullAndroidNotificationChannelId,
+  'General',
+  description: 'BuddBull heads-up alerts',
+  importance: Importance.max,
+  playSound: true,
+  enableVibration: true,
+  enableLights: true,
+  ledColor: Color(0xFF1565C0),
+);
+
+/// Per-notification template if you later show local notifications from Dart.
+const AndroidNotificationDetails kBuddbullAndroidHeadsUpDetails =
+    AndroidNotificationDetails(
+  kBuddbullAndroidNotificationChannelId,
+  'General',
+  channelDescription: 'BuddBull heads-up alerts',
+  importance: Importance.max,
+  priority: Priority.high,
+  playSound: true,
+  enableVibration: true,
+  enableLights: true,
+  ledColor: Color(0xFF1565C0),
+);
 
 /// Must be registered in `main()` via [FirebaseMessaging.onBackgroundMessage]
 /// before `runApp` (separate isolate entry-point).
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  if (defaultTargetPlatform == TargetPlatform.android) {
+    final plugin = FlutterLocalNotificationsPlugin();
+    await plugin.initialize(
+      settings: const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        iOS: DarwinInitializationSettings(),
+      ),
+    );
+    final android = plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    await android?.createNotificationChannel(kBuddbullAndroidNotificationChannel);
+  }
 }
 
 final pushNotificationServiceProvider = Provider<PushNotificationService>((ref) {
@@ -26,11 +77,10 @@ final pushNotificationServiceProvider = Provider<PushNotificationService>((ref) 
   return service;
 });
 
-/// FCM + (optional) local notifications wiring.
+/// FCM + local notification channel registration.
 ///
-/// Foreground [FirebaseMessaging.onMessage] intentionally does **not** show a
-/// heads-up banner: the backend also emits `notification:new` over Socket.io,
-/// so showing FCM here would duplicate the UX when the app is open.
+/// Foreground [FirebaseMessaging.onMessage] does **not** show a second banner:
+/// Socket.io already delivers `notification:new` for the inbox.
 class PushNotificationService {
   PushNotificationService(this._ref);
 
@@ -39,8 +89,6 @@ class PushNotificationService {
 
   bool _started = false;
   StreamSubscription<String>? _tokenRefreshSub;
-
-  static const _androidChannelId = 'buddbull_default';
 
   Future<void> ensureInitialized() async {
     if (_started || kIsWeb) return;
@@ -80,15 +128,14 @@ class PushNotificationService {
     final androidPlugin = _local
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     await androidPlugin?.createNotificationChannel(
-      const AndroidNotificationChannel(
-        _androidChannelId,
-        'General',
-        description: 'BuddBull alerts',
-        importance: Importance.high,
-      ),
+      kBuddbullAndroidNotificationChannel,
     );
     if (defaultTargetPlatform == TargetPlatform.android) {
       await androidPlugin?.requestNotificationsPermission();
+    }
+    if (kDebugMode && defaultTargetPlatform == TargetPlatform.android) {
+      assert(kBuddbullAndroidHeadsUpDetails.priority == Priority.high);
+      assert(kBuddbullAndroidHeadsUpDetails.importance == Importance.max);
     }
   }
 
@@ -117,8 +164,6 @@ class PushNotificationService {
   }
 
   void _onForegroundMessage(RemoteMessage message) {
-    // Socket.io already delivers inbox rows as `notification:new`.
-    // Do not show a second heads-up notification while foregrounded.
     if (kDebugMode) {
       debugPrint(
         '[FCM foreground] id=${message.messageId} title=${message.notification?.title}',
@@ -130,7 +175,7 @@ class PushNotificationService {
     navigateFromPushData(message.data);
   }
 
-  /// Maps FCM `data` (all string values from the server) to a GoRouter path.
+  /// Maps FCM `data` (string values from the server) to a GoRouter path.
   @visibleForTesting
   String pathForPushData(Map<String, dynamic> raw) {
     final data = {

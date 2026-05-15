@@ -10,7 +10,6 @@
  */
 
 const logger = require('../utils/logger');
-const User = require('../models/User.model');
 
 // ── Firebase initialisation (lazy, guarded) ───────────────────────────────────
 let _fcmApp = null;
@@ -44,11 +43,6 @@ const getFCMApp = () => {
   }
 };
 
-const stringifyData = (data = {}) =>
-  Object.fromEntries(
-    Object.entries(data).map(([k, v]) => [k, v === null || v === undefined ? '' : String(v)]),
-  );
-
 // ── Push notification primitives ──────────────────────────────────────────────
 /**
  * Send a push notification to a single FCM device token.
@@ -61,7 +55,7 @@ const sendPush = async (fcmToken, { title, body, data = {} }) => {
     await messaging.send({
       token: fcmToken,
       notification: { title, body },
-      data: stringifyData(data),
+      data: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
       android: { priority: 'high' },
       apns: { payload: { aps: { sound: 'default' } } },
     });
@@ -86,7 +80,7 @@ const sendPushToMany = async (fcmTokens, payload) => {
       await messaging.sendEachForMulticast({
         tokens: chunk,
         notification: { title: payload.title, body: payload.body },
-        data: payload.data ? stringifyData(payload.data) : {},
+        data: payload.data ? Object.fromEntries(Object.entries(payload.data).map(([k, v]) => [k, String(v)])) : {},
         android: { priority: 'high' },
         apns: { payload: { aps: { sound: 'default' } } },
       });
@@ -95,41 +89,6 @@ const sendPushToMany = async (fcmTokens, payload) => {
     }
   }
 };
-
-/**
- * Loads the user's registered device tokens and sends one FCM multicast per
- * chunk (FCM max 500 tokens per call).
- */
-const sendPushToUser = async (userId, { title, body, data = {} }) => {
-  const messaging = getFCMApp();
-  if (!messaging || !userId) return;
-
-  const user = await User.findById(userId).select('+pushTokens').lean();
-  if (!user?.pushTokens?.length) return;
-
-  const tokens = [...new Set(user.pushTokens.map((p) => p.token).filter(Boolean))];
-  if (!tokens.length) return;
-
-  const strData = stringifyData(data);
-  const CHUNK = 500;
-
-  for (let i = 0; i < tokens.length; i += CHUNK) {
-    const chunk = tokens.slice(i, i + CHUNK);
-    try {
-      await messaging.sendEachForMulticast({
-        tokens: chunk,
-        notification: { title, body },
-        data: strData,
-        android: { priority: 'high' },
-        apns: { payload: { aps: { sound: 'default' } } },
-      });
-    } catch (err) {
-      logger.warn(`[Notifications] sendPushToUser chunk failed: ${err.message}`);
-    }
-  }
-};
-
-const userIdOf = (user) => (user && user._id ? user._id : user);
 
 // ── Email wrapper (re-exports with fallback) ──────────────────────────────────
 const sendEmailNotification = async (to, { title, body, firstName = 'there' }) => {
@@ -145,7 +104,7 @@ const notifyGameInvite = async (user, game) => {
   const body = `You've been invited to play "${game.title}" (${game.sport}) on ${new Date(game.scheduledAt).toDateString()}.`;
 
   await Promise.allSettled([
-    sendPushToUser(userIdOf(user), { title, body, data: { type: 'game_invite', gameId: String(game._id) } }),
+    sendPush(user.fcmToken, { title, body, data: { type: 'game_invite', gameId: String(game._id) } }),
     sendEmailNotification(user.email, { title, body, firstName: user.firstName }),
   ]);
 };
@@ -157,7 +116,7 @@ const notifyJoinApproved = async (user, game) => {
   const title = 'Request Approved ✅';
   const body = `Your request to join "${game.title}" has been approved! Get ready for ${new Date(game.scheduledAt).toDateString()}.`;
 
-  await sendPushToUser(userIdOf(user), { title, body, data: { type: 'join_approved', gameId: String(game._id) } });
+  await sendPush(user.fcmToken, { title, body, data: { type: 'join_approved', gameId: String(game._id) } });
 };
 
 /**
@@ -167,10 +126,9 @@ const notifyGroupMerge = async (users, sourceGame, targetGame) => {
   const title = 'Groups Merged 🤝';
   const body = `Your game "${sourceGame.title}" has been merged into "${targetGame.title}". See you on the field!`;
 
-  const payload = { title, body, data: { type: 'group_merge', gameId: String(targetGame._id) } };
-
+  const tokens = users.map((u) => u.fcmToken).filter(Boolean);
   await Promise.allSettled([
-    ...users.map((u) => sendPushToUser(userIdOf(u), payload)),
+    sendPushToMany(tokens, { title, body, data: { type: 'group_merge', gameId: String(targetGame._id) } }),
     ...users.map((u) => sendEmailNotification(u.email, { title, body, firstName: u.firstName })),
   ]);
 };
@@ -182,7 +140,7 @@ const notifyPersonalBest = async (user, { sport, metric, value }) => {
   const title = 'New Personal Best 🎉';
   const body = `You broke your ${sport} personal best for "${metric}"! New record: ${value}.`;
 
-  await sendPushToUser(userIdOf(user), {
+  await sendPush(user.fcmToken, {
     title,
     body,
     data: { type: 'personal_best', sport },
@@ -196,7 +154,7 @@ const notifyGameReminder = async (user, game) => {
   const title = 'Game Starting Soon ⏰';
   const body = `"${game.title}" starts in about 1 hour. Head to ${game.location?.neighbourhood || game.location?.city}.`;
 
-  await sendPushToUser(userIdOf(user), {
+  await sendPush(user.fcmToken, {
     title,
     body,
     data: { type: 'game_reminder', gameId: String(game._id) },
@@ -206,7 +164,6 @@ const notifyGameReminder = async (user, game) => {
 module.exports = {
   sendPush,
   sendPushToMany,
-  sendPushToUser,
   sendEmail: sendEmailNotification,
   notifyGameInvite,
   notifyJoinApproved,
