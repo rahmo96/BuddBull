@@ -1,6 +1,7 @@
 const Notification = require('../models/Notification.model');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
+const notificationService = require('./notification.service');
 
 // ─────────────────────────────────────────────
 //  Notification Inbox Service
@@ -43,6 +44,54 @@ const _emitNotificationNew = (recipientId, payload) => {
   } catch (err) {
     // Never let an emit failure roll back the DB write that succeeded.
     logger.warn(`[notification:socket] emit failed for ${recipientId}: ${err.message}`);
+  }
+};
+
+/**
+ * Maps persisted inbox `type` + `data` to a stable FCM `data.type` the Flutter
+ * client uses for deep-link routing (see `PushNotificationService`).
+ */
+const _fcmNavTypeFromInbox = (type, data) => {
+  if (data?.chatId) return 'new_message';
+  switch (type) {
+    case 'gameInvite':
+      return 'game_invite';
+    case 'gameJoinRequest':
+      return 'join_request';
+    case 'gameApproved':
+      return 'join_approved';
+    default:
+      return 'inbox';
+  }
+};
+
+const _plainInboxDoc = (doc) => (typeof doc.toObject === 'function' ? doc.toObject({ getters: false }) : doc);
+
+const _fcmDataFromInboxDoc = (doc) => {
+  const plain = _plainInboxDoc(doc);
+  const { type, data = {} } = plain;
+  const navType = _fcmNavTypeFromInbox(type, data);
+  const out = {
+    type: navType,
+    inboxType: type,
+    notificationId: String(plain._id),
+  };
+  for (const [k, v] of Object.entries(data)) {
+    if (v !== undefined && v !== null && v !== '') out[k] = String(v);
+  }
+  return out;
+};
+
+const _sendFcmForInboxDoc = async (recipientId, doc) => {
+  try {
+    const plain = _plainInboxDoc(doc);
+    await notificationService.sendPushToUser(recipientId, {
+      title: plain.title,
+      body: plain.body || '',
+      data: _fcmDataFromInboxDoc(doc),
+    });
+  } catch (err) {
+    logger.warn(`[notificationInbox:fcm] ${err.message}`);
   }
 };
 
@@ -142,6 +191,7 @@ const createForUser = async (recipientId, { type, title, body = '', data = {} } 
   if (!title) throw new AppError('title is required', 400);
   const doc = await Notification.create({ recipient: recipientId, type, title, body, data });
   _emitNotificationNew(recipientId, _toPayload(doc));
+  await _sendFcmForInboxDoc(recipientId, doc);
   return doc;
 };
 
@@ -163,6 +213,9 @@ const createForManyUsers = async (recipientIds = [], payload) => {
   const created = await Notification.insertMany(docs, { ordered: false });
   for (const doc of created) {
     _emitNotificationNew(doc.recipient, _toPayload(doc));
+  }
+  for (const doc of created) {
+    await _sendFcmForInboxDoc(doc.recipient, doc);
   }
   return created;
 };

@@ -57,6 +57,8 @@ dependencies:
   flutter_form_builder: ^10.2.0
   form_builder_validators: ^11.2.0
   geolocator: ^14.0.2
+  firebase_messaging: ^16.2.0
+  flutter_local_notifications: ^20.1.0
 
 dev_dependencies:
   flutter_test:

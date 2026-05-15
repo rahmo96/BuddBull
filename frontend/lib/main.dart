@@ -1,9 +1,11 @@
 import 'package:buddbull/app.dart';
 import 'package:buddbull/core/network/api_client.dart';
+import 'package:buddbull/core/services/push_notification_service.dart';
 import 'package:buddbull/core/storage/shared_preferences_provider.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,7 +35,11 @@ Future<void> _ensureFirebaseInitialized() async {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
   await _ensureFirebaseInitialized();
+
+  await FirebaseMessaging.instance.setAutoInitEnabled(true);
 
   // Lock orientation to portrait
   await SystemChrome.setPreferredOrientations([

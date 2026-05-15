@@ -27,6 +27,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+/// Root [NavigatorState] for FCM / local-notification taps (no [BuildContext]
+/// from a widget at cold start).
+final GlobalKey<NavigatorState> rootNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'root');
+
 // ── Route path constants ──────────────────────────────────────────────────────
 abstract class Routes {
   static const String splash = '/';
@@ -65,6 +70,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   final onboardingRefresh = ref.watch(onboardingRedirectListenProvider);
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: Routes.splash,
     refreshListenable: Listenable.merge([authListenable, onboardingRefresh]),
     redirect: (BuildContext context, GoRouterState state) {
