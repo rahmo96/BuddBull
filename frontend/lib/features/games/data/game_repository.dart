@@ -154,8 +154,8 @@ class GameRepository {
   }
 
   // ── Join ──────────────────────────────────────────────────
-  Future<GameModel> joinGame(String id) async {
-    final body = await _api.post(ApiEndpoints.joinGame(id));
+  Future<GameModel> joinGame(String id, {bool acceptInvite = false}) async {
+    final body = await _api.post(ApiEndpoints.joinGame(id, acceptInvite: acceptInvite));
     final data = body['data'] as Map<String, dynamic>;
     return GameModel.fromJson(data['game'] as Map<String, dynamic>);
   }
@@ -176,6 +176,18 @@ class GameRepository {
 
   // ── Kick player ───────────────────────────────────────────
   // Real backend route: `DELETE /games/:id/players/:userId`.
+  Future<GameModel> inviteFriend(String gameId, String friendId) async {
+    final body = await _api.post(ApiEndpoints.inviteFriendToGame(gameId, friendId));
+    final data = body['data'] as Map<String, dynamic>;
+    return GameModel.fromJson(data['game'] as Map<String, dynamic>);
+  }
+
+  Future<GameModel> cancelInvite(String gameId, String userId) async {
+    final body = await _api.delete(ApiEndpoints.cancelGameInvite(gameId, userId));
+    final data = body['data'] as Map<String, dynamic>;
+    return GameModel.fromJson(data['game'] as Map<String, dynamic>);
+  }
+
   Future<GameModel> kickPlayer(String gameId, String userId,
       {String? reason}) async {
     final body = await _api.delete(

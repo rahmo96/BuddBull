@@ -58,8 +58,7 @@ abstract class AppStrings {
   static const String addSport = '+ Add sport';
   static const String saveChanges = 'Save Changes';
   static const String changePhoto = 'Change Photo';
-  static const String followers = 'Followers';
-  static const String following = 'Following';
+  static const String friends = 'Friends';
   static const String gamesPlayed = 'Games';
   static const String rating = 'Rating';
   static const String streakDays = 'Streak';

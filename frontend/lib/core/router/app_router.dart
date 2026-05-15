@@ -22,6 +22,7 @@ import 'package:buddbull/features/onboarding/providers/onboarding_redirect_liste
 import 'package:buddbull/features/performance/presentation/screens/create_log_screen.dart';
 import 'package:buddbull/features/performance/presentation/screens/performance_screen.dart';
 import 'package:buddbull/features/profile/presentation/screens/edit_profile_screen.dart';
+import 'package:buddbull/features/profile/presentation/screens/friends_list_screen.dart';
 import 'package:buddbull/features/profile/presentation/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -56,6 +57,7 @@ abstract class Routes {
   static const String performance = '/performance';
   static const String createLog = '/performance/log/create';
   static const String profile = '/profile';
+  static const String friends = '/profile/friends';
   static const String editProfile = '/profile/edit';
   static String publicProfile(String id) => '/profile/$id';
   static const String notifications = '/notifications';
@@ -190,6 +192,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'profile',
             builder: (_, __) => const ProfileScreen(),
             routes: [
+              GoRoute(
+                path: 'friends',
+                name: 'friends',
+                pageBuilder: (_, s) =>
+                    _slide(s, const FriendsListScreen()),
+              ),
               GoRoute(
                 path: 'edit',
                 name: 'editProfile',

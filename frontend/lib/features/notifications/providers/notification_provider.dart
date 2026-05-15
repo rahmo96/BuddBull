@@ -5,6 +5,7 @@ import 'package:buddbull/core/services/socket_service.dart';
 import 'package:buddbull/features/games/data/game_repository.dart';
 import 'package:buddbull/features/notifications/data/notification_model.dart';
 import 'package:buddbull/features/notifications/data/notification_repository.dart';
+import 'package:buddbull/features/profile/data/user_repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -85,7 +86,9 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
     this._repo, {
     Stream<Map<String, dynamic>>? liveStream,
     GameRepository? gameRepository,
+    UserRepository? userRepository,
   })  : _gameRepo = gameRepository,
+        _userRepo = userRepository,
         super(const NotificationsState()) {
     // Fire-and-forget initial load so the badge is populated as soon as
     // the bell icon mounts. Errors land in `state.error` instead of
@@ -107,6 +110,7 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
 
   final NotificationRepository _repo;
   final GameRepository? _gameRepo;
+  final UserRepository? _userRepo;
   StreamSubscription<Map<String, dynamic>>? _socketSub;
 
   /// Reloads the inbox from the server. Safe to call from pull-to-
@@ -269,6 +273,108 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
     }
   }
 
+  Future<bool> handleFriendRequest(String notificationId, String decision) async {
+    assert(decision == 'accept' || decision == 'decline');
+    if (_userRepo == null) {
+      state = state.copyWith(error: 'User repository unavailable.');
+      return false;
+    }
+
+    final idx = state.notifications.indexWhere((n) => n.id == notificationId);
+    if (idx < 0) return false;
+    final target = state.notifications[idx];
+    if (target.type != 'friendRequest') return false;
+
+    final requestId = target.data['requestId']?.toString();
+    if (requestId == null || requestId.isEmpty) {
+      state = state.copyWith(error: 'Invalid friend-request payload.');
+      return false;
+    }
+
+    final prevList = state.notifications;
+    final prevUnread = state.unreadCount;
+    final without = [...state.notifications]..removeAt(idx);
+    state = state.copyWith(
+      notifications: without,
+      unreadCount:
+          target.isUnread ? (prevUnread - 1).clamp(0, prevUnread) : prevUnread,
+      isMutating: true,
+    );
+
+    try {
+      if (decision == 'accept') {
+        await _userRepo.acceptFriendRequest(requestId);
+      } else {
+        await _userRepo.declineFriendRequest(requestId);
+      }
+      if (target.isUnread) {
+        unawaited(_repo.markAsRead(target.id).catchError((_) => target));
+      }
+      state = state.copyWith(isMutating: false);
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        notifications: prevList,
+        unreadCount: prevUnread,
+        isMutating: false,
+        error: _humanise(e),
+      );
+      return false;
+    }
+  }
+
+  /// Accept or decline a `gameInvite` notification from the inbox.
+  /// Accept joins the game as an approved participant; decline leaves the invite slot.
+  Future<bool> handleGameInvite(String notificationId, String decision) async {
+    assert(decision == 'accept' || decision == 'decline');
+    if (_gameRepo == null) {
+      state = state.copyWith(error: 'Game repository unavailable.');
+      return false;
+    }
+
+    final idx = state.notifications.indexWhere((n) => n.id == notificationId);
+    if (idx < 0) return false;
+    final target = state.notifications[idx];
+    if (target.type != 'gameInvite') return false;
+
+    final gameId = target.gameId;
+    if (gameId == null || gameId.isEmpty) {
+      state = state.copyWith(error: 'Invalid game-invite payload.');
+      return false;
+    }
+
+    final prevList = state.notifications;
+    final prevUnread = state.unreadCount;
+    final without = [...state.notifications]..removeAt(idx);
+    state = state.copyWith(
+      notifications: without,
+      unreadCount:
+          target.isUnread ? (prevUnread - 1).clamp(0, prevUnread) : prevUnread,
+      isMutating: true,
+    );
+
+    try {
+      if (decision == 'accept') {
+        await _gameRepo.joinGame(gameId, acceptInvite: true);
+      } else {
+        await _gameRepo.leaveGame(gameId);
+      }
+      if (target.isUnread) {
+        unawaited(_repo.markAsRead(target.id).catchError((_) => target));
+      }
+      state = state.copyWith(isMutating: false);
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        notifications: prevList,
+        unreadCount: prevUnread,
+        isMutating: false,
+        error: _humanise(e),
+      );
+      return false;
+    }
+  }
+
   /// Handles a `notification:new` payload pushed from the server.
   ///
   /// Behaviour:
@@ -340,10 +446,12 @@ final notificationsProvider =
   final repo = ref.watch(notificationRepositoryProvider);
   final liveStream = ref.watch(notificationLiveStreamProvider);
   final gameRepo = ref.watch(gameRepositoryProvider);
+  final userRepo = ref.watch(userRepositoryProvider);
   return NotificationsNotifier(
     repo,
     liveStream: liveStream,
     gameRepository: gameRepo,
+    userRepository: userRepo,
   );
 });
 

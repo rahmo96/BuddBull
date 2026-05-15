@@ -17,7 +17,7 @@ const playerSlotSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['invited', 'pending', 'approved', 'kicked', 'left', 'rejected'],
+      enum: ['invited', 'pending', 'approved', 'kicked', 'left', 'rejected', 'invite_revoked'],
       default: 'pending',
     },
     role: {

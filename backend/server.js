@@ -12,6 +12,7 @@
 require('dotenv').config();
 
 const http = require('http');
+const cron = require('node-cron');
 const { Server: SocketIOServer } = require('socket.io');
 
 const connectDB = require('./src/config/database');
@@ -20,6 +21,7 @@ const logger = require('./src/utils/logger');
 const registerSocketHandlers = require('./src/socket/socket.manager');
 const notificationInboxService = require('./src/services/notificationInbox.service');
 const chatPresenceService = require('./src/services/chatPresence.service');
+const GameService = require('./src/services/game.service');
 const { port, nodeEnv, clientUrl } = require('./src/config/environment');
 
 const startServer = async () => {
@@ -62,6 +64,18 @@ const startServer = async () => {
   // is kicked so the kicked socket immediately stops receiving
   // messages and the client gets a `chat:kicked` push.
   chatPresenceService.setIo(io);
+
+  // ── 4e. Hourly sweep: auto-complete stale games (PRD) ─────────
+  cron.schedule('0 * * * *', async () => {
+    try {
+      const summary = await GameService.autoCompleteStaleGames();
+      if (summary.completed.length > 0 || summary.errors.length > 0) {
+        logger.info(`[cron:autoComplete] ${JSON.stringify(summary)}`);
+      }
+    } catch (err) {
+      logger.error(`[cron:autoComplete] job failed: ${err.message}`);
+    }
+  });
 
   // ── 5. Listen ───────────────────────────────────────────────
   server.listen(port, () => {

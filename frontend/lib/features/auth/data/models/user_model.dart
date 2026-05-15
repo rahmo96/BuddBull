@@ -15,8 +15,10 @@ class UserModel {
     this.stats,
     this.location,
     this.sportsInterests = const [],
-    this.followersCount = 0,
-    this.followingCount = 0,
+    this.friendsCount = 0,
+    this.isFriend = false,
+    this.friendRequestStatus = 'none',
+    this.friendRequestId,
     this.createdAt,
     this.performanceSummary,
   });
@@ -34,8 +36,11 @@ class UserModel {
   final UserStats? stats;
   final UserLocation? location;
   final List<SportInterest> sportsInterests;
-  final int followersCount;
-  final int followingCount;
+  final int friendsCount;
+  final bool isFriend;
+  /// none | pending_sent | pending_received | friends
+  final String friendRequestStatus;
+  final String? friendRequestId;
   final DateTime? createdAt;
   final UserPerformanceSummary? performanceSummary;
 
@@ -66,8 +71,13 @@ class UserModel {
                   SportInterest.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
-      followersCount: json['followersCount'] as int? ?? 0,
-      followingCount: json['followingCount'] as int? ?? 0,
+      friendsCount: (json['friendsCount'] as num?)?.toInt() ??
+          (json['followersCount'] as num?)?.toInt() ??
+          (json['followingCount'] as num?)?.toInt() ??
+          0,
+      isFriend: json['isFriend'] as bool? ?? false,
+      friendRequestStatus: json['friendRequestStatus'] as String? ?? 'none',
+      friendRequestId: json['friendRequestId'] as String?,
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'] as String)
           : null,
@@ -99,8 +109,10 @@ class UserModel {
     UserLocation? location,
     List<SportInterest>? sportsInterests,
     UserStats? stats,
-    int? followersCount,
-    int? followingCount,
+    int? friendsCount,
+    bool? isFriend,
+    String? friendRequestStatus,
+    String? friendRequestId,
     UserPerformanceSummary? performanceSummary,
   }) {
     return UserModel(
@@ -117,8 +129,10 @@ class UserModel {
       stats: stats ?? this.stats,
       location: location ?? this.location,
       sportsInterests: sportsInterests ?? this.sportsInterests,
-      followersCount: followersCount ?? this.followersCount,
-      followingCount: followingCount ?? this.followingCount,
+      friendsCount: friendsCount ?? this.friendsCount,
+      isFriend: isFriend ?? this.isFriend,
+      friendRequestStatus: friendRequestStatus ?? this.friendRequestStatus,
+      friendRequestId: friendRequestId ?? this.friendRequestId,
       createdAt: createdAt,
       performanceSummary: performanceSummary ?? this.performanceSummary,
     );

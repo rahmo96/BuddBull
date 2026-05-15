@@ -4,6 +4,7 @@ const User = require('../models/User.model');
 const Game = require('../models/Game.model');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
+const notificationService = require('./notification.service');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const PARTICIPANT_FIELDS = 'firstName lastName username profilePicture';
@@ -220,6 +221,23 @@ const sendMessage = async (chatId, userId, { content, type = 'text', replyTo } =
     { path: 'sender', select: SENDER_FIELDS },
     { path: 'replyTo', select: 'content sender', populate: { path: 'sender', select: 'firstName lastName username' } },
   ]);
+
+  const sender = message.sender;
+  const senderName = sender
+    ? `${sender.firstName || ''} ${sender.lastName || ''}`.trim() || sender.username
+    : 'Someone';
+  const recipientIds = (chat.participants || [])
+    .filter((p) => p.leftAt == null && String(p.user) !== String(userId))
+    .map((p) => String(p.user));
+
+  await notificationService.notifyChatMessage({
+    chatId,
+    senderId: userId,
+    senderName,
+    preview: type === 'text' ? content : `[${type}]`,
+    recipientIds,
+    gameId: chat.game ? String(chat.game) : undefined,
+  });
 
   return _formatMessage(message.toObject());
 };

@@ -8,6 +8,7 @@ import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/games/presentation/widgets/player_slot_row.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
 import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
+import 'package:buddbull/features/profile/providers/profile_provider.dart';
 import 'package:buddbull/features/rating/data/models/rating_model.dart';
 import 'package:buddbull/features/rating/presentation/widgets/rate_player_sheet.dart';
 import 'package:buddbull/features/rating/presentation/widgets/rating_stars.dart';
@@ -130,6 +131,7 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
       if (user == null || !context.mounted) return;
       final prevPlayer = prev?.valueOrNull?.getPlayer(user.id);
       final nextPlayer = next.valueOrNull?.getPlayer(user.id);
+
       if (nextPlayer?.isRejected != true) return;
       if (prevPlayer?.isRejected == true) return;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -365,6 +367,12 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
                     onLeave: () => ref
                         .read(gameActionsProvider(gameId).notifier)
                         .leave(),
+                    onAcceptInvite: () => ref
+                        .read(gameActionsProvider(gameId).notifier)
+                        .acceptInvite(),
+                    onDeclineInvite: () => ref
+                        .read(gameActionsProvider(gameId).notifier)
+                        .declineInvite(),
                     onOpenChat: () =>
                         context.push('/chats/${game.groupChatId}'),
                     onManage: () => _showManageSheet(context, ref, game),
@@ -741,9 +749,15 @@ class _PlayerTile extends StatelessWidget {
     // Rating UI is hidden for the viewer's own row (no self-rating).
     final showRateButton = canRate && !isCurrentUser && player.isApproved;
 
+    final canOpenProfile =
+        player.userId.isNotEmpty && !isCurrentUser;
+
     return ListTile(
       contentPadding: EdgeInsets.zero,
       dense: true,
+      onTap: canOpenProfile
+          ? () => context.push(Routes.publicProfile(player.userId))
+          : null,
       leading: BbProfileAvatar(
         profilePicture: player.profilePicture,
         initials: _initials,
@@ -932,6 +946,7 @@ bool _gameDetailBottomBarHasContent({
   }
   if (myPlayer == null) return true;
   if (myPlayer.isPending) return true;
+  if (myPlayer.isInvited) return true;
   if (myPlayer.canJoinAgain) return true;
   if (myPlayer.isApproved && !game.isCompleted) return true;
   // Approved player on a completed game: always render the bar so the
@@ -952,6 +967,8 @@ class _BottomActionBar extends ConsumerWidget {
     required this.actionsState,
     required this.onJoin,
     required this.onLeave,
+    required this.onAcceptInvite,
+    required this.onDeclineInvite,
     required this.onOpenChat,
     required this.onManage,
   });
@@ -964,6 +981,8 @@ class _BottomActionBar extends ConsumerWidget {
   final GameActionsState actionsState;
   final VoidCallback onJoin;
   final VoidCallback onLeave;
+  final VoidCallback onAcceptInvite;
+  final VoidCallback onDeclineInvite;
   final VoidCallback onOpenChat;
   final VoidCallback onManage;
 
@@ -1074,6 +1093,15 @@ class _BottomActionBar extends ConsumerWidget {
       );
     }
 
+    if (myPlayer!.isInvited) {
+      return _GameInvitePanel(
+        onAccept: onAcceptInvite,
+        onDecline: onDeclineInvite,
+        isAccepting: actionsState.isJoining,
+        isDeclining: actionsState.isLeaving,
+      );
+    }
+
     if (myPlayer!.canJoinAgain) {
       if (game.isFull) {
         return const BbButton(
@@ -1118,6 +1146,78 @@ class _BottomActionBar extends ConsumerWidget {
     }
 
     return null;
+  }
+}
+
+/// Prominent accept / decline for organiser-sent game invitations.
+class _GameInvitePanel extends StatelessWidget {
+  const _GameInvitePanel({
+    required this.onAccept,
+    required this.onDecline,
+    required this.isAccepting,
+    required this.isDeclining,
+  });
+
+  final VoidCallback onAccept;
+  final VoidCallback onDecline;
+  final bool isAccepting;
+  final bool isDeclining;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.infoLight.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.35)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.mail_outline_rounded,
+                  size: 20, color: AppColors.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'You\'re invited to this game',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: BbButton(
+                label: 'Accept Invitation',
+                onPressed: (isAccepting || isDeclining) ? null : onAccept,
+                isLoading: isAccepting,
+                icon: Icons.check_rounded,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: BbButton(
+                label: 'Decline',
+                onPressed: (isAccepting || isDeclining) ? null : onDecline,
+                isLoading: isDeclining,
+                variant: BbButtonVariant.outlined,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }
 
@@ -1195,6 +1295,186 @@ String _sportEmoji(String sport) {
   };
 }
 
+Future<void> _showInviteFriendsSheet(
+  BuildContext context,
+  WidgetRef ref,
+  String gameId,
+) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (sheetCtx) => _InviteFriendsSheet(gameId: gameId),
+  );
+}
+
+/// Invite / revoke invites with per-row loading to prevent double-taps.
+class _InviteFriendsSheet extends ConsumerStatefulWidget {
+  const _InviteFriendsSheet({required this.gameId});
+
+  final String gameId;
+
+  @override
+  ConsumerState<_InviteFriendsSheet> createState() =>
+      _InviteFriendsSheetState();
+}
+
+class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
+  String? _busyFriendId;
+
+  Future<void> _invite(String friendId, String friendName) async {
+    if (_busyFriendId != null) return;
+    setState(() => _busyFriendId = friendId);
+    try {
+      final ok = await ref
+          .read(gameActionsProvider(widget.gameId).notifier)
+          .inviteFriend(friendId);
+      if (!mounted) return;
+      if (ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Invited $friendName')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busyFriendId = null);
+    }
+  }
+
+  Future<void> _revoke(String friendId, String friendName) async {
+    if (_busyFriendId != null) return;
+    setState(() => _busyFriendId = friendId);
+    try {
+      final ok = await ref
+          .read(gameActionsProvider(widget.gameId).notifier)
+          .cancelInvite(friendId);
+      if (!mounted) return;
+      if (ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Revoked invite for $friendName')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busyFriendId = null);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final friendsAsync = ref.watch(friendsProvider);
+    final gameAsync = ref.watch(gameDetailProvider(widget.gameId));
+    final invitedIds = gameAsync.maybeWhen(
+      data: (game) => game.players
+          .where((p) => p.isInvited)
+          .map((p) => p.userId)
+          .toSet(),
+      orElse: () => <String>{},
+    );
+    final sheetBusy = ref.watch(gameActionsProvider(widget.gameId)).isProcessing;
+
+    return SafeArea(
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.5,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Text(
+                'Invite Friends',
+                style: AppTextStyles.titleMedium.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            Expanded(
+              child: friendsAsync.when(
+                loading: () =>
+                    const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(child: Text(e.toString())),
+                data: (friends) {
+                  if (friends.isEmpty) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text(
+                          'Add friends from their profile to invite them to games.',
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    );
+                  }
+                  return ListView.builder(
+                    itemCount: friends.length,
+                    itemBuilder: (_, i) {
+                      final friend = friends[i];
+                      final alreadyInvited = invitedIds.contains(friend.id);
+                      final isRowBusy = _busyFriendId == friend.id;
+                      final disabled =
+                          _busyFriendId != null || sheetBusy;
+
+                      return ListTile(
+                        leading: BbProfileAvatar(
+                          profilePicture: friend.profilePicture,
+                          radius: 20,
+                          initials:
+                              '${friend.firstName[0]}${friend.lastName[0]}',
+                        ),
+                        title: Text(friend.fullName),
+                        subtitle: Text('@${friend.username}'),
+                        trailing: isRowBusy
+                            ? const SizedBox(
+                                width: 28,
+                                height: 28,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : alreadyInvited
+                                ? TextButton(
+                                    onPressed: disabled
+                                        ? null
+                                        : () => _revoke(
+                                              friend.id,
+                                              friend.fullName,
+                                            ),
+                                    child: Text(
+                                      'Invited',
+                                      style:
+                                          AppTextStyles.labelMedium.copyWith(
+                                        color: disabled
+                                            ? AppColors.textSecondary
+                                            : AppColors.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  )
+                                : IconButton(
+                                    onPressed: disabled
+                                        ? null
+                                        : () => _invite(
+                                              friend.id,
+                                              friend.fullName,
+                                            ),
+                                    icon: Icon(
+                                      Icons.send_rounded,
+                                      color: disabled
+                                          ? AppColors.textSecondary
+                                          : AppColors.primary,
+                                    ),
+                                  ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 Future<void> _showManageSheet(
   BuildContext context,
   WidgetRef ref,
@@ -1217,6 +1497,17 @@ Future<void> _showManageSheet(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (canEdit)
+            ListTile(
+              leading: const Icon(Icons.group_add_outlined),
+              title: const Text('Invite Friends'),
+              subtitle: const Text('Send an invite to your approved friends'),
+              onTap: () {
+                Navigator.pop(sheetCtx);
+                if (!context.mounted) return;
+                _showInviteFriendsSheet(context, ref, gameId);
+              },
+            ),
           ListTile(
             leading: const Icon(Icons.edit_outlined),
             title: const Text('Edit Game'),

@@ -1,9 +1,12 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/error/app_exception.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/auth/data/models/user_model.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
+import 'package:buddbull/features/chat/data/models/chat_model.dart';
+import 'package:buddbull/features/chat/providers/chat_provider.dart';
 import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
 import 'package:buddbull/features/profile/presentation/widgets/sport_chip.dart';
 import 'package:buddbull/features/profile/presentation/widgets/stats_card.dart';
@@ -115,26 +118,57 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
 
-            // ── Social stats ──────────────────────────────────
+            // ── Friends row (navigates to friends list) ───────
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _SocialStat(
-                        count: user.followersCount,
-                        label: AppStrings.followers,
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Material(
+                  color: AppColors.surface,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: AppColors.grey200),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: () => context.push(Routes.friends),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.people_outline_rounded,
+                          color: AppColors.primary,
+                          size: 22,
+                        ),
+                      ),
+                      title: Text(
+                        AppStrings.friends,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      subtitle: Text(
+                        user.friendsCount == 1
+                            ? '1 mutual connection'
+                            : '${user.friendsCount} mutual connections',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      trailing: const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(width: 1),
-                    Expanded(
-                      child: _SocialStat(
-                        count: user.followingCount,
-                        label: AppStrings.following,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -353,24 +387,19 @@ class _PublicProfileView extends ConsumerWidget {
                 ),
               ),
             ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Expanded(child: _FollowButton(userId: userId)),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                        label: const Text('Message'),
-                      ),
-                    ),
-                  ],
+            if (ref.watch(currentUserProvider)?.id != userId)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: _PublicProfileActions(
+                    userId: userId,
+                    friendRequestStatus: user.friendRequestStatus,
+                    friendRequestId: user.friendRequestId,
+                    isFriend: user.isFriend,
+                    initialFriendsCount: user.friendsCount,
+                  ),
                 ),
               ),
-            ),
             if (user.stats != null)
               SliverToBoxAdapter(
                 child: Padding(
@@ -389,7 +418,9 @@ class _PublicProfileView extends ConsumerWidget {
                       Expanded(
                         child: StatsCard(
                           value: user.stats!.averageRating.toStringAsFixed(1),
-                          label: AppStrings.rating,
+                          label: user.stats!.totalRatings > 0
+                              ? '${AppStrings.rating} (${user.stats!.totalRatings})'
+                              : AppStrings.rating,
                           icon: Icons.star_rounded,
                           color: AppColors.secondary,
                         ),
@@ -403,6 +434,19 @@ class _PublicProfileView extends ConsumerWidget {
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ),
+            if (user.stats != null && user.stats!.totalRatings > 0)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Text(
+                    'Community average ${user.stats!.averageRating.toStringAsFixed(1)} from ${user.stats!.totalRatings} peer ${user.stats!.totalRatings == 1 ? 'rating' : 'ratings'}',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ),
@@ -483,76 +527,260 @@ class _PublicProfileView extends ConsumerWidget {
   }
 }
 
-// ── Follow button ─────────────────────────────────────────────────────────────
-class _FollowButton extends ConsumerStatefulWidget {
-  const _FollowButton({required this.userId});
+// ── Public profile actions (friend requests, message, social counts) ────────
+class _PublicProfileActions extends ConsumerStatefulWidget {
+  const _PublicProfileActions({
+    required this.userId,
+    required this.friendRequestStatus,
+    this.friendRequestId,
+    required this.isFriend,
+    required this.initialFriendsCount,
+  });
+
   final String userId;
+  final String friendRequestStatus;
+  final String? friendRequestId;
+  final bool isFriend;
+  final int initialFriendsCount;
 
   @override
-  ConsumerState<_FollowButton> createState() => _FollowButtonState();
+  ConsumerState<_PublicProfileActions> createState() =>
+      _PublicProfileActionsState();
 }
 
-class _FollowButtonState extends ConsumerState<_FollowButton> {
-  bool _following = false;
+class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
+  late String _status;
+  late int _friendsCount;
+  bool _actionLoading = false;
+  bool _messageLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _status = widget.isFriend ? 'friends' : widget.friendRequestStatus;
+    _friendsCount = widget.initialFriendsCount;
+  }
+
+  void _snack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  String _errorMessage(Object e) {
+    if (e is AppException) return e.message;
+    final raw = e.toString();
+    final match = RegExp(r'\): (.+)$').firstMatch(raw);
+    return match?.group(1) ?? raw;
+  }
+
+  Future<void> _sendFriendRequest() async {
+    if (_actionLoading) return;
+    setState(() => _actionLoading = true);
+    try {
+      await ref.read(profileProvider.notifier).sendFriendRequest(widget.userId);
+      if (!mounted) return;
+      setState(() => _status = 'pending_sent');
+      _snack('Friend request sent');
+    } catch (e) {
+      _snack(_errorMessage(e));
+    } finally {
+      if (mounted) setState(() => _actionLoading = false);
+    }
+  }
+
+  Future<void> _acceptRequest() async {
+    final requestId = widget.friendRequestId;
+    if (requestId == null || requestId.isEmpty) return;
+    if (_actionLoading) return;
+    setState(() => _actionLoading = true);
+    try {
+      final count = await ref
+          .read(profileProvider.notifier)
+          .acceptFriendRequest(requestId);
+      if (!mounted) return;
+      setState(() {
+        _status = 'friends';
+        if (count != null) _friendsCount = count;
+      });
+      ref.invalidate(publicProfileProvider(widget.userId));
+      _snack('You are now friends');
+    } catch (e) {
+      _snack(_errorMessage(e));
+    } finally {
+      if (mounted) setState(() => _actionLoading = false);
+    }
+  }
+
+  Future<void> _declineRequest() async {
+    final requestId = widget.friendRequestId;
+    if (requestId == null || requestId.isEmpty) return;
+    if (_actionLoading) return;
+    setState(() => _actionLoading = true);
+    try {
+      await ref.read(profileProvider.notifier).declineFriendRequest(requestId);
+      if (!mounted) return;
+      setState(() => _status = 'none');
+      ref.invalidate(publicProfileProvider(widget.userId));
+      _snack('Friend request declined');
+    } catch (e) {
+      _snack(_errorMessage(e));
+    } finally {
+      if (mounted) setState(() => _actionLoading = false);
+    }
+  }
+
+  Future<void> _openMessage() async {
+    final me = ref.read(currentUserProvider);
+    if (me == null) {
+      _snack('Please sign in to send a message.');
+      return;
+    }
+    if (me.id == widget.userId) {
+      _snack('You cannot message yourself.');
+      return;
+    }
+    if (_messageLoading) return;
+
+    setState(() => _messageLoading = true);
+    try {
+      final repo = ref.read(chatRepositoryProvider);
+      final chats = await repo.getChats();
+      ChatModel? existingDm;
+      for (final c in chats) {
+        if (c.type == 'dm' &&
+            c.participants.any((p) => p.userId == widget.userId)) {
+          existingDm = c;
+          break;
+        }
+      }
+      final chat = existingDm ?? await repo.createOrGetDM(widget.userId);
+      ref.invalidate(chatListProvider);
+      if (!mounted) return;
+      context.push(Routes.chatRoom(chat.id));
+    } catch (e) {
+      _snack(_errorMessage(e));
+    } finally {
+      if (mounted) setState(() => _messageLoading = false);
+    }
+  }
+
+  Widget _primaryFriendButton() {
+    if (_actionLoading) {
+      return const Center(
+        child: SizedBox(
+          width: 22,
+          height: 22,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+
+    switch (_status) {
+      case 'friends':
+        return OutlinedButton.icon(
+          onPressed: _messageLoading ? null : _openMessage,
+          icon: _messageLoading
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.chat_bubble_outline, size: 18),
+          label: const Text('Message'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.primary,
+            side: const BorderSide(color: AppColors.primary),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+        );
+      case 'pending_sent':
+        return OutlinedButton.icon(
+          onPressed: null,
+          icon: const Icon(Icons.hourglass_top_rounded, size: 18),
+          label: const Text('Request sent'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.textSecondary,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+        );
+      case 'pending_received':
+        return Row(
+          children: [
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: _acceptRequest,
+                icon: const Icon(Icons.check_rounded, size: 18),
+                label: const Text('Accept'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.success,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _declineRequest,
+                icon: const Icon(Icons.close_rounded, size: 18),
+                label: const Text('Decline'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ],
+        );
+      default:
+        return OutlinedButton.icon(
+          onPressed: _sendFriendRequest,
+          icon: const Icon(Icons.person_add_outlined, size: 18),
+          label: const Text('Add Friend'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.primary,
+            side: const BorderSide(color: AppColors.primary),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+        );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return _following
-        ? OutlinedButton.icon(
-            onPressed: _unfollow,
-            icon: const Icon(Icons.person_remove_outlined, size: 18),
-            label: const Text('Following'),
-          )
-        : FilledButton.icon(
-            onPressed: _follow,
-            icon: const Icon(Icons.person_add_outlined, size: 18),
-            label: const Text('Follow'),
-            style:
-                FilledButton.styleFrom(backgroundColor: AppColors.primary),
-          );
-  }
-
-  Future<void> _follow() async {
-    setState(() => _following = true);
-    await ref.read(profileProvider.notifier).followUser(widget.userId);
-  }
-
-  Future<void> _unfollow() async {
-    setState(() => _following = false);
-    await ref.read(profileProvider.notifier).unfollowUser(widget.userId);
-  }
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-class _SocialStat extends StatelessWidget {
-  const _SocialStat({required this.count, required this.label});
-  final int count;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.grey200),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Text(
-            count.toString(),
-            style: AppTextStyles.titleMedium.copyWith(
-              color: AppColors.textPrimary,
+    return Column(
+      children: [
+        _primaryFriendButton(),
+        const SizedBox(height: 12),
+        Material(
+          color: AppColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: AppColors.grey200),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: ListTile(
+            dense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+            leading: const Icon(
+              Icons.people_outline_rounded,
+              color: AppColors.primary,
+              size: 20,
+            ),
+            title: Text(
+              '$_friendsCount ${AppStrings.friends}',
+              style: AppTextStyles.bodySmall.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-          Text(label, style: AppTextStyles.labelSmall),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
 class _SectionCard extends StatelessWidget {
   const _SectionCard({required this.title, required this.child});
   final String title;

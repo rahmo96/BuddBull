@@ -40,7 +40,14 @@ abstract class ApiEndpoints {
   static String userFollowers(String id) => '/users/$id/followers';
   static String userFollowing(String id) => '/users/$id/following';
   static String followUser(String id) => '/users/$id/follow';
-  static String unfollowUser(String id) => '/users/$id/unfollow';
+  static String unfollowUser(String id) => '/users/$id/follow';
+  static const String myFriends = '/users/me/friends';
+  static String acceptFriendRequest(String requestId) =>
+      '/users/friend-requests/$requestId/accept';
+  static String declineFriendRequest(String requestId) =>
+      '/users/friend-requests/$requestId/decline';
+  static String inviteFriendToGame(String gameId, String friendId) =>
+      '/games/$gameId/invite/$friendId?requireFriend=true';
   static const String updateProfilePicture = '/users/me/profile-picture';
   static const String pushToken = '/users/me/push-token';
 
@@ -52,9 +59,12 @@ abstract class ApiEndpoints {
   static const String myGames = '/games/me';
   static const String calendar = '/games/calendar';
   static String game(String id) => '/games/$id';
-  static String joinGame(String id) => '/games/$id/join';
+  static String joinGame(String id, {bool acceptInvite = false}) =>
+      acceptInvite ? '/games/$id/join?acceptInvite=true' : '/games/$id/join';
   static String leaveGame(String id) => '/games/$id/leave';
   static String invitePlayer(String gameId, String userId) =>
+      '/games/$gameId/invite/$userId';
+  static String cancelGameInvite(String gameId, String userId) =>
       '/games/$gameId/invite/$userId';
   static String approvePlayer(String gameId, String userId) =>
       '/games/$gameId/players/$userId/approve';

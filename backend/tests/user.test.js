@@ -163,20 +163,35 @@ describe('GET /users/:username', () => {
   });
 });
 
-describe('Follow & Unfollow', () => {
-  it('allows a user to follow another user', async () => {
+describe('Friend requests & unfriend', () => {
+  it('sends a pending friend request and becomes friends after accept', async () => {
     const r1 = await registerAndLogin(1);
     const r2 = await registerAndLogin(2);
 
-    const res = await request(app)
+    const send = await request(app)
       .post(`${USER_BASE}/${r2.user._id}/follow`)
       .set('Authorization', `Bearer ${r1.token}`);
 
-    expect(res.status).toBe(200);
-    expect(res.body.data.followerCount).toBe(1);
+    expect(send.status).toBe(200);
+    expect(send.body.data.status).toBe('pending');
+    expect(send.body.data.requestId).toBeTruthy();
+
+    const accept = await request(app)
+      .post(`${USER_BASE}/friend-requests/${send.body.data.requestId}/accept`)
+      .set('Authorization', `Bearer ${r2.token}`);
+
+    expect(accept.status).toBe(200);
+    expect(accept.body.data.isFriend).toBe(true);
+
+    const profile = await request(app)
+      .get(`${USER_BASE}/${r2.user._id}`)
+      .set('Authorization', `Bearer ${r1.token}`);
+
+    expect(profile.body.data.user.isFriend).toBe(true);
+    expect(profile.body.data.user.friendsCount).toBeGreaterThanOrEqual(1);
   });
 
-  it('prevents following the same user twice with 409', async () => {
+  it('prevents duplicate pending friend requests with 409', async () => {
     const r1 = await registerAndLogin(1);
     const r2 = await registerAndLogin(2);
 
@@ -207,11 +222,16 @@ describe('Follow & Unfollow', () => {
     expect(res.status).toBe(400);
   });
 
-  it('unfollows successfully after following', async () => {
+  it('unfriends successfully after becoming friends', async () => {
     const r1 = await registerAndLogin(1);
     const r2 = await registerAndLogin(2);
 
-    await request(app).post(`${USER_BASE}/${r2.user._id}/follow`).set('Authorization', `Bearer ${r1.token}`);
+    const send = await request(app)
+      .post(`${USER_BASE}/${r2.user._id}/follow`)
+      .set('Authorization', `Bearer ${r1.token}`);
+    await request(app)
+      .post(`${USER_BASE}/friend-requests/${send.body.data.requestId}/accept`)
+      .set('Authorization', `Bearer ${r2.token}`);
 
     const res = await request(app)
       .delete(`${USER_BASE}/${r2.user._id}/follow`)

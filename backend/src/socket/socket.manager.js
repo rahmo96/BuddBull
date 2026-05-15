@@ -30,6 +30,7 @@ const User = require('../models/User.model');
 const Chat = require('../models/Chat.model');
 const Message = require('../models/Message.model');
 const logger = require('../utils/logger');
+const notificationService = require('../services/notification.service');
 const { toPlainDoc } = require('../utils/toPlainDoc');
 
 const SENDER_FIELDS = 'firstName lastName username profilePicture';
@@ -237,6 +238,21 @@ module.exports = (io) => {
           for (const recipientId of recipients) {
             io.to(recipientId).emit('chat:unread_update', unreadEvent);
           }
+
+          const senderDoc = message.sender;
+          const senderName = senderDoc
+            ? `${senderDoc.firstName || ''} ${senderDoc.lastName || ''}`.trim() ||
+              senderDoc.username
+            : user.username || 'Someone';
+
+          await notificationService.notifyChatMessage({
+            chatId,
+            senderId: user._id,
+            senderName,
+            preview: unreadEvent.preview,
+            recipientIds: recipients,
+            gameId: chat.game ? String(chat.game) : undefined,
+          });
         } catch (err) {
           logger.warn(`[Socket] chat:unread_update fan-out failed: ${err.message}`);
         }

@@ -124,6 +124,19 @@ router.post(
 );
 
 /**
+ * @route  DELETE /api/v1/games/:id/invite/:userId
+ * @desc   Organiser revokes a pending game invite
+ * @access Private — organiser or admin
+ */
+router.delete(
+  '/:id/invite/:userId',
+  protect,
+  validateMongoId('id'),
+  validateMongoId('userId'),
+  GameController.cancelInvite,
+);
+
+/**
  * @route  PATCH  /api/v1/games/:id/players/:userId/approve
  * @desc   Organiser approves a pending player
  * @access Private — organiser or admin

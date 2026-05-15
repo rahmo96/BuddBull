@@ -269,6 +269,77 @@ class GameActionsNotifier extends StateNotifier<GameActionsState> {
     }
   }
 
+  Future<bool> inviteFriend(String friendId) async {
+    state = state.copyWith(isProcessing: true, clearError: true);
+    try {
+      final game = await _repo.inviteFriend(_gameId, friendId);
+      state = state.copyWith(
+        isProcessing: false,
+        game: game,
+        successMessage: 'Invitation sent to your friend.',
+      );
+      _ref.invalidate(gameDetailProvider(_gameId));
+      return true;
+    } catch (e) {
+      state = state.copyWith(isProcessing: false, error: _msg(e));
+      return false;
+    }
+  }
+
+  Future<bool> cancelInvite(String userId) async {
+    state = state.copyWith(isProcessing: true, clearError: true);
+    try {
+      final game = await _repo.cancelInvite(_gameId, userId);
+      state = state.copyWith(
+        isProcessing: false,
+        game: game,
+        successMessage: 'Invitation revoked.',
+      );
+      _ref.invalidate(gameDetailProvider(_gameId));
+      return true;
+    } catch (e) {
+      state = state.copyWith(isProcessing: false, error: _msg(e));
+      return false;
+    }
+  }
+
+  /// Join when accepting an organiser invite (`status: invited`).
+  Future<bool> acceptInvite() async {
+    state = state.copyWith(isJoining: true, clearError: true);
+    try {
+      final game = await _repo.joinGame(_gameId, acceptInvite: true);
+      state = state.copyWith(
+        isJoining: false,
+        game: game,
+        successMessage: 'You joined the game!',
+      );
+      _ref.invalidate(gameDetailProvider(_gameId));
+      _ref.invalidate(myGamesProvider);
+      return true;
+    } catch (e) {
+      final message = _msg(e);
+      state = state.copyWith(isJoining: false, error: message);
+      return false;
+    }
+  }
+
+  /// Decline an organiser invite without joining.
+  Future<bool> declineInvite() async {
+    state = state.copyWith(isLeaving: true, clearError: true);
+    try {
+      await _repo.leaveGame(_gameId);
+      state = state.copyWith(
+        isLeaving: false,
+        successMessage: 'Invitation declined.',
+      );
+      _ref.invalidate(gameDetailProvider(_gameId));
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLeaving: false, error: _msg(e));
+      return false;
+    }
+  }
+
   /// winnerDescription / score / mvpUserId / notes — fields the backend
   /// `completeGameSchema` accepts.
   Future<bool> completeGame([Map<String, dynamic>? result]) async {

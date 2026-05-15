@@ -28,6 +28,32 @@ const assertOrganizer = (game, userId, userRole) => {
   }
 };
 
+/** Initial roster slot so the organiser counts as a player for stats + completion. */
+const _organizerPlayerSlot = (organizerId) => ({
+  user: organizerId,
+  status: 'approved',
+  role: 'co-organizer',
+  joinedAt: new Date(),
+});
+
+/**
+ * Guarantees the organiser has an approved player row (create, legacy data, completion).
+ */
+const ensureOrganizerApprovedParticipant = (game) => {
+  const organizerId = game.organizer?.toString();
+  if (!organizerId) return;
+
+  const slot = game.players.find((p) => p.user.toString() === organizerId);
+  if (!slot) {
+    game.players.push(_organizerPlayerSlot(game.organizer));
+    return;
+  }
+  if (slot.status !== 'approved') {
+    slot.status = 'approved';
+    if (!slot.joinedAt) slot.joinedAt = new Date();
+  }
+};
+
 // ─────────────────────────────────────────────
 //  Notification dispatch
 // ─────────────────────────────────────────────
@@ -56,10 +82,12 @@ const _dispatchers = {
   'game:invite': (p) => ({
     recipients: [p.targetUserId],
     type: 'gameInvite',
-    title: 'New Game Invite',
-    body: p.gameTitle
-      ? `You've been invited to "${p.gameTitle}".`
-      : 'You have been invited to a game.',
+    title: 'Game Invite',
+    body: p.organizerName
+      ? `${p.organizerName} invited you to join their game!`
+      : p.gameTitle
+        ? `You've been invited to "${p.gameTitle}".`
+        : 'You have been invited to a game.',
     data: {
       gameId: String(p.gameId),
       organizerId: p.organizerId ? String(p.organizerId) : undefined,
@@ -302,16 +330,10 @@ const createGame = async (organizerId, dto) => {
   const game = new Game({
     ...dto,
     organizer: organizerId,
-    players: [
-      {
-        user: organizerId,
-        status: 'approved',
-        role: 'co-organizer',
-        joinedAt: new Date(),
-      },
-    ],
+    players: [_organizerPlayerSlot(organizerId)],
   });
 
+  ensureOrganizerApprovedParticipant(game);
   await game.save();
 
   const chat = await Chat.create({
@@ -651,7 +673,7 @@ const cancelGame = async (gameId, userId, userRole, reason) => {
  *  3. Player meets the skill-level requirement
  *  4. No schedule conflict with any of the player's other approved games
  */
-const joinGame = async (gameId, userId) => {
+const joinGame = async (gameId, userId, { acceptInvite = false } = {}) => {
   const game = await Game.findById(gameId).where({ deletedAt: null });
   if (!game) throw new AppError('Game not found.', 404);
 
@@ -668,6 +690,9 @@ const joinGame = async (gameId, userId) => {
   // Already in the game?
   const existingSlot = game.players.find((p) => p.user.toString() === userId.toString());
   if (existingSlot) {
+    if (acceptInvite && existingSlot.status !== 'invited') {
+      throw new AppError('This invitation is no longer valid.', 410);
+    }
     if (existingSlot.status === 'approved') {
       throw new AppError('You are already in this game.', 409);
     }
@@ -688,10 +713,9 @@ const joinGame = async (gameId, userId) => {
       }
       return { game, status: existingSlot.status };
     }
-    if (['left', 'kicked', 'rejected'].includes(existingSlot.status)) {
-      // Re-join path. Fall through to the skill-level + schedule-conflict
-      // checks below by NOT returning here, then the post-validation block
-      // detects this slot and mutates it in place instead of pushing a dup.
+    if (['left', 'kicked', 'rejected', 'invite_revoked'].includes(existingSlot.status)) {
+      // Re-join path (includes revoked invites — manual join is a fresh request).
+      // Fall through to skill/conflict checks; post-validation mutates in place.
     } else {
       // Any other unexpected slot state — never $push a second row for the same user.
       throw new AppError('You already have a slot in this game.', 409);
@@ -740,10 +764,9 @@ const joinGame = async (gameId, userId) => {
   // Treat them as equivalent join-time gates.
   const playerStatus = targetStatus();
 
-  // We only reach this branch when the slot is 'left', 'kicked', or
-  // 'rejected' (organiser declined a join request) — the
-  // approved/pending/invited cases all short-circuited above.
-  if (existingSlot && ['left', 'kicked', 'rejected'].includes(existingSlot.status)) {
+  // Slot is 'left', 'kicked', 'rejected', or 'invite_revoked' — approved/pending/invited
+  // short-circuited above.
+  if (existingSlot && ['left', 'kicked', 'rejected', 'invite_revoked'].includes(existingSlot.status)) {
     existingSlot.status = playerStatus;
     existingSlot.joinedAt = new Date();
     existingSlot.resolvedAt = playerStatus === 'approved' ? new Date() : undefined;
@@ -803,7 +826,13 @@ const leaveGame = async (gameId, userId) => {
 //  invitePlayer
 // ─────────────────────────────────────────────
 
-const invitePlayer = async (gameId, organizerId, organizerRole, targetUserId) => {
+const invitePlayer = async (
+  gameId,
+  organizerId,
+  organizerRole,
+  targetUserId,
+  { requireFriend = false } = {},
+) => {
   const game = await Game.findById(gameId).where({ deletedAt: null });
   if (!game) throw new AppError('Game not found.', 404);
 
@@ -821,6 +850,18 @@ const invitePlayer = async (gameId, organizerId, organizerRole, targetUserId) =>
   const target = await User.findById(targetUserId).active().notBanned();
   if (!target) throw new AppError('Target user not found.', 404);
 
+  if (requireFriend) {
+    const friendService = require('./friend.service');
+    if (!(await friendService.areFriends(organizerId, targetUserId))) {
+      throw new AppError('You can only invite friends to this game.', 403);
+    }
+  }
+
+  const organizer = await User.findById(organizerId).select('firstName lastName username');
+  const organizerName = organizer
+    ? `${organizer.firstName || ''} ${organizer.lastName || ''}`.trim() || organizer.username
+    : null;
+
   // Re-invite after a closed slot — mutate in place instead of pushing a
   // second participant row with the same user id.
   if (existing && ['left', 'kicked', 'rejected'].includes(existing.status)) {
@@ -834,6 +875,7 @@ const invitePlayer = async (gameId, organizerId, organizerRole, targetUserId) =>
       organizerId,
       targetUserId,
       gameTitle: game.title,
+      organizerName,
     });
 
     logger.info(`Re-invited user ${targetUserId} to game ${gameId}`);
@@ -848,9 +890,34 @@ const invitePlayer = async (gameId, organizerId, organizerRole, targetUserId) =>
     organizerId,
     targetUserId,
     gameTitle: game.title,
+    organizerName,
   });
 
   logger.info(`Invited user ${targetUserId} to game ${gameId}`);
+  return game;
+};
+
+/**
+ * Organiser revokes a pending invite before the invitee accepts.
+ * Sets the slot to `invite_revoked` so stale notification joins fail clearly.
+ */
+const cancelInvite = async (gameId, organizerId, organizerRole, targetUserId) => {
+  const game = await Game.findById(gameId).where({ deletedAt: null });
+  if (!game) throw new AppError('Game not found.', 404);
+
+  assertOrganizer(game, organizerId, organizerRole);
+
+  const slot = game.players.find((p) => p.user.toString() === targetUserId.toString());
+  if (!slot) throw new AppError('This user has not been invited to the game.', 404);
+  if (slot.status !== 'invited') {
+    throw new AppError('Only pending invitations can be revoked.', 400);
+  }
+
+  slot.status = 'invite_revoked';
+  slot.resolvedAt = new Date();
+  await game.save();
+
+  logger.info(`Invite revoked for user ${targetUserId} in game ${gameId}`);
   return game;
 };
 
@@ -1095,8 +1162,47 @@ const mergeGroups = async (sourceGameId, targetGameId, organizerId, organizerRol
 };
 
 // ─────────────────────────────────────────────
-//  completeGame
+//  Game completion (manual + auto)
 // ─────────────────────────────────────────────
+
+/** PRD: auto-complete stale fixtures this many ms after `scheduledAt`. */
+const STALE_GAME_AUTO_COMPLETE_MS = 4 * 60 * 60 * 1000;
+
+const STALE_GAME_STATUSES = ['open', 'full', 'in_progress'];
+
+/**
+ * Shared tail for manual and automatic completion: persist status/result,
+ * bump `stats.gamesPlayed`, refresh training streaks, fan out rating inbox
+ * + FCM via `notify('game:completed', ...)`.
+ */
+const _finalizeGameCompletion = async (game, { result, source = 'manual' }) => {
+  const gameId = game._id;
+
+  ensureOrganizerApprovedParticipant(game);
+  game.status = 'completed';
+  game.result = result;
+
+  await game.save();
+
+  const approvedPlayerIds = game.players.filter((p) => p.status === 'approved').map((p) => p.user);
+
+  if (approvedPlayerIds.length > 0) {
+    await User.updateMany({ _id: { $in: approvedPlayerIds } }, { $inc: { 'stats.gamesPlayed': 1 } });
+
+    const players = await User.find({ _id: { $in: approvedPlayerIds } });
+    await Promise.all(
+      players.map(async (player) => {
+        userService.updateTrainingStreakWithDebugLog(player);
+        await player.save({ validateBeforeSave: false });
+      }),
+    );
+  }
+
+  await notify('game:completed', { gameId, approvedPlayerIds });
+  logger.info(`Game completed (${source}): ${gameId}`);
+
+  return game;
+};
 
 /**
  * Marks a game as completed, records the result, and updates
@@ -1111,36 +1217,84 @@ const completeGame = async (gameId, organizerId, organizerRole, resultDto) => {
   if (game.status === 'completed') throw new AppError('Game is already completed.', 400);
   if (game.status === 'cancelled') throw new AppError('Cannot complete a cancelled game.', 400);
 
-  game.status = 'completed';
-  game.result = {
-    winnerDescription: resultDto.winnerDescription,
-    score: resultDto.score,
-    mvpUser: resultDto.mvpUserId || null,
-    notes: resultDto.notes,
-    recordedAt: new Date(),
-    recordedBy: organizerId,
+  return _finalizeGameCompletion(game, {
+    source: 'manual',
+    result: {
+      winnerDescription: resultDto.winnerDescription,
+      score: resultDto.score,
+      mvpUser: resultDto.mvpUserId || null,
+      notes: resultDto.notes,
+      recordedAt: new Date(),
+      recordedBy: organizerId,
+    },
+  });
+};
+
+/**
+ * Auto-completes games whose `scheduledAt` is more than 4 hours in the past
+ * and are still `open`, `full`, or `in_progress`. Intended for hourly cron.
+ */
+const autoCompleteStaleGames = async () => {
+  const cutoff = new Date(Date.now() - STALE_GAME_AUTO_COMPLETE_MS);
+
+  const staleGames = await Game.find({
+    deletedAt: null,
+    status: { $in: STALE_GAME_STATUSES },
+    scheduledAt: { $lt: cutoff },
+  }).select('_id organizer title scheduledAt status');
+
+  const summary = {
+    cutoff: cutoff.toISOString(),
+    scanned: staleGames.length,
+    completed: [],
+    skipped: [],
+    errors: [],
   };
 
-  await game.save();
+  for (const row of staleGames) {
+    const gameId = String(row._id);
+    try {
+      const game = await Game.findById(row._id).where({ deletedAt: null });
+      if (!game) {
+        summary.skipped.push({ gameId, reason: 'not_found' });
+        continue;
+      }
 
-  // Bulk-update stats for all approved players
-  const approvedPlayerIds = game.players.filter((p) => p.status === 'approved').map((p) => p.user);
+      if (!STALE_GAME_STATUSES.includes(game.status)) {
+        summary.skipped.push({ gameId, reason: 'status_changed' });
+        continue;
+      }
 
-  await User.updateMany({ _id: { $in: approvedPlayerIds } }, { $inc: { 'stats.gamesPlayed': 1 } });
+      if (game.scheduledAt >= cutoff) {
+        summary.skipped.push({ gameId, reason: 'not_stale' });
+        continue;
+      }
 
-  // Update streaks for each player (must run per-document for streak logic)
-  const players = await User.find({ _id: { $in: approvedPlayerIds } });
-  await Promise.all(
-    players.map(async (player) => {
-      userService.updateTrainingStreakWithDebugLog(player);
-      await player.save({ validateBeforeSave: false });
-    }),
-  );
+      await _finalizeGameCompletion(game, {
+        source: 'auto',
+        result: {
+          winnerDescription: 'Auto-completed',
+          notes:
+            'This game was automatically marked complete because it was still active more than 4 hours after its scheduled start time.',
+          recordedAt: new Date(),
+          recordedBy: game.organizer,
+        },
+      });
 
-  await notify('game:completed', { gameId, approvedPlayerIds });
-  logger.info(`Game completed: ${gameId}`);
+      summary.completed.push(gameId);
+    } catch (err) {
+      summary.errors.push({ gameId, message: err.message });
+      logger.warn(`[game:autoComplete] failed for ${gameId}: ${err.message}`);
+    }
+  }
 
-  return game;
+  if (summary.completed.length > 0) {
+    logger.info(
+      `[game:autoComplete] completed ${summary.completed.length}/${summary.scanned} stale game(s)`,
+    );
+  }
+
+  return summary;
 };
 
 // ─────────────────────────────────────────────
@@ -1208,11 +1362,15 @@ module.exports = {
   joinGame,
   leaveGame,
   invitePlayer,
+  cancelInvite,
+  inviteFriendToGame: (gameId, organizerId, organizerRole, friendId) =>
+    invitePlayer(gameId, organizerId, organizerRole, friendId, { requireFriend: true }),
   approvePlayer,
   kickPlayer,
   handleJoinRequest,
   mergeGroups,
   completeGame,
+  autoCompleteStaleGames,
   getPendingRequests,
   adminListGames,
 };

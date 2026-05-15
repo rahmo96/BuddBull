@@ -52,7 +52,7 @@ describe('notificationInbox.service — socket emission', () => {
       const recipient = '6504a4c70d2af9ac353ed2a1'; // arbitrary ObjectId-shaped string
       const doc = await notificationInboxService.createForUser(recipient, {
         type: 'gameInvite',
-        title: 'New Game Invite',
+        title: 'Game Invite',
         body: 'You have been invited to a game.',
         data: { gameId: '6504a4c70d2af9ac353ed2b2' },
       });
@@ -68,7 +68,7 @@ describe('notificationInbox.service — socket emission', () => {
       expect(emits[0].payload).toMatchObject({
         _id: String(doc._id),
         type: 'gameInvite',
-        title: 'New Game Invite',
+        title: 'Game Invite',
         body: 'You have been invited to a game.',
         read: false,
         data: { gameId: '6504a4c70d2af9ac353ed2b2' },

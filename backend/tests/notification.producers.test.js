@@ -86,12 +86,10 @@ describe('game.service.notify — Phase 2 inbox writes', () => {
       expect(inbox).toHaveLength(1);
       expect(inbox[0]).toMatchObject({
         type: 'gameInvite',
-        title: 'New Game Invite',
+        title: 'Game Invite',
         read: false,
       });
-      // Game title flows through into the body so the inbox UI can
-      // render a meaningful message without an extra round-trip.
-      expect(inbox[0].body).toMatch(/Friday 5-a-side/);
+      expect(inbox[0].body).toMatch(/User1 Test invited you to join their game!/);
       expect(inbox[0].data).toMatchObject({ gameId: String(gameId) });
 
       // The organiser is NOT also notified about their own invite —

@@ -126,6 +126,26 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             notificationId: n.id,
             decision: 'reject',
           ),
+          onAcceptFriendRequest: () => _handleFriendRequestDecision(
+            context: context,
+            notificationId: n.id,
+            decision: 'accept',
+          ),
+          onDeclineFriendRequest: () => _handleFriendRequestDecision(
+            context: context,
+            notificationId: n.id,
+            decision: 'decline',
+          ),
+          onAcceptGameInvite: () => _handleGameInviteDecision(
+            context: context,
+            notificationId: n.id,
+            decision: 'accept',
+          ),
+          onDeclineGameInvite: () => _handleGameInviteDecision(
+            context: context,
+            notificationId: n.id,
+            decision: 'decline',
+          ),
         );
       },
     );
@@ -171,6 +191,71 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     }
     final target = _routeFor(n);
     if (target != null && context.mounted) context.push(target);
+  }
+
+  Future<void> _handleFriendRequestDecision({
+    required BuildContext context,
+    required String notificationId,
+    required String decision,
+  }) async {
+    final ok = await ref
+        .read(notificationsProvider.notifier)
+        .handleFriendRequest(notificationId, decision);
+    if (!context.mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            decision == 'accept'
+                ? 'Friend request accepted'
+                : 'Friend request declined',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      final err = ref.read(notificationsProvider).error;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(err ?? 'Could not update friend request'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleGameInviteDecision({
+    required BuildContext context,
+    required String notificationId,
+    required String decision,
+  }) async {
+    final ok = await ref
+        .read(notificationsProvider.notifier)
+        .handleGameInvite(notificationId, decision);
+    if (!context.mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    if (ok) {
+      messenger.showSnackBar(SnackBar(
+        content: Text(
+          decision == 'accept'
+              ? 'You joined the game.'
+              : 'Invite declined.',
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ));
+    } else {
+      final err = ref.read(notificationsProvider).error ?? 'Action failed.';
+      final message = err.contains('no longer valid')
+          ? 'This invitation is no longer valid.'
+          : err;
+      messenger.showSnackBar(SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.error,
+      ));
+    }
   }
 
   Future<void> _handleJoinRequestDecision({
@@ -220,22 +305,40 @@ class _NotificationTile extends StatelessWidget {
     required this.isMutating,
     this.onApproveJoinRequest,
     this.onRejectJoinRequest,
+    this.onAcceptFriendRequest,
+    this.onDeclineFriendRequest,
+    this.onAcceptGameInvite,
+    this.onDeclineGameInvite,
   });
 
   final NotificationModel notification;
   final VoidCallback onTap;
   final bool isMutating;
 
-  /// Both callbacks are only invoked when the tile shows the inline
-  /// quick-action row (`type == 'gameJoinRequest'` and unread).
   final VoidCallback? onApproveJoinRequest;
   final VoidCallback? onRejectJoinRequest;
+  final VoidCallback? onAcceptFriendRequest;
+  final VoidCallback? onDeclineFriendRequest;
+  final VoidCallback? onAcceptGameInvite;
+  final VoidCallback? onDeclineGameInvite;
 
-  bool get _showQuickActions =>
+  bool get _showJoinQuickActions =>
       notification.type == 'gameJoinRequest' &&
       notification.isUnread &&
       onApproveJoinRequest != null &&
       onRejectJoinRequest != null;
+
+  bool get _showFriendQuickActions =>
+      notification.type == 'friendRequest' &&
+      notification.isUnread &&
+      onAcceptFriendRequest != null &&
+      onDeclineFriendRequest != null;
+
+  bool get _showGameInviteQuickActions =>
+      notification.type == 'gameInvite' &&
+      notification.isUnread &&
+      onAcceptGameInvite != null &&
+      onDeclineGameInvite != null;
 
   @override
   Widget build(BuildContext context) {
@@ -307,16 +410,40 @@ class _NotificationTile extends StatelessWidget {
                   ],
                 ],
               ),
-              if (_showQuickActions) ...[
+              if (_showJoinQuickActions) ...[
                 const SizedBox(height: 10),
                 Padding(
-                  // Align the buttons with the title text (leading icon
-                  // takes 40px, gap 12px → 52px indent).
                   padding: const EdgeInsets.only(left: 52),
                   child: _JoinRequestQuickActions(
                     isMutating: isMutating,
                     onApprove: onApproveJoinRequest!,
                     onReject: onRejectJoinRequest!,
+                  ),
+                ),
+              ],
+              if (_showFriendQuickActions) ...[
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.only(left: 52),
+                  child: _JoinRequestQuickActions(
+                    isMutating: isMutating,
+                    onApprove: onAcceptFriendRequest!,
+                    onReject: onDeclineFriendRequest!,
+                    approveLabel: 'Accept',
+                    rejectLabel: 'Decline',
+                  ),
+                ),
+              ],
+              if (_showGameInviteQuickActions) ...[
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.only(left: 52),
+                  child: _JoinRequestQuickActions(
+                    isMutating: isMutating,
+                    onApprove: onAcceptGameInvite!,
+                    onReject: onDeclineGameInvite!,
+                    approveLabel: 'Accept',
+                    rejectLabel: 'Decline',
                   ),
                 ),
               ],
@@ -333,11 +460,15 @@ class _JoinRequestQuickActions extends StatelessWidget {
     required this.isMutating,
     required this.onApprove,
     required this.onReject,
+    this.approveLabel = 'Approve',
+    this.rejectLabel = 'Reject',
   });
 
   final bool isMutating;
   final VoidCallback onApprove;
   final VoidCallback onReject;
+  final String approveLabel;
+  final String rejectLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -347,7 +478,7 @@ class _JoinRequestQuickActions extends StatelessWidget {
           child: FilledButton.tonalIcon(
             onPressed: isMutating ? null : onApprove,
             icon: const Icon(Icons.check_rounded, size: 18),
-            label: const Text('Approve'),
+            label: Text(approveLabel),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.success.withValues(alpha: 0.15),
               foregroundColor: AppColors.success,
@@ -363,7 +494,7 @@ class _JoinRequestQuickActions extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: isMutating ? null : onReject,
             icon: const Icon(Icons.close_rounded, size: 18),
-            label: const Text('Reject'),
+            label: Text(rejectLabel),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.error,
               side: BorderSide(
@@ -420,6 +551,8 @@ class _LeadingIcon extends StatelessWidget {
       case 'ratingReceived':
         return (Icons.star_border_rounded, AppColors.secondary);
       case 'newFollower':
+      case 'friendRequest':
+      case 'friendRequestAccepted':
         return (Icons.person_add_alt_1_outlined, AppColors.info);
       case 'broadcast':
         return (Icons.campaign_outlined, AppColors.primary);

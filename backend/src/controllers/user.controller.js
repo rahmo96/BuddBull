@@ -29,7 +29,7 @@ const getUser = catchAsync(async (req, res) => {
 // ─────────────────────────────────────────────
 
 const getUserById = catchAsync(async (req, res) => {
-  const user = await UserService.getPublicProfileById(req.params.id);
+  const user = await UserService.getPublicProfileById(req.params.id, req.user._id);
 
   res.status(200).json({ success: true, data: { user } });
 });
@@ -113,9 +113,28 @@ const followUser = catchAsync(async (req, res) => {
 // ─────────────────────────────────────────────
 
 const unfollowUser = catchAsync(async (req, res) => {
-  await UserService.unfollowUser(req.user._id, req.params.id);
+  const result = await UserService.unfollowUser(req.user._id, req.params.id);
 
-  res.status(200).json({ success: true, message: 'Unfollowed successfully.' });
+  res.status(200).json({ success: true, message: 'Unfriended successfully.', data: result });
+});
+
+const getMyFriends = catchAsync(async (req, res) => {
+  const { page, limit } = req.query;
+  const friends = await UserService.getFriends(req.user._id, { page, limit });
+
+  res.status(200).json({ success: true, results: friends.length, data: { friends } });
+});
+
+const acceptFriendRequest = catchAsync(async (req, res) => {
+  const result = await UserService.acceptFriendRequest(req.user._id, req.params.requestId);
+
+  res.status(200).json({ success: true, data: result });
+});
+
+const declineFriendRequest = catchAsync(async (req, res) => {
+  await UserService.declineFriendRequest(req.user._id, req.params.requestId);
+
+  res.status(200).json({ success: true, message: 'Friend request declined.' });
 });
 
 // ─────────────────────────────────────────────
@@ -204,6 +223,9 @@ module.exports = {
   deleteMe,
   followUser,
   unfollowUser,
+  getMyFriends,
+  acceptFriendRequest,
+  declineFriendRequest,
   getFollowers,
   getFollowing,
   searchUsers,

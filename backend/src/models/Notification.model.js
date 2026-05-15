@@ -41,6 +41,8 @@ const NOTIFICATION_TYPES = [
   'ratingPending',
   'ratingReceived',
   'newFollower',
+  'friendRequest',
+  'friendRequestAccepted',
   'broadcast',
   'system',
 ];

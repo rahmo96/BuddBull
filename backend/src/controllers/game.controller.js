@@ -88,7 +88,10 @@ const cancelGame = catchAsync(async (req, res) => {
 // ─────────────────────────────────────────────
 
 const joinGame = catchAsync(async (req, res) => {
-  const { game, status } = await GameService.joinGame(req.params.id, req.user._id);
+  const acceptInvite = req.query.acceptInvite === 'true';
+  const { game, status } = await GameService.joinGame(req.params.id, req.user._id, {
+    acceptInvite,
+  });
 
   const message =
     status === 'approved' ? 'You have joined the game!' : 'Your join request is pending organizer approval.';
@@ -111,9 +114,39 @@ const leaveGame = catchAsync(async (req, res) => {
 // ─────────────────────────────────────────────
 
 const invitePlayer = catchAsync(async (req, res) => {
-  const game = await GameService.invitePlayer(req.params.id, req.user._id, req.user.role, req.params.userId);
+  const requireFriend = req.query.requireFriend === 'true';
+  const game = await GameService.invitePlayer(
+    req.params.id,
+    req.user._id,
+    req.user.role,
+    req.params.userId,
+    { requireFriend },
+  );
 
-  res.status(200).json({ success: true, message: 'Invitation sent.', data: { game } });
+  res.status(200).json({
+    success: true,
+    message: requireFriend ? 'Friend invited to the game.' : 'Invitation sent.',
+    data: { game },
+  });
+});
+
+// ─────────────────────────────────────────────
+//  DELETE /api/v1/games/:id/invite/:userId
+// ─────────────────────────────────────────────
+
+const cancelInvite = catchAsync(async (req, res) => {
+  const game = await GameService.cancelInvite(
+    req.params.id,
+    req.user._id,
+    req.user.role,
+    req.params.userId,
+  );
+
+  res.status(200).json({
+    success: true,
+    message: 'Invitation revoked.',
+    data: { game },
+  });
 });
 
 // ─────────────────────────────────────────────
@@ -228,6 +261,7 @@ module.exports = {
   joinGame,
   leaveGame,
   invitePlayer,
+  cancelInvite,
   approvePlayer,
   kickPlayer,
   handleJoinRequest,

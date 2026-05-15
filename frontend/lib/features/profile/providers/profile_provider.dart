@@ -51,6 +51,10 @@ final publicProfileProvider =
   return ref.watch(userRepositoryProvider).getUserProfile(userId);
 });
 
+final friendsProvider = FutureProvider.autoDispose<List<UserModel>>((ref) {
+  return ref.watch(userRepositoryProvider).getFriends();
+});
+
 // ── Notifier ─────────────────────────────────────────────────────────────────
 class ProfileNotifier extends StateNotifier<ProfileState> {
   ProfileNotifier(this._repo, this._ref) : super(const ProfileState());
@@ -105,20 +109,40 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     }
   }
 
-  // ── Follow / unfollow ─────────────────────────────────────────
-  Future<void> followUser(String id) async {
+  // ── Friends ───────────────────────────────────────────────────
+  Future<String> sendFriendRequest(String id) async {
     try {
-      await _repo.followUser(id);
+      return await _repo.sendFriendRequest(id);
     } catch (e) {
       state = state.copyWith(error: _msg(e));
+      rethrow;
     }
   }
 
-  Future<void> unfollowUser(String id) async {
+  Future<int?> acceptFriendRequest(String requestId) async {
     try {
-      await _repo.unfollowUser(id);
+      return await _repo.acceptFriendRequest(requestId);
     } catch (e) {
       state = state.copyWith(error: _msg(e));
+      rethrow;
+    }
+  }
+
+  Future<void> declineFriendRequest(String requestId) async {
+    try {
+      await _repo.declineFriendRequest(requestId);
+    } catch (e) {
+      state = state.copyWith(error: _msg(e));
+      rethrow;
+    }
+  }
+
+  Future<void> unfriend(String id) async {
+    try {
+      await _repo.unfriend(id);
+    } catch (e) {
+      state = state.copyWith(error: _msg(e));
+      rethrow;
     }
   }
 

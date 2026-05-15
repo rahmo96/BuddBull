@@ -162,7 +162,9 @@ const userSchema = new mongoose.Schema(
     // ── Location (privacy-safe) ───────────────────────────────
     location: { type: locationSchema, default: () => ({}) },
 
-    // ── Social graph ──────────────────────────────────────────
+    // ── Social graph (mutual friends only) ─────────────────────
+    friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    // Legacy — migrated into `friends`; kept for existing DB rows only.
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 
@@ -231,11 +233,10 @@ userSchema.virtual('age').get(function () {
   return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
 });
 
-userSchema.virtual('followerCount').get(function () {
-  return this.followers ? this.followers.length : 0;
-});
-
-userSchema.virtual('followingCount').get(function () {
+userSchema.virtual('friendsCount').get(function () {
+  const friendsLen = this.friends ? this.friends.length : 0;
+  if (friendsLen > 0) return friendsLen;
+  // Legacy rows stored mutual links in `following`.
   return this.following ? this.following.length : 0;
 });
 

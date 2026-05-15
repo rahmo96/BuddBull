@@ -8,6 +8,7 @@ const PerformanceLog = require('../models/PerformanceLog.model');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
 const { upload: uploadConfig } = require('../config/environment');
+const friendService = require('./friend.service');
 
 // ─────────────────────────────────────────────
 //  Profile retrieval
@@ -60,7 +61,7 @@ const getUserById = async (id) => {
 /**
  * Returns a public profile by Mongo ID with rating/game/activity summary.
  */
-const getPublicProfileById = async (id) => {
+const getPublicProfileById = async (id, viewerId = null) => {
   if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid user ID.', 400);
 
   const user = await User.findById(id)
@@ -69,6 +70,11 @@ const getPublicProfileById = async (id) => {
     .select('-email -pushTokens -notificationPreferences -refreshTokenHash -verificationToken -resetPasswordToken');
 
   if (!user) throw new AppError('User not found.', 404);
+
+  const relationship =
+    viewerId && viewerId.toString() !== id.toString()
+      ? await friendService.getRelationship(viewerId, id)
+      : { isFriend: false, friendRequestStatus: 'none', friendRequestId: null };
 
   const [ratingSummary, recentLogs, upcomingGames] = await Promise.all([
     Rating.getProfileSummary(id),
@@ -92,8 +98,13 @@ const getPublicProfileById = async (id) => {
       .lean(),
   ]);
 
+  const obj = user.toObject();
   return {
-    ...user.toObject(),
+    ...obj,
+    friendsCount: obj.friendsCount ?? friendService._friendsCount(user),
+    isFriend: relationship.isFriend,
+    friendRequestStatus: relationship.friendRequestStatus,
+    friendRequestId: relationship.friendRequestId,
     performanceSummary: {
       ratings: ratingSummary,
       recentActivity: recentLogs,
@@ -207,86 +218,19 @@ const deleteMe = async (userId, password) => {
 
 /**
  * Follows a target user. Idempotent — safe to call multiple times.
- * @returns {{ followerCount, followingCount }}
+ * @returns {{ requestId, status }}
  */
-const followUser = async (actorId, targetId) => {
-  if (actorId.toString() === targetId.toString()) {
-    throw new AppError('You cannot follow yourself.', 400);
-  }
+/** Sends a pending friend request (replaces instant follow). */
+const followUser = async (actorId, targetId) => friendService.sendFriendRequest(actorId, targetId);
 
-  const [actor, target] = await Promise.all([
-    User.findById(actorId).active(),
-    User.findById(targetId).active().notBanned(),
-  ]);
+/** Removes mutual friendship. */
+const unfollowUser = async (actorId, targetId) => friendService.unfriend(actorId, targetId);
 
-  if (!actor) throw new AppError('Actor user not found.', 404);
-  if (!target) throw new AppError('Target user not found.', 404);
+/** @deprecated Use getFriends — kept for route compatibility. */
+const getFollowers = (userId, opts) => friendService.getFriends(userId, opts);
 
-  const alreadyFollowing = actor.following.some((id) => id.toString() === targetId.toString());
-  if (alreadyFollowing) throw new AppError('You are already following this user.', 409);
-
-  await Promise.all([
-    User.findByIdAndUpdate(actorId, { $addToSet: { following: targetId } }),
-    User.findByIdAndUpdate(targetId, { $addToSet: { followers: actorId } }),
-  ]);
-
-  return {
-    followerCount: target.followers.length + 1,
-    followingCount: actor.following.length + 1,
-  };
-};
-
-/**
- * Unfollows a target user.
- */
-const unfollowUser = async (actorId, targetId) => {
-  if (actorId.toString() === targetId.toString()) {
-    throw new AppError('You cannot unfollow yourself.', 400);
-  }
-
-  await Promise.all([
-    User.findByIdAndUpdate(actorId, { $pull: { following: targetId } }),
-    User.findByIdAndUpdate(targetId, { $pull: { followers: actorId } }),
-  ]);
-};
-
-/**
- * Returns the list of users following the given user.
- */
-const getFollowers = async (userId, { page = 1, limit = 20 } = {}) => {
-  const user = await User.findById(userId)
-    .populate({
-      path: 'followers',
-      select: 'username firstName lastName profilePicture stats.averageRating location.city',
-      options: {
-        skip: (page - 1) * limit,
-        limit: Number(limit),
-      },
-    })
-    .active();
-
-  if (!user) throw new AppError('User not found.', 404);
-  return user.followers;
-};
-
-/**
- * Returns the list of users this user is following.
- */
-const getFollowing = async (userId, { page = 1, limit = 20 } = {}) => {
-  const user = await User.findById(userId)
-    .populate({
-      path: 'following',
-      select: 'username firstName lastName profilePicture stats.averageRating location.city',
-      options: {
-        skip: (page - 1) * limit,
-        limit: Number(limit),
-      },
-    })
-    .active();
-
-  if (!user) throw new AppError('User not found.', 404);
-  return user.following;
-};
+/** @deprecated Use getFriends — kept for route compatibility. */
+const getFollowing = (userId, opts) => friendService.getFriends(userId, opts);
 
 // ─────────────────────────────────────────────
 //  Search / Discovery
@@ -456,6 +400,9 @@ module.exports = {
   deleteMe,
   followUser,
   unfollowUser,
+  acceptFriendRequest: friendService.acceptFriendRequest,
+  declineFriendRequest: friendService.declineFriendRequest,
+  getFriends: friendService.getFriends,
   getFollowers,
   getFollowing,
   searchUsers,

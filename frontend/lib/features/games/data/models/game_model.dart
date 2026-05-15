@@ -332,11 +332,16 @@ class GamePlayer {
 
   bool get isApproved => status == 'approved';
   bool get isPending => status == 'pending';
+  bool get isInvited => status == 'invited';
+  bool get isInviteRevoked => status == 'invite_revoked';
   bool get isRejected => status == 'rejected';
 
-  /// Can tap Join / Request again after leave, kick, or join-request rejection.
+  /// Can tap Join / Request again after leave, kick, rejection, or revoked invite.
   bool get canJoinAgain =>
-      status == 'rejected' || status == 'left' || status == 'kicked';
+      status == 'rejected' ||
+      status == 'left' ||
+      status == 'kicked' ||
+      status == 'invite_revoked';
 
   String get displayName => (firstName != null && lastName != null)
       ? '$firstName $lastName'

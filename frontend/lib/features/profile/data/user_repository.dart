@@ -59,12 +59,34 @@ class UserRepository {
     return me;
   }
 
-  // ── Follow / unfollow ─────────────────────────────────────────
-  Future<void> followUser(String id) =>
-      _api.post(ApiEndpoints.followUser(id));
+  // ── Friends / friend requests ─────────────────────────────────
+  Future<String> sendFriendRequest(String id) async {
+    final body = await _api.post(ApiEndpoints.followUser(id));
+    final data = body['data'] as Map<String, dynamic>? ?? {};
+    return data['requestId']?.toString() ?? '';
+  }
 
-  Future<void> unfollowUser(String id) =>
-      _api.post(ApiEndpoints.unfollowUser(id));
+  Future<int?> acceptFriendRequest(String requestId) async {
+    final body = await _api.post(ApiEndpoints.acceptFriendRequest(requestId));
+    final data = body['data'] as Map<String, dynamic>?;
+    return (data?['friendsCount'] as num?)?.toInt();
+  }
+
+  Future<void> declineFriendRequest(String requestId) =>
+      _api.post(ApiEndpoints.declineFriendRequest(requestId));
+
+  Future<void> unfriend(String id) =>
+      _api.delete(ApiEndpoints.unfollowUser(id));
+
+  Future<List<UserModel>> getFriends() async {
+    final body = await _api.get(ApiEndpoints.myFriends);
+    final data = body['data'] as Map<String, dynamic>;
+    final list = data['friends'] as List<dynamic>? ?? [];
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map(UserModel.fromJson)
+        .toList();
+  }
 
   // ── Search users ──────────────────────────────────────────────
   Future<List<UserModel>> searchUsers({

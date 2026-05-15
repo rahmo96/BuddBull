@@ -70,6 +70,28 @@ router.post('/me/push-token', validate(addPushTokenSchema), UserController.addPu
  */
 router.delete('/me/push-token', UserController.removePushToken);
 
+/**
+ * @route  GET /api/v1/users/me/friends
+ * @desc   List the authenticated user's friends (mutual)
+ * @access Private
+ */
+router.get('/me/friends', UserController.getMyFriends);
+
+/**
+ * @route  POST /api/v1/users/friend-requests/:requestId/accept
+ * @route  POST /api/v1/users/friend-requests/:requestId/decline
+ */
+router.post(
+  '/friend-requests/:requestId/accept',
+  validateMongoId('requestId'),
+  UserController.acceptFriendRequest,
+);
+router.post(
+  '/friend-requests/:requestId/decline',
+  validateMongoId('requestId'),
+  UserController.declineFriendRequest,
+);
+
 // ─────────────────────────────────────────────
 //  Admin-only routes  (MUST be before /:username)
 // ─────────────────────────────────────────────
@@ -101,8 +123,9 @@ router.get('/search', UserController.searchUsers);
 
 /**
  * @route  POST   /api/v1/users/:id/follow
+ * @desc   Send a friend request (pending until accepted)
  * @route  DELETE /api/v1/users/:id/follow
- * @desc   Follow / unfollow a user
+ * @desc   Unfriend a user
  * @access Private
  */
 router.post('/:id/follow', validateMongoId('id'), UserController.followUser);

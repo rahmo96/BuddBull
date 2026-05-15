@@ -60,6 +60,10 @@ const _fcmNavTypeFromInbox = (type, data) => {
       return 'join_request';
     case 'gameApproved':
       return 'join_approved';
+    case 'friendRequest':
+      return 'friend_request';
+    case 'friendRequestAccepted':
+      return 'friend_request_accepted';
     default:
       return 'inbox';
   }
