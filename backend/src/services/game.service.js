@@ -28,6 +28,14 @@ const assertOrganizer = (game, userId, userRole) => {
   }
 };
 
+/** Resolve a player slot's user id whether `user` is populated or an ObjectId. */
+const _playerUserId = (player) => {
+  if (!player?.user) return '';
+  const u = player.user;
+  if (typeof u === 'object' && u._id != null) return u._id.toString();
+  return u.toString();
+};
+
 /** Initial roster slot so the organiser counts as a player for stats + completion. */
 const _organizerPlayerSlot = (organizerId) => ({
   user: organizerId,
@@ -899,7 +907,7 @@ const invitePlayer = async (
 
 /**
  * Organiser revokes a pending invite before the invitee accepts.
- * Sets the slot to `invite_revoked` so stale notification joins fail clearly.
+ * Removes the player subdocument via `$pull` (reliable array mutation in MongoDB).
  */
 const cancelInvite = async (gameId, organizerId, organizerRole, targetUserId) => {
   const game = await Game.findById(gameId).where({ deletedAt: null });
@@ -907,18 +915,46 @@ const cancelInvite = async (gameId, organizerId, organizerRole, targetUserId) =>
 
   assertOrganizer(game, organizerId, organizerRole);
 
-  const slot = game.players.find((p) => p.user.toString() === targetUserId.toString());
-  if (!slot) throw new AppError('This user has not been invited to the game.', 404);
-  if (slot.status !== 'invited') {
-    throw new AppError('Only pending invitations can be revoked.', 400);
+  const targetId = targetUserId.toString();
+  if (!mongoose.Types.ObjectId.isValid(targetId)) {
+    throw new AppError('Invalid user ID.', 400);
+  }
+  const targetOid = new mongoose.Types.ObjectId(targetId);
+
+  const slot = game.players.find((p) => _playerUserId(p) === targetId);
+
+  // Idempotent — invite row already removed.
+  if (!slot) {
+    return getGame(gameId);
   }
 
-  slot.status = 'invite_revoked';
-  slot.resolvedAt = new Date();
-  await game.save();
+  // Invitee already left / was removed — nothing to pull.
+  if (['left', 'rejected', 'kicked'].includes(slot.status)) {
+    return getGame(gameId);
+  }
 
-  logger.info(`Invite revoked for user ${targetUserId} in game ${gameId}`);
-  return game;
+  if (slot.status === 'pending' || slot.status === 'approved') {
+    throw new AppError(
+      'This player has already joined or requested to join. Remove them from the player list instead.',
+      400,
+    );
+  }
+
+  if (slot.status !== 'invited' && slot.status !== 'invite_revoked') {
+    throw new AppError(`Cannot revoke invitation while player status is "${slot.status}".`, 400);
+  }
+
+  const pullResult = await Game.updateOne(
+    { _id: gameId, deletedAt: null },
+    { $pull: { players: { user: targetOid } } },
+  );
+
+  if (pullResult.matchedCount === 0) {
+    throw new AppError('Game not found.', 404);
+  }
+
+  logger.info(`Invite revoked (player removed) for user ${targetUserId} in game ${gameId}`);
+  return getGame(gameId);
 };
 
 // ─────────────────────────────────────────────

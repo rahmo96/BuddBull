@@ -1352,24 +1352,42 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Revoked invite for $friendName')),
         );
+      } else {
+        final err = ref.read(gameActionsProvider(widget.gameId)).error;
+        if (err != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(err)),
+          );
+        }
       }
     } finally {
       if (mounted) setState(() => _busyFriendId = null);
     }
   }
 
+  Set<String> _invitedFriendIds(GameModel? game) {
+    if (game == null) return {};
+    return game.players
+        .where((p) => p.isInvited)
+        .map((p) => p.userId)
+        .where((id) => id.isNotEmpty)
+        .toSet();
+  }
+
   @override
   Widget build(BuildContext context) {
     final friendsAsync = ref.watch(friendsProvider);
+    final actionsState = ref.watch(gameActionsProvider(widget.gameId));
     final gameAsync = ref.watch(gameDetailProvider(widget.gameId));
-    final invitedIds = gameAsync.maybeWhen(
-      data: (game) => game.players
-          .where((p) => p.isInvited)
-          .map((p) => p.userId)
-          .toSet(),
-      orElse: () => <String>{},
+    // Prefer mutation response from gameActions — updates immediately after invite/revoke.
+    final game = actionsState.game ?? gameAsync.valueOrNull;
+    final invitedIds = _invitedFriendIds(game);
+    // ignore: avoid_print
+    print(
+      '[InviteFriendsSheet] gameId=${widget.gameId} invitedIds=${invitedIds.length} '
+      'players=${game?.players.length ?? 0} source=${actionsState.game != null ? 'actions' : 'detail'}',
     );
-    final sheetBusy = ref.watch(gameActionsProvider(widget.gameId)).isProcessing;
+    final sheetBusy = actionsState.isProcessing;
 
     return SafeArea(
       child: SizedBox(

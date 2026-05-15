@@ -1,3 +1,4 @@
+import 'package:buddbull/core/error/app_exception.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/games/data/game_repository.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
@@ -269,16 +270,25 @@ class GameActionsNotifier extends StateNotifier<GameActionsState> {
     }
   }
 
+  Future<void> _syncGameDetail(GameModel game) async {
+    state = state.copyWith(game: game);
+    _ref.invalidate(gameDetailProvider(_gameId));
+    try {
+      await _ref.read(gameDetailProvider(_gameId).future);
+    } catch (_) {
+      // Detail refetch failed — actions state still holds the mutation response.
+    }
+  }
+
   Future<bool> inviteFriend(String friendId) async {
     state = state.copyWith(isProcessing: true, clearError: true);
     try {
       final game = await _repo.inviteFriend(_gameId, friendId);
       state = state.copyWith(
         isProcessing: false,
-        game: game,
         successMessage: 'Invitation sent to your friend.',
       );
-      _ref.invalidate(gameDetailProvider(_gameId));
+      await _syncGameDetail(game);
       return true;
     } catch (e) {
       state = state.copyWith(isProcessing: false, error: _msg(e));
@@ -292,10 +302,9 @@ class GameActionsNotifier extends StateNotifier<GameActionsState> {
       final game = await _repo.cancelInvite(_gameId, userId);
       state = state.copyWith(
         isProcessing: false,
-        game: game,
         successMessage: 'Invitation revoked.',
       );
-      _ref.invalidate(gameDetailProvider(_gameId));
+      await _syncGameDetail(game);
       return true;
     } catch (e) {
       state = state.copyWith(isProcessing: false, error: _msg(e));
@@ -368,6 +377,7 @@ class GameActionsNotifier extends StateNotifier<GameActionsState> {
   void clearSuccess() => state = state.copyWith(clearSuccess: true);
 
   String _msg(Object e) {
+    if (e is AppException && e.message.isNotEmpty) return e.message;
     final raw = e.toString();
     final m = RegExp(r'\): (.+)$').firstMatch(raw);
     return m?.group(1) ?? raw;

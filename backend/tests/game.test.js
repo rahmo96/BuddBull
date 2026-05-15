@@ -249,6 +249,34 @@ describe('DELETE /games/:id/leave', () => {
 });
 
 describe('Invite & Approve flow', () => {
+  it('organizer can revoke a pending invite (DELETE invite)', async () => {
+    const { token: orgToken } = await registerAndLogin(1, 'organizer');
+    const { userId: p2Id } = await registerAndLogin(2, 'player');
+
+    const game = await createGameAs(orgToken);
+    const gameId = game.body.data.game._id;
+
+    const invRes = await request(app)
+      .post(`${GAMES}/${gameId}/invite/${p2Id}`)
+      .set('Authorization', `Bearer ${orgToken}`);
+    expect(invRes.status).toBe(200);
+
+    const cancelRes = await request(app)
+      .delete(`${GAMES}/${gameId}/invite/${p2Id}`)
+      .set('Authorization', `Bearer ${orgToken}`);
+    expect(cancelRes.status).toBe(200);
+
+    const slot = cancelRes.body.data.game.players.find(
+      (p) => `${p.user}` === `${p2Id}` || p.user?._id === `${p2Id}`,
+    );
+    expect(slot).toBeUndefined();
+
+    const again = await request(app)
+      .delete(`${GAMES}/${gameId}/invite/${p2Id}`)
+      .set('Authorization', `Bearer ${orgToken}`);
+    expect(again.status).toBe(200);
+  });
+
   it('organizer invites a user and then approves them after join', async () => {
     const { token: orgToken } = await registerAndLogin(1, 'organizer');
     const { token: p2Token, userId: p2Id } = await registerAndLogin(2, 'player');
