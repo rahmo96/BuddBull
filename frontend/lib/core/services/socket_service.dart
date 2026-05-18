@@ -118,6 +118,9 @@ class SocketService {
   SocketStatus _status = SocketStatus.disconnected;
   SocketStatus get status => _status;
 
+  /// Coalesces overlapping [connect] calls (home shell + chat screen).
+  Future<void>? _connectInFlight;
+
   SocketService() {
     _authSub = FirebaseAuth.instance.idTokenChanges().listen((user) async {
       if (user == null) {
@@ -136,26 +139,34 @@ class SocketService {
       _lastToken = token;
 
       // Refresh auth and reconnect so the new token is used.
-      if (_socket != null) {
+      if (_socket?.connected == true) {
         _socket!.auth = {'token': token};
-        if (_socket!.connected == true) {
-          _socket!.disconnect();
-        }
+        _socket!.disconnect();
         _socket!.connect();
+      } else if (_connectInFlight == null && _socket == null) {
+        await connect();
       }
     });
   }
 
   // ── Connect ───────────────────────────────────────────────────────────────
-  Future<void> connect() async {
+  Future<void> connect() {
     if (_socket?.connected == true) {
       debugPrint('⚪ SOCKET connect skipped — already connected (${_socket!.id})');
-      return;
+      return Future.value();
     }
+    if (_connectInFlight != null) {
+      debugPrint('⚪ SOCKET connect skipped — handshake already in progress');
+      return _connectInFlight!;
+    }
+    _connectInFlight = _connectOnce();
+    return _connectInFlight!.whenComplete(() => _connectInFlight = null);
+  }
 
-    // Drop half-open client so a later connect() always rebuilds listeners + handshake.
-    if (_socket != null) {
-      debugPrint('⚪ SOCKET disposing stale socket before new handshake');
+  Future<void> _connectOnce() async {
+    // Only tear down a dead socket — never dispose one that is mid-handshake.
+    if (_socket != null && _socket!.connected != true) {
+      debugPrint('⚪ SOCKET disposing disconnected client before new handshake');
       try {
         _socket!.dispose();
       } catch (_) {}
@@ -194,8 +205,8 @@ class SocketService {
         io.OptionBuilder()
             // Polling first — more reliable on Android emulator / cleartext HTTP.
             .setTransports(['polling', 'websocket'])
-            .enableForceNew()
             .enableReconnection()
+            .setTimeout(30000)
             .setAuth({'token': token})
             // Must defer connect until handlers below are attached (see Socket ctor).
             .disableAutoConnect()

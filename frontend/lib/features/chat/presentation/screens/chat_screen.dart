@@ -36,10 +36,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    // Connect socket when entering chat
+    // HomeScaffold already starts the socket; only join this room.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final socket = ref.read(socketServiceProvider);
-      await socket.connect();
+      if (socket.status != SocketStatus.connected) {
+        await socket.connect();
+      }
       if (!mounted) return;
       socket.joinChat(widget.chatId);
 
