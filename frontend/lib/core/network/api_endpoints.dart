@@ -1,16 +1,17 @@
 import 'package:flutter/foundation.dart';
 
 /// All backend API endpoint paths.
-/// Override with `--dart-define=API_BASE_URL=http://host:port/api/v1`
+/// Set [baseUrl] via `--dart-define=API_BASE_URL=https://api.example.com`
+/// or fall back to the Docker-compose local address.
 abstract class ApiEndpoints {
   static String get baseUrl {
+    // `String.fromEnvironment` must be invoked as a const constructor (required on web).
     const env = String.fromEnvironment('API_BASE_URL', defaultValue: '');
     if (env.isNotEmpty) return env;
 
-    if (kReleaseMode) return 'http://178.105.65.91:8000/api/v1';
-
     if (kIsWeb) return 'http://127.0.0.1:5000/api/v1';
 
+    // Android emulator: host loopback. iOS simulator & desktop: localhost (not 10.0.2.2).
     if (defaultTargetPlatform == TargetPlatform.android) {
       return 'http://10.0.2.2:5000/api/v1';
     }
