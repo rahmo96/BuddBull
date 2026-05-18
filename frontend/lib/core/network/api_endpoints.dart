@@ -1,6 +1,21 @@
+import 'package:flutter/foundation.dart';
+
 /// All backend API endpoint paths.
+/// Override with `--dart-define=API_BASE_URL=http://host:port/api/v1`
 abstract class ApiEndpoints {
-  static String get baseUrl => 'http://178.105.65.91:3000/api/v1';
+  static String get baseUrl {
+    const env = String.fromEnvironment('API_BASE_URL', defaultValue: '');
+    if (env.isNotEmpty) return env;
+
+    if (kReleaseMode) return 'http://178.105.65.91:8000/api/v1';
+
+    if (kIsWeb) return 'http://127.0.0.1:5000/api/v1';
+
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:5000/api/v1';
+    }
+    return 'http://127.0.0.1:5000/api/v1';
+  }
 
   /// HTTP origin for Socket.IO (same host/port as REST, without `/api/v1`).
   static String get socketUrl =>

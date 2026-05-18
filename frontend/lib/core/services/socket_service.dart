@@ -192,7 +192,8 @@ class SocketService {
       _socket = io.io(
         serverUrl,
         io.OptionBuilder()
-            .setTransports(['websocket'])
+            // Polling first — more reliable on Android emulator / cleartext HTTP.
+            .setTransports(['polling', 'websocket'])
             .enableForceNew()
             .enableReconnection()
             .setAuth({'token': token})

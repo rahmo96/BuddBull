@@ -32,7 +32,7 @@ services:
     container_name: buddbull_api
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "5000:5000"
     env_file:
       - ./backend/.env
     environment:
@@ -46,7 +46,7 @@ services:
       # Persist uploads between restarts
       - uploads_data:/app/uploads
     healthcheck:
-      test: [ "CMD", "wget", "-qO-", "http://localhost:3000/health" ]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:5000/health" ]
       interval: 15s
       timeout: 5s
       retries: 3
