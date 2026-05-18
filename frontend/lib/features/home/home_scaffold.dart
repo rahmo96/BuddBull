@@ -24,9 +24,10 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
   @override
   void initState() {
     super.initState();
-    // Establish socket connection when the authenticated shell mounts
+    // Connect only when already signed in (auth listener handles login transitions).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      if (ref.read(authProvider).status != AuthStatus.authenticated) return;
       _socketService = ref.read(socketServiceProvider);
       _socketService?.connect();
     });
