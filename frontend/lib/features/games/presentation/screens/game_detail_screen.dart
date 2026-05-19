@@ -752,42 +752,47 @@ class _PlayerTile extends StatelessWidget {
     final canOpenProfile =
         player.userId.isNotEmpty && !isCurrentUser;
 
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      dense: true,
-      onTap: canOpenProfile
-          ? () => context.push(Routes.publicProfile(player.userId))
-          : null,
-      leading: BbProfileAvatar(
-        profilePicture: player.profilePicture,
-        initials: _initials,
-        radius: 18,
-      ),
-      title: Row(
-        children: [
-          Flexible(
-            child: Text(
-              player.displayName + (isCurrentUser ? ' (You)' : ''),
-              style: AppTextStyles.bodyMedium,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (player.averageRating > 0) ...[
-            const SizedBox(width: 6),
-            RatingStars(rating: player.averageRating, size: 12),
-            const SizedBox(width: 4),
-            Text(
-              player.averageRating.toStringAsFixed(1),
-              style: AppTextStyles.labelSmall.copyWith(
-                color: AppColors.textSecondary,
+    // Own [Material] so splash/highlight from [ListTile] is not asserted
+    // against when this row lives inside [_Section]'s decorated container.
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        dense: true,
+        onTap: canOpenProfile
+            ? () => context.push(Routes.publicProfile(player.userId))
+            : null,
+        leading: BbProfileAvatar(
+          profilePicture: player.profilePicture,
+          initials: _initials,
+          radius: 18,
+        ),
+        title: Row(
+          children: [
+            Flexible(
+              child: Text(
+                player.displayName + (isCurrentUser ? ' (You)' : ''),
+                style: AppTextStyles.bodyMedium,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
+            if (player.averageRating > 0) ...[
+              const SizedBox(width: 6),
+              RatingStars(rating: player.averageRating, size: 12),
+              const SizedBox(width: 4),
+              Text(
+                player.averageRating.toStringAsFixed(1),
+                style: AppTextStyles.labelSmall.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
+        subtitle: Text('@${player.username}',
+            style: AppTextStyles.bodySmall),
+        trailing: _buildTrailing(showRateButton),
       ),
-      subtitle: Text('@${player.username}',
-          style: AppTextStyles.bodySmall),
-      trailing: _buildTrailing(showRateButton),
     );
   }
 
