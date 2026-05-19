@@ -153,6 +153,11 @@ class SocketService {
       return;
     }
 
+    if (FirebaseAuth.instance.currentUser == null) {
+      // Expected when logged out or in widget tests without a signed-in user.
+      return;
+    }
+
     // Drop half-open client so a later connect() always rebuilds listeners + handshake.
     if (_socket != null) {
       debugPrint('⚪ SOCKET disposing stale socket before new handshake');
@@ -176,9 +181,6 @@ class SocketService {
       return;
     }
     if (token == null) {
-      debugPrint(
-        '❌ SOCKET abort — no Firebase ID token (currentUser: ${FirebaseAuth.instance.currentUser?.uid})',
-      );
       return;
     }
     _lastToken = token;

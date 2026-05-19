@@ -24,9 +24,9 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
   @override
   void initState() {
     super.initState();
-    // Establish socket connection when the authenticated shell mounts
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      if (ref.read(authProvider).status != AuthStatus.authenticated) return;
       _socketService = ref.read(socketServiceProvider);
       _socketService?.connect();
     });
