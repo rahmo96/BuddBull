@@ -4,6 +4,7 @@ import 'package:buddbull/core/network/api_client.dart';
 import 'package:buddbull/core/network/api_endpoints.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
+import 'package:buddbull/features/chat/providers/chat_provider.dart';
 import 'package:buddbull/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -50,6 +51,12 @@ const AndroidNotificationDetails kBuddbullAndroidHeadsUpDetails =
   ledColor: Color(0xFF1565C0),
 );
 
+const NotificationDetails kBuddbullForegroundNotificationDetails =
+    NotificationDetails(
+  android: kBuddbullAndroidHeadsUpDetails,
+  iOS: DarwinNotificationDetails(),
+);
+
 /// Must be registered in `main()` via [FirebaseMessaging.onBackgroundMessage]
 /// before `runApp` (separate isolate entry-point).
 @pragma('vm:entry-point')
@@ -79,8 +86,8 @@ final pushNotificationServiceProvider = Provider<PushNotificationService>((ref) 
 
 /// FCM + local notification channel registration.
 ///
-/// Foreground [FirebaseMessaging.onMessage] does **not** show a second banner:
-/// Socket.io already delivers `notification:new` for the inbox.
+/// Foreground chat messages for the **active** room are ignored — [SocketService]
+/// already delivers them. Other chats and general categories may show a local banner.
 class PushNotificationService {
   PushNotificationService(this._ref);
 
@@ -89,6 +96,8 @@ class PushNotificationService {
 
   bool _started = false;
   StreamSubscription<String>? _tokenRefreshSub;
+  StreamSubscription<RemoteMessage>? _foregroundSub;
+  StreamSubscription<RemoteMessage>? _openedAppSub;
 
   Future<void> ensureInitialized() async {
     if (_started || kIsWeb) return;
@@ -101,8 +110,8 @@ class PushNotificationService {
       sound: true,
     );
 
-    FirebaseMessaging.onMessage.listen(_onForegroundMessage);
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleOpenedMessage);
+    _foregroundSub = FirebaseMessaging.onMessage.listen(_onForegroundMessage);
+    _openedAppSub = FirebaseMessaging.onMessageOpenedApp.listen(_handleOpenedMessage);
 
     _tokenRefreshSub = FirebaseMessaging.instance.onTokenRefresh.listen(
       (_) => unawaited(syncTokenIfAuthenticated()),
@@ -164,23 +173,151 @@ class PushNotificationService {
   }
 
   void _onForegroundMessage(RemoteMessage message) {
+    if (!_isAppInForeground) return;
+
+    final data = _normalisePushData(message.data);
+    final type = data['type'] ?? '';
+    final chatId = _extractChatId(data);
+
+    if (_shouldSuppressForegroundChatPush(type: type, chatId: chatId)) {
+      if (kDebugMode) {
+        debugPrint(
+          '[FCM foreground] skipped — active chat room ($chatId), socket owns delivery',
+        );
+      }
+      return;
+    }
+
     if (kDebugMode) {
       debugPrint(
-        '[FCM foreground] id=${message.messageId} title=${message.notification?.title}',
+        '[FCM foreground] id=${message.messageId} type=$type chatId=$chatId',
       );
     }
+
+    // Do not touch [messagesProvider] or chat repositories — socket handles live chat.
+    if (type == 'new_message' && chatId != null && chatId.isNotEmpty) {
+      unawaited(_showForegroundChatBanner(message, chatId: chatId));
+      return;
+    }
+
+    unawaited(_showForegroundGeneralBanner(message, data: data));
   }
 
   void _handleOpenedMessage(RemoteMessage message) {
     navigateFromPushData(message.data);
   }
 
+  /// True when the user is on [ChatScreen] for [chatId] (provider + route).
+  @visibleForTesting
+  bool shouldSuppressForegroundChatPush({
+    required String type,
+    required String? chatId,
+    String? activeChatId,
+    String? routeChatId,
+  }) {
+    if (chatId == null || chatId.isEmpty) return false;
+
+    final active = activeChatId ?? routeChatId;
+    if (active == null || active.isEmpty) return false;
+
+    if (active != chatId) return false;
+
+    return type == 'new_message' || type.isEmpty;
+  }
+
+  bool _shouldSuppressForegroundChatPush({
+    required String type,
+    required String? chatId,
+  }) {
+    return shouldSuppressForegroundChatPush(
+      type: type,
+      chatId: chatId,
+      activeChatId: _ref.read(activeChatRoomProvider),
+      routeChatId: _chatIdFromCurrentRoute(),
+    );
+  }
+
+  bool get _isAppInForeground {
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    return lifecycle == null || lifecycle == AppLifecycleState.resumed;
+  }
+
+  static Map<String, String> _normalisePushData(Map<String, dynamic> raw) {
+    return {
+      for (final e in raw.entries) e.key: e.value?.toString() ?? '',
+    };
+  }
+
+  static String? _extractChatId(Map<String, String> data) {
+    final id = data['chatId'] ?? data['chat_id'];
+    if (id == null || id.isEmpty) return null;
+    return id;
+  }
+
+  String? _chatIdFromCurrentRoute() {
+    final ctx = rootNavigatorKey.currentContext;
+    if (ctx == null) return null;
+    final path = GoRouter.of(ctx).state.matchedLocation;
+    final match = RegExp(r'^/chats/([^/]+)$').firstMatch(path);
+    return match?.group(1);
+  }
+
+  Future<void> _showForegroundChatBanner(
+    RemoteMessage message, {
+    required String chatId,
+  }) async {
+    final title = message.notification?.title ?? 'New message';
+    final body = message.notification?.body ?? 'Open chat to read';
+    await _showLocalBanner(
+      id: chatId.hashCode & 0x7fffffff,
+      title: title,
+      body: body,
+      payload: Routes.chatRoom(chatId),
+    );
+  }
+
+  Future<void> _showForegroundGeneralBanner(
+    RemoteMessage message, {
+    required Map<String, String> data,
+  }) async {
+    final title = message.notification?.title ?? data['title'] ?? 'BuddBull';
+    final body = message.notification?.body ??
+        data['body'] ??
+        'You have a new notification';
+    final payload = pathForPushData(data);
+    final id = (message.messageId ?? payload).hashCode & 0x7fffffff;
+    await _showLocalBanner(
+      id: id,
+      title: title,
+      body: body,
+      payload: payload,
+    );
+  }
+
+  Future<void> _showLocalBanner({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    if (kIsWeb) return;
+    try {
+      await _local.show(
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: kBuddbullForegroundNotificationDetails,
+        payload: payload,
+      );
+    } catch (e, st) {
+      debugPrint('⚠️ Foreground local notification failed: $e\n$st');
+    }
+  }
+
   /// Maps FCM `data` (string values from the server) to a GoRouter path.
   @visibleForTesting
   String pathForPushData(Map<String, dynamic> raw) {
-    final data = {
-      for (final e in raw.entries) e.key: e.value?.toString() ?? '',
-    };
+    final data = _normalisePushData(raw);
     final type = data['type'] ?? '';
 
     final chatId = data['chatId'];
@@ -218,6 +355,10 @@ class PushNotificationService {
   }
 
   void dispose() {
+    _foregroundSub?.cancel();
+    _foregroundSub = null;
+    _openedAppSub?.cancel();
+    _openedAppSub = null;
     _tokenRefreshSub?.cancel();
     _tokenRefreshSub = null;
   }

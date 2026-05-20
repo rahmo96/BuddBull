@@ -4,6 +4,7 @@ import 'package:buddbull/core/network/api_endpoints.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/logger.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 // ── Event data types ──────────────────────────────────────────────────────────
@@ -76,6 +77,13 @@ class SocketService {
   final Set<String> _joinedChats = <String>{};
   StreamSubscription<User?>? _authSub;
   String? _lastToken;
+  final Logger _log = Logger();
+
+  /// Prevents overlapping [connect] handshakes from auth + shell.
+  bool _connectInProgress = false;
+
+  /// Bumped on [disconnect] / teardown so in-flight [connect] aborts safely.
+  int _connectGeneration = 0;
 
   // ── Broadcast streams ──────────────────────────────────────────────────────
   // Raw socket payloads for debugging + provider-side parsing. We keep
@@ -135,21 +143,22 @@ class SocketService {
       if (token == null || token == _lastToken) return;
       _lastToken = token;
 
-      // Refresh auth and reconnect so the new token is used.
-      if (_socket != null) {
-        _socket!.auth = {'token': token};
-        if (_socket!.connected == true) {
-          _socket!.disconnect();
-        }
-        _socket!.connect();
-      }
+      // Re-handshake with the refreshed Firebase token (guarded inside connect).
+      await connect();
     });
   }
 
   // ── Connect ───────────────────────────────────────────────────────────────
   Future<void> connect() async {
     if (_socket?.connected == true) {
-      debugPrint('⚪ SOCKET connect skipped — already connected (${_socket!.id})');
+      debugPrint(
+        '⚪ SOCKET connect skipped — already connected (${_socket?.id})',
+      );
+      return;
+    }
+
+    if (_connectInProgress) {
+      debugPrint('⚪ SOCKET connect skipped — handshake already in progress');
       return;
     }
 
@@ -158,167 +167,80 @@ class SocketService {
       return;
     }
 
-    // Drop half-open client so a later connect() always rebuilds listeners + handshake.
-    if (_socket != null) {
-      debugPrint('⚪ SOCKET disposing stale socket before new handshake');
-      try {
-        _socket!.dispose();
-      } catch (_) {}
-      _socket = null;
-    }
-
-    String? token;
-    try {
-      token = await FirebaseAuth.instance.currentUser?.getIdToken();
-    } on FirebaseAuthException catch (e, st) {
-      debugPrint('❌ SOCKET abort — FirebaseAuthException getting token: $e\n$st');
-      try {
-        await FirebaseAuth.instance.signOut();
-      } catch (_) {}
-      return;
-    } catch (e, st) {
-      debugPrint('❌ SOCKET abort — error getting token: $e\n$st');
-      return;
-    }
-    if (token == null) {
-      return;
-    }
-    _lastToken = token;
-
-    _setStatus(SocketStatus.connecting);
-
-    final serverUrl = ApiEndpoints.socketUrl;
-    debugPrint('🟡 SOCKET handshake → $serverUrl (same origin as ApiClient base, minus /api/v1)');
+    _connectInProgress = true;
+    final generation = ++_connectGeneration;
 
     try {
-      _socket = io.io(
-        serverUrl,
-        io.OptionBuilder()
-            .setTransports(['websocket'])
-            .enableForceNew()
-            .enableReconnection()
-            .setAuth({'token': token})
-            // Must defer connect until handlers below are attached (see Socket ctor).
-            .disableAutoConnect()
-            .build(),
+      _tearDownSocket();
+
+      String? token;
+      try {
+        token = await FirebaseAuth.instance.currentUser?.getIdToken();
+      } on FirebaseAuthException catch (e, st) {
+        debugPrint(
+          '❌ SOCKET abort — FirebaseAuthException getting token: $e\n$st',
+        );
+        try {
+          await FirebaseAuth.instance.signOut();
+        } catch (_) {}
+        return;
+      } catch (e, st) {
+        debugPrint('❌ SOCKET abort — error getting token: $e\n$st');
+        return;
+      }
+
+      if (token == null) return;
+      if (generation != _connectGeneration) return;
+
+      _lastToken = token;
+      _setStatus(SocketStatus.connecting);
+
+      final serverUrl = ApiEndpoints.socketUrl;
+      debugPrint(
+        '🟡 SOCKET handshake → $serverUrl (same origin as ApiClient base, minus /api/v1)',
       );
-    } catch (e, st) {
-      debugPrint('❌ SOCKET io.io() failed: $e\n$st');
-      _setStatus(SocketStatus.error);
-      return;
-    }
 
-    _socket!
-      ..onConnect((_) {
-        debugPrint('🟢 SOCKET CONNECTED: ${_socket!.id}');
-        _setStatus(SocketStatus.connected);
-        // Re-join rooms after reconnect — contract: `{ 'chatId': chatId }`.
-        for (final chatId in _joinedChats) {
-          if (_socket?.connected == true) {
-            _socket!.emit('join_chat', <String, dynamic>{'chatId': chatId});
-          }
-        }
-      })
-      ..onDisconnect((_) {
-        debugPrint('🔴 SOCKET DISCONNECTED');
-        _setStatus(SocketStatus.disconnected);
-      })
-      ..onConnectError((err) {
-        debugPrint('❌ SOCKET ERROR: $err');
+      io.Socket socket;
+      try {
+        socket = io.io(
+          serverUrl,
+          io.OptionBuilder()
+              .setTransports(['websocket'])
+              .enableForceNew()
+              .enableReconnection()
+              .setAuth({'token': token})
+              // Must defer connect until handlers below are attached.
+              .disableAutoConnect()
+              .build(),
+        );
+      } catch (e, st) {
+        debugPrint('❌ SOCKET io.io() failed: $e\n$st');
         _setStatus(SocketStatus.error);
-      })
-      ..on('messageRead', (data) {
-        // Forward as a lightweight pinned event channel reuse isn't ideal; handled in provider via socket raw if needed.
-      })
-      ..on('typing', (data) {
-        try {
-          final d = data as Map;
-          _typingController.add(TypingEvent(
-            chatId: d['chatId']?.toString() ?? '',
-            userId: d['userId']?.toString() ?? '',
-            username: d['username']?.toString() ?? '',
-            isTyping: true,
-          ));
-        } catch (_) {}
-      })
-      ..on('stop_typing', (data) {
-        try {
-          final d = data as Map;
-          _typingController.add(TypingEvent(
-            chatId: d['chatId']?.toString() ?? '',
-            userId: d['userId']?.toString() ?? '',
-            username: '',
-            isTyping: false,
-          ));
-        } catch (_) {}
-      })
-      ..on('message_deleted', (data) {
-        try {
-          final d = data as Map;
-          _deletedController
-              .add(MessageDeletedEvent(d['messageId'].toString()));
-        } catch (_) {}
-      })
-      ..on('message_pinned', (data) {
-        try {
-          final d = data as Map;
-          _pinnedController.add(
-              MessagePinnedEvent(d['messageId'].toString(), isPinned: true));
-        } catch (_) {}
-      })
-      ..on('message_unpinned', (data) {
-        try {
-          final d = data as Map;
-          _pinnedController.add(
-              MessagePinnedEvent(d['messageId'].toString(), isPinned: false));
-        } catch (_) {}
-      })
-      ..on('notification:new', (data) {
-        // Server pushes the same JSON shape as `GET /notifications`,
-        // so the provider can reuse `NotificationModel.fromJson`.
-        try {
-          if (data is Map) {
-            _notificationController
-                .add(Map<String, dynamic>.from(data));
-          }
-        } catch (e, st) {
-          debugPrint('⚠️ SOCKET notification:new parse error: $e\n$st');
-        }
-      })
-      ..on('chat:kicked', (data) => _emitChatAccessRevoked(data, 'kicked'))
-      ..on('chat:left', (data) => _emitChatAccessRevoked(data, 'left'))
-      ..on('room_access_denied', (data) => _emitChatAccessRevoked(data, 'denied'))
-      ..on('chat:unread_update', _emitChatUnread);
+        return;
+      }
 
-    debugPrint('🟡 SOCKET calling connect()…');
-    _socket!.connect();
+      if (generation != _connectGeneration) {
+        _disposeSocketInstance(socket);
+        return;
+      }
 
-    _socket!.onAny((event, data) {
-      debugPrint('⚡ GLOBAL CAUGHT: Event: $event | Data: $data');
-    });
+      _socket = socket;
+      _attachSocketListeners(socket);
 
-    // Register message handlers immediately after connect() so they always bind to this instance.
-    _socket!.on('receive_message', (data) {
-      debugPrint('🔥 RECEIVED: $data');
-      try {
-        _messageController.add(data);
-      } catch (_) {}
-    });
-    _socket!.on('newMessage', (data) {
-      debugPrint('🔥 RECEIVED newMessage: $data');
-      try {
-        _messageController.add(data);
-      } catch (_) {}
-    });
+      debugPrint('🟡 SOCKET calling connect()…');
+      socket.connect();
+    } finally {
+      _connectInProgress = false;
+    }
   }
 
   // ── Room management ───────────────────────────────────────────────────────
   void joinChat(String chatId) {
     debugPrint('🔵 SOCKET EMITTING JOIN ROOM: $chatId');
     _joinedChats.add(chatId);
-    if (_socket?.connected == true) {
-      _socket!.emit('join_chat', <String, dynamic>{'chatId': chatId});
-    }
+    final socket = _socket;
+    if (socket == null || socket.connected != true) return;
+    socket.emit('join_chat', <String, dynamic>{'chatId': chatId});
   }
 
   void leaveChat(String chatId) {
@@ -353,9 +275,9 @@ class SocketService {
 
   // ── Disconnect ────────────────────────────────────────────────────────────
   void disconnect() {
-    _socket?.disconnect();
-    _socket?.dispose();
-    _socket = null;
+    _connectGeneration++;
+    _connectInProgress = false;
+    _tearDownSocket();
     _setStatus(SocketStatus.disconnected);
   }
 
@@ -375,13 +297,145 @@ class SocketService {
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────
+  void _tearDownSocket() {
+    final socket = _socket;
+    _socket = null;
+    if (socket == null) return;
+
+    debugPrint('⚪ SOCKET tearing down stale instance (${socket.id})');
+    _disposeSocketInstance(socket);
+  }
+
+  void _disposeSocketInstance(io.Socket socket) {
+    try {
+      if (socket.connected) {
+        socket.disconnect();
+      }
+    } catch (e, st) {
+      _log.w('SOCKET disconnect error', error: e, stackTrace: st);
+    }
+    try {
+      socket.dispose();
+    } catch (e, st) {
+      _log.w('SOCKET dispose error', error: e, stackTrace: st);
+    }
+  }
+
+  void _attachSocketListeners(io.Socket socket) {
+    socket
+      ..onConnect((_) {
+        final active = _socket;
+        if (active == null || active.connected != true) return;
+
+        debugPrint('🟢 SOCKET CONNECTED: ${active.id}');
+        _setStatus(SocketStatus.connected);
+
+        // Re-join rooms after reconnect — contract: `{ 'chatId': chatId }`.
+        final s = _socket;
+        if (s == null || s.connected != true) return;
+        for (final chatId in _joinedChats) {
+          s.emit('join_chat', <String, dynamic>{'chatId': chatId});
+        }
+      })
+      ..onDisconnect((_) {
+        debugPrint('🔴 SOCKET DISCONNECTED');
+        _setStatus(SocketStatus.disconnected);
+      })
+      ..onConnectError((err) {
+        debugPrint('❌ SOCKET ERROR: $err');
+        _setStatus(SocketStatus.error);
+      })
+      ..on('messageRead', (data) {
+        // Handled in provider via socket raw if needed.
+      })
+      ..on('typing', (data) => _handleTypingEvent(data, isTyping: true))
+      ..on('stop_typing', (data) => _handleTypingEvent(data, isTyping: false))
+      ..on('message_deleted', _handleMessageDeleted)
+      ..on('message_pinned', (data) => _handleMessagePinned(data, isPinned: true))
+      ..on('message_unpinned', (data) => _handleMessagePinned(data, isPinned: false))
+      ..on('receive_message', _handleReceiveMessage)
+      ..on('notification:new', (data) {
+        try {
+          if (data is Map) {
+            _notificationController.add(Map<String, dynamic>.from(data));
+          }
+        } catch (e, st) {
+          _log.w(
+            'SOCKET notification:new parse error',
+            error: e,
+            stackTrace: st,
+          );
+        }
+      })
+      ..on('chat:kicked', (data) => _emitChatAccessRevoked(data, 'kicked'))
+      ..on('chat:left', (data) => _emitChatAccessRevoked(data, 'left'))
+      ..on('room_access_denied', (data) => _emitChatAccessRevoked(data, 'denied'))
+      ..on('chat:unread_update', _emitChatUnread);
+  }
+
   void _emit(String event, Map<String, dynamic> data) {
-    if (_socket?.connected == true) _socket!.emit(event, data);
+    final socket = _socket;
+    if (socket == null || socket.connected != true) return;
+    socket.emit(event, data);
   }
 
   void _setStatus(SocketStatus status) {
     _status = status;
     if (!_statusController.isClosed) _statusController.add(status);
+  }
+
+  void _handleReceiveMessage(dynamic data) {
+    if (_messageController.isClosed) return;
+    try {
+      _messageController.add(data);
+    } catch (e, st) {
+      _log.e('SOCKET receive_message handler error', error: e, stackTrace: st);
+    }
+  }
+
+  void _handleTypingEvent(dynamic data, {required bool isTyping}) {
+    if (_typingController.isClosed) return;
+    try {
+      final d = data as Map;
+      _typingController.add(TypingEvent(
+        chatId: d['chatId']?.toString() ?? '',
+        userId: d['userId']?.toString() ?? '',
+        username: isTyping ? (d['username']?.toString() ?? '') : '',
+        isTyping: isTyping,
+      ));
+    } catch (e, st) {
+      _log.w(
+        'SOCKET ${isTyping ? 'typing' : 'stop_typing'} parse error',
+        error: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  void _handleMessageDeleted(dynamic data) {
+    if (_deletedController.isClosed) return;
+    try {
+      final d = data as Map;
+      _deletedController.add(MessageDeletedEvent(d['messageId'].toString()));
+    } catch (e, st) {
+      _log.w('SOCKET message_deleted parse error', error: e, stackTrace: st);
+    }
+  }
+
+  void _handleMessagePinned(dynamic data, {required bool isPinned}) {
+    if (_pinnedController.isClosed) return;
+    try {
+      final d = data as Map;
+      _pinnedController.add(
+        MessagePinnedEvent(d['messageId'].toString(), isPinned: isPinned),
+      );
+    } catch (e, st) {
+      _log.w(
+        'SOCKET ${isPinned ? 'message_pinned' : 'message_unpinned'} parse error',
+        error: e,
+        stackTrace: st,
+      );
+    }
   }
 
   void _emitChatUnread(dynamic data) {
@@ -399,7 +453,7 @@ class SocketService {
         senderId: d['senderId']?.toString(),
       ));
     } catch (e, st) {
-      debugPrint('⚠️ SOCKET chat:unread_update parse error: $e\n$st');
+      _log.w('SOCKET chat:unread_update parse error', error: e, stackTrace: st);
     }
   }
 
@@ -417,7 +471,7 @@ class SocketService {
         detail: d['detail']?.toString(),
       ));
     } catch (e, st) {
-      debugPrint('⚠️ SOCKET chat access revoked parse error: $e\n$st');
+      _log.w('SOCKET chat access revoked parse error', error: e, stackTrace: st);
     }
   }
 }

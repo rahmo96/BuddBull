@@ -38,6 +38,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _scrollController.addListener(_onScroll);
     // Connect socket when entering chat
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      ref.read(activeChatRoomProvider.notifier).state = widget.chatId;
+
       final socket = ref.read(socketServiceProvider);
       await socket.connect();
       if (!mounted) return;
@@ -71,6 +73,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         });
       });
     });
+  }
+
+  @override
+  void deactivate() {
+    final chatId = widget.chatId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (ref.read(activeChatRoomProvider) == chatId) {
+        ref.read(activeChatRoomProvider.notifier).state = null;
+      }
+    });
+    super.deactivate();
   }
 
   @override

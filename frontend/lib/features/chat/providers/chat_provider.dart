@@ -5,11 +5,16 @@ import 'package:buddbull/core/services/socket_service.dart';
 import 'package:buddbull/features/chat/data/chat_repository.dart';
 import 'package:buddbull/features/chat/data/models/chat_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/logger.dart';
 
 // ── Repository provider ───────────────────────────────────────────────────────
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
   return ChatRepository(ref.watch(apiClientProvider));
 });
+
+/// Chat room currently open on [ChatScreen]. [PushNotificationService] uses this
+/// to ignore foreground FCM payloads for the active room (socket already delivers).
+final activeChatRoomProvider = StateProvider<String?>((ref) => null);
 
 // ── Chat list ─────────────────────────────────────────────────────────────────
 final chatListProvider = FutureProvider<List<ChatModel>>((ref) async {
@@ -122,6 +127,8 @@ class MessagesState {
 }
 
 class MessagesNotifier extends StateNotifier<MessagesState> {
+  static final _log = Logger();
+
   final ChatRepository _repo;
   final SocketService _socket;
   final String chatId;
@@ -236,18 +243,20 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     }
   }
 
-  /// Send via socket (real-time); falls back to HTTP if disconnected
+  /// Persists via HTTP; appends to the list from the socket echo when connected.
   Future<void> sendMessage(String content, {String? replyToId}) async {
     if (_accessRevoked) return;
-    // Always attempt HTTP send to guarantee delivery and to ensure a network request is fired.
-    // Socket emission remains for real-time UX when connected.
+    // Socket emission for real-time delivery; server echoes via `receive_message`.
     if (_socket.status == SocketStatus.connected) {
       _socket.sendMessage(chatId, content, replyToId: replyToId);
     }
 
     try {
       final msg = await _repo.sendMessage(chatId, content, replyToId: replyToId);
-      _handleIncoming(msg);
+      // Only append from HTTP when the socket cannot deliver the echo.
+      if (_socket.status != SocketStatus.connected) {
+        _handleIncoming(msg);
+      }
     } catch (_) {}
   }
 
@@ -261,7 +270,8 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     final Map<String, dynamic> d;
     try {
       d = Map<String, dynamic>.from(data);
-    } catch (_) {
+    } catch (e, st) {
+      _log.w('SOCKET message payload map cast failed', error: e, stackTrace: st);
       return;
     }
     final raw = (d['message'] is Map)
@@ -274,7 +284,9 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
       try {
         final msg = MessageModel.fromJson(raw);
         _handleIncoming(msg);
-      } catch (_) {}
+      } catch (e, st) {
+        _log.w('SOCKET message fromJson failed', error: e, stackTrace: st);
+      }
     });
   }
 
@@ -287,10 +299,59 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     state = state.copyWith(messages: next);
   }
 
+  static const Duration _dedupeWindow = Duration(seconds: 2);
+
+  /// Same sender + body within [_dedupeWindow] (HTTP vs socket race, missing ids).
+  bool _isRecentContentDuplicate(MessageModel msg) {
+    if (msg.content.isEmpty) return false;
+    final senderId = msg.senderId;
+    if (senderId.isEmpty) return false;
+
+    final now = DateTime.now();
+    final windowStart = now.subtract(_dedupeWindow);
+
+    for (final m in state.messages) {
+      if (m.content != msg.content || m.senderId != senderId) continue;
+
+      if (!m.sentAt.isBefore(windowStart)) return true;
+
+      if (m.sentAt.difference(msg.sentAt).abs() <= _dedupeWindow) return true;
+    }
+    return false;
+  }
+
+  String _messageDedupeKey(MessageModel msg) {
+    if (msg.id.isNotEmpty) return msg.id;
+    final bucket = msg.sentAt.millisecondsSinceEpoch ~/ 1000;
+    return 'content:${msg.senderId}:${msg.content}:$bucket';
+  }
+
   void _handleIncoming(MessageModel msg) {
-    if (!_seenMessageIds.add(msg.id)) return;
+    if (_isRecentContentDuplicate(msg)) return;
+
+    final dedupeKey = _messageDedupeKey(msg);
+    if (_seenMessageIds.contains(dedupeKey)) return;
+
+    final messageId = msg.id;
+    if (messageId.isNotEmpty && state.messages.any((m) => m.id == messageId)) {
+      _seenMessageIds.add(dedupeKey);
+      return;
+    }
+
+    _seenMessageIds.add(dedupeKey);
+
     state = state.copyWith(messages: [...state.messages, msg]);
-    _socket.markAsRead(chatId, msg.id);
+
+    _log.d(
+      'Chat message appended '
+      'chatId=$chatId '
+      'messageId=${messageId.isEmpty ? dedupeKey : messageId} '
+      'senderId=${msg.senderId}',
+    );
+
+    if (messageId.isNotEmpty) {
+      _socket.markAsRead(chatId, messageId);
+    }
   }
 
   @override
