@@ -1,11 +1,16 @@
 import 'dart:async';
 
-import 'package:buddbull/core/network/api_endpoints.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+
+/// Socket.IO origin — mirrors `--dart-define=API_BASE_URL` with `/api/v1` stripped.
+final String _socketUrl = const String.fromEnvironment(
+  'API_BASE_URL',
+  defaultValue: 'http://178.105.65.91:8000/api/v1',
+).replaceAll('/api/v1', '');
 
 // ── Event data types ──────────────────────────────────────────────────────────
 class TypingEvent {
@@ -195,10 +200,8 @@ class SocketService {
       _lastToken = token;
       _setStatus(SocketStatus.connecting);
 
-      final serverUrl = ApiEndpoints.socketUrl;
-      debugPrint(
-        '🟡 SOCKET handshake → $serverUrl (same origin as ApiClient base, minus /api/v1)',
-      );
+      final serverUrl = _socketUrl;
+      debugPrint('🟡 SOCKET handshake → $serverUrl');
 
       io.Socket socket;
       try {

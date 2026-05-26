@@ -154,6 +154,8 @@ class GameRepository {
   }
 
   // ── Join ──────────────────────────────────────────────────
+  /// [acceptInvite] must be true when the user's slot is `invited` so the
+  /// backend confirms them as `approved` instead of a fresh pending request.
   Future<GameModel> joinGame(String id, {bool acceptInvite = false}) async {
     final body = await _api.post(ApiEndpoints.joinGame(id, acceptInvite: acceptInvite));
     final data = body['data'] as Map<String, dynamic>;

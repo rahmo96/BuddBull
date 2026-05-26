@@ -277,7 +277,7 @@ describe('Invite & Approve flow', () => {
     expect(again.status).toBe(200);
   });
 
-  it('organizer invites a user and then approves them after join', async () => {
+  it('organizer invites a user; accepting join immediately approves (no second approval)', async () => {
     const { token: orgToken } = await registerAndLogin(1, 'organizer');
     const { token: p2Token, userId: p2Id } = await registerAndLogin(2, 'player');
 
@@ -289,15 +289,41 @@ describe('Invite & Approve flow', () => {
       .set('Authorization', `Bearer ${orgToken}`);
     expect(invRes.status).toBe(200);
 
-    await request(app).post(`${GAMES}/${gameId}/join`).set('Authorization', `Bearer ${p2Token}`);
+    const joinRes = await request(app)
+      .post(`${GAMES}/${gameId}/join`)
+      .set('Authorization', `Bearer ${p2Token}`);
+    expect(joinRes.status).toBe(200);
+    expect(joinRes.body.data.status).toBe('approved');
+    expect(joinRes.body.message).toMatch(/joined the game/i);
 
-    const appRes = await request(app)
+    const slot = joinRes.body.data.game.players.find(
+      (p) => `${p.user}` === `${p2Id}` || p.user?._id === `${p2Id}`,
+    );
+    expect(slot?.status).toBe('approved');
+
+    const redundantApprove = await request(app)
       .patch(`${GAMES}/${gameId}/players/${p2Id}/approve`)
       .set('Authorization', `Bearer ${orgToken}`);
+    expect(redundantApprove.status).toBe(400);
+  });
 
-    expect(appRes.status).toBe(200);
-    const slot = appRes.body.data.game.players.find((p) => `${p.user}` === `${p2Id}` || p.user?._id === `${p2Id}`);
-    expect(slot?.status).toBe('approved');
+  it('acceptInvite query confirms an invited player on a requiresApproval game', async () => {
+    const { token: orgToken } = await registerAndLogin(1, 'organizer');
+    const { token: p2Token, userId: p2Id } = await registerAndLogin(2, 'player');
+
+    const game = await createGameAs(orgToken, { requiresApproval: true });
+    const gameId = game.body.data.game._id;
+
+    await request(app)
+      .post(`${GAMES}/${gameId}/invite/${p2Id}`)
+      .set('Authorization', `Bearer ${orgToken}`);
+
+    const joinRes = await request(app)
+      .post(`${GAMES}/${gameId}/join?acceptInvite=true`)
+      .set('Authorization', `Bearer ${p2Token}`);
+
+    expect(joinRes.status).toBe(200);
+    expect(joinRes.body.data.status).toBe('approved');
   });
 
   it('returns 403 when a non-organizer attempts to approve a participant', async () => {

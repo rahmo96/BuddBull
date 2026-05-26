@@ -33,7 +33,6 @@ exports.sendMessage = catchAsync(async (req, res) => {
     const roomId = chatId.toString();
     console.log('🚀 FIRING TO ROOM:', roomId);
     io.to(roomId).emit('receive_message', { message: messageDocument });
-    io.to(roomId).emit('newMessage', messageDocument);
   }
 
   res.status(201).json({ success: true, data: { message } });

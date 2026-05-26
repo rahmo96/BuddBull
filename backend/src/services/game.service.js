@@ -669,8 +669,7 @@ const cancelGame = async (gameId, userId, userRole, reason) => {
  * Status transitions on an existing slot:
  *   approved  →  409 "already in this game"
  *   pending   →  409 "request already pending"
- *   invited   →  promoted to approved/pending depending on `requiresApproval`
- *                or `isPrivate` (this is the "accept invite" path)
+ *   invited   →  always promoted to `approved` (organiser already invited them)
  *   left      →  treated as a fresh re-join; status reset to approved/pending
  *   kicked    →  same as left (re-request allowed)
  *   rejected  →  organiser declined a join request; same re-join path as kicked
@@ -708,18 +707,14 @@ const joinGame = async (gameId, userId, { acceptInvite = false } = {}) => {
       throw new AppError('Your join request is already pending.', 409);
     }
     if (existingSlot.status === 'invited') {
-      // Accept the invitation.
-      existingSlot.status = targetStatus();
+      // Organiser invite — confirm immediately; never re-queue as pending.
+      existingSlot.status = 'approved';
       existingSlot.resolvedAt = new Date();
       await game.save();
 
-      if (existingSlot.status === 'approved') {
-        await ensureGroupChatParticipant(gameId, userId, { isAdmin: false });
-        await notify('game:playerJoined', { gameId, userId, organizerId: game.organizer });
-      } else {
-        await notify('game:joinRequest', { gameId, organizerId: game.organizer, requesterId: userId });
-      }
-      return { game, status: existingSlot.status };
+      await ensureGroupChatParticipant(gameId, userId, { isAdmin: false });
+      await notify('game:playerJoined', { gameId, userId, organizerId: game.organizer });
+      return { game, status: 'approved' };
     }
     if (['left', 'kicked', 'rejected', 'invite_revoked'].includes(existingSlot.status)) {
       // Re-join path (includes revoked invites — manual join is a fresh request).

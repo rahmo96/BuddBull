@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 
 /**
  * Represents a single player slot within a game.
- * Status transitions: invited → pending → approved | kicked | left
+ * Status transitions: invited → approved (accept invite) | pending → approved (organiser approves) | kicked | left
  */
 const playerSlotSchema = new mongoose.Schema(
   {

@@ -30,10 +30,8 @@ const User = require('../models/User.model');
 const Chat = require('../models/Chat.model');
 const Message = require('../models/Message.model');
 const logger = require('../utils/logger');
+const chatService = require('../services/chat.service');
 const notificationService = require('../services/notification.service');
-const { toPlainDoc } = require('../utils/toPlainDoc');
-
-const SENDER_FIELDS = 'firstName lastName username profilePicture';
 
 const getFirebaseAuth = () => {
   if (!admin.apps.length) {
@@ -174,48 +172,19 @@ module.exports = (io) => {
         const chat = await getChat(chatId, user._id);
         if (!chat) return socket.emit('error', { message: 'Chat not found' });
 
-        const message = await Message.create({
-          chat: chatId,
-          sender: user._id,
-          type,
+        // Single persistence path (same as POST /chats/:id/messages).
+        const plain = await chatService.sendMessage(chatId, user._id, {
           content: content?.trim() || '',
-          ...(replyTo && { replyTo }),
+          type,
+          replyTo,
         });
 
-        await Chat.findByIdAndUpdate(chatId, {
-          lastMessage: {
-            sender: user._id,
-            content: type === 'text' ? content.trim() : `[${type}]`,
-            sentAt: new Date(),
-          },
-          $inc: { messageCount: 1 },
-        });
-
-        await message.populate([
-          { path: 'sender', select: SENDER_FIELDS },
-          {
-            path: 'replyTo',
-            select: 'content sender type',
-            populate: { path: 'sender', select: 'firstName lastName username' },
-          },
-        ]);
-
-        const plain = toPlainDoc(message);
         const receivePayload = { message: plain };
 
-        // Direct to this socket + broadcast to everyone else in the room (no duplicate for sender).
         socket.emit('receive_message', receivePayload);
-        socket.emit('newMessage', plain);
         socket.broadcast.to(chatId).emit('receive_message', receivePayload);
-        socket.broadcast.to(chatId).emit('newMessage', plain);
 
-        // ── Unread fan-out ────────────────────────────────────────────
-        // Push an inexpensive `chat:unread_update` event to every active
-        // participant except the sender, regardless of whether they have
-        // a socket in this chat room (e.g. the user is on the Home tab
-        // and only listens on their private user room). The frontend
-        // bumps the badge optimistically and reconciles via the HTTP
-        // `/chats/unread` snapshot on the next refresh.
+        // ── Unread fan-out (socket-only; FCM handled in chatService.sendMessage) ──
         try {
           const recipients = (chat.participants || [])
             .filter(
@@ -238,21 +207,6 @@ module.exports = (io) => {
           for (const recipientId of recipients) {
             io.to(recipientId).emit('chat:unread_update', unreadEvent);
           }
-
-          const senderDoc = message.sender;
-          const senderName = senderDoc
-            ? `${senderDoc.firstName || ''} ${senderDoc.lastName || ''}`.trim() ||
-              senderDoc.username
-            : user.username || 'Someone';
-
-          await notificationService.notifyChatMessage({
-            chatId,
-            senderId: user._id,
-            senderName,
-            preview: unreadEvent.preview,
-            recipientIds: recipients,
-            gameId: chat.game ? String(chat.game) : undefined,
-          });
         } catch (err) {
           logger.warn(`[Socket] chat:unread_update fan-out failed: ${err.message}`);
         }

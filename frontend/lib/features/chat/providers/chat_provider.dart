@@ -243,20 +243,18 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     }
   }
 
-  /// Persists via HTTP; appends to the list from the socket echo when connected.
+  /// Connected: socket only (server persists + echoes). Offline: HTTP POST fallback.
   Future<void> sendMessage(String content, {String? replyToId}) async {
     if (_accessRevoked) return;
-    // Socket emission for real-time delivery; server echoes via `receive_message`.
+
     if (_socket.status == SocketStatus.connected) {
       _socket.sendMessage(chatId, content, replyToId: replyToId);
+      return;
     }
 
     try {
       final msg = await _repo.sendMessage(chatId, content, replyToId: replyToId);
-      // Only append from HTTP when the socket cannot deliver the echo.
-      if (_socket.status != SocketStatus.connected) {
-        _handleIncoming(msg);
-      }
+      _handleIncoming(msg);
     } catch (_) {}
   }
 

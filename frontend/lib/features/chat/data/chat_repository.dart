@@ -48,7 +48,7 @@ class ChatRepository {
     return raw.whereType<Map<String, dynamic>>().map(MessageModel.fromJson).toList();
   }
 
-  // ── Send a message via HTTP (fallback) ─────────────────────────────────────
+  // ── Send via HTTP when socket is disconnected (socket path persists on server) ──
   Future<MessageModel> sendMessage(
     String chatId,
     String content, {

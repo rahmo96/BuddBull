@@ -218,16 +218,35 @@ class GameActionsNotifier extends StateNotifier<GameActionsState> {
   final Ref _ref;
   final String _gameId;
 
+  /// True when the viewer already has an organiser invite slot on this game.
+  bool _isInvitedPlayer(GameModel game) {
+    final userId = _ref.read(currentUserProvider)?.id;
+    if (userId == null || userId.isEmpty) return false;
+    return game.getPlayer(userId)?.isInvited ?? false;
+  }
+
+  Future<GameModel> _gameSnapshot() async {
+    final cached = state.game;
+    if (cached != null) return cached;
+    return _ref.read(gameDetailProvider(_gameId).future);
+  }
+
   Future<void> join() async {
     state = state.copyWith(isJoining: true, clearError: true);
     try {
-      final game = await _repo.joinGame(_gameId);
+      final snapshot = await _gameSnapshot();
+      final acceptInvite = _isInvitedPlayer(snapshot);
+      final game = await _repo.joinGame(_gameId, acceptInvite: acceptInvite);
       state = state.copyWith(
         isJoining: false,
         game: game,
-        successMessage: 'Join request sent!',
+        successMessage: acceptInvite
+            ? 'You joined the game!'
+            : 'Join request sent!',
       );
-      _ref.invalidate(gameDetailProvider(_gameId));
+      await _syncGameDetail(game);
+      _ref.invalidate(myGamesProvider);
+      _ref.invalidate(calendarGamesProvider);
     } catch (e) {
       state = state.copyWith(isJoining: false, error: _msg(e));
     }
@@ -322,8 +341,9 @@ class GameActionsNotifier extends StateNotifier<GameActionsState> {
         game: game,
         successMessage: 'You joined the game!',
       );
-      _ref.invalidate(gameDetailProvider(_gameId));
+      await _syncGameDetail(game);
       _ref.invalidate(myGamesProvider);
+      _ref.invalidate(calendarGamesProvider);
       return true;
     } catch (e) {
       final message = _msg(e);

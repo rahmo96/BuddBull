@@ -7,20 +7,11 @@
 /// - Android emulator: `http://10.0.2.2:5000/api/v1`
 /// - iOS simulator / desktop: `http://127.0.0.1:5000/api/v1`
 abstract class ApiEndpoints {
-  /// Production API when [API_BASE_URL] is not passed at build time.
-  static const String _defaultBaseUrl =
-      'http://178.105.65.91:8000/api/v1';
-
-  static String get baseUrl {
-    // `String.fromEnvironment` must be invoked as a const constructor (required on web).
-    const env = String.fromEnvironment('API_BASE_URL', defaultValue: '');
-    if (env.isNotEmpty) return env;
-    return _defaultBaseUrl;
-  }
-
-  /// HTTP origin for Socket.IO (same host/port as REST, without `/api/v1`).
-  static String get socketUrl =>
-      baseUrl.replaceAll(RegExp(r'/api/v1/?$'), '');
+  /// Override at run/build: `--dart-define=API_BASE_URL=<url>/api/v1`
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://178.105.65.91:8000/api/v1',
+  );
 
   // ── Auth ──────────────────────────────────────────────────────
   static const String register = '/auth/register';
