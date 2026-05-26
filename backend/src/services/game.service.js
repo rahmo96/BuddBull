@@ -1134,8 +1134,26 @@ const mergeGroups = async (sourceGameId, targetGameId, organizerId, organizerRol
     throw new AppError(`Target game status is '${target.status}'. Only open games can be merged.`, 400);
 
   const sourceApproved = source.players.filter((p) => p.status === 'approved');
+
+  // Organiser is stored on `source.organizer`, not always in `players`.
+  const sourceOrganizerId = source.organizer.toString();
+  const organizerAlreadyApproved = sourceApproved.some(
+    (p) => p.user.toString() === sourceOrganizerId,
+  );
+  const playersToMigrate = organizerAlreadyApproved
+    ? sourceApproved
+    : [
+        ...sourceApproved,
+        {
+          user: source.organizer,
+          status: 'approved',
+          role: 'player',
+          joinedAt: new Date(),
+        },
+      ];
+
   const targetApproved = approvedCount(target);
-  const combinedCount = targetApproved + sourceApproved.length;
+  const combinedCount = targetApproved + playersToMigrate.length;
 
   if (combinedCount > target.maxPlayers) {
     if (!expandCapacity) {
@@ -1153,16 +1171,32 @@ const mergeGroups = async (sourceGameId, targetGameId, organizerId, organizerRol
     target.players.filter((p) => ['approved', 'pending', 'invited'].includes(p.status)).map((p) => p.user.toString()),
   );
 
-  for (const slot of sourceApproved) {
+  for (const slot of playersToMigrate) {
     if (!existingTargetUserIds.has(slot.user.toString())) {
       // Recheck schedule conflict for each migrating player
       // eslint-disable-next-line no-await-in-loop
       const conflict = await Game.hasConflict(slot.user, target.scheduledAt, target.durationMinutes, target._id);
       if (!conflict) {
-        target.players.push({ user: slot.user, status: 'approved', joinedAt: new Date() });
+        target.players.push({
+          user: slot.user,
+          status: 'approved',
+          role: slot.role || 'player',
+          joinedAt: new Date(),
+        });
       }
       // Players with conflicts are silently skipped (organizer should handle manually)
     }
+  }
+
+  // Source organiser must always land in the target roster — they are merging
+  // their own game and must not be dropped by schedule-conflict checks.
+  if (!existingTargetUserIds.has(sourceOrganizerId)) {
+    target.players.push({
+      user: source.organizer,
+      status: 'approved',
+      role: 'player',
+      joinedAt: new Date(),
+    });
   }
 
   // Finalise merge
@@ -1180,14 +1214,14 @@ const mergeGroups = async (sourceGameId, targetGameId, organizerId, organizerRol
 
   const allPlayerIds = [
     ...new Set([
-      ...sourceApproved.map((p) => p.user.toString()),
+      ...playersToMigrate.map((p) => p.user.toString()),
       ...target.players.filter((p) => p.status === 'approved').map((p) => p.user.toString()),
     ]),
   ];
 
   await notify('game:merged', { sourceGameId, targetGameId, affectedPlayerIds: allPlayerIds });
 
-  logger.info(`Merge complete: ${sourceGameId} → ${targetGameId} (${sourceApproved.length} players transferred)`);
+  logger.info(`Merge complete: ${sourceGameId} → ${targetGameId} (${playersToMigrate.length} players transferred)`);
 
   return target;
 };

@@ -21,6 +21,9 @@ class GameModel {
     this.createdAt,
     this.isPrivate = false,
     this.requiresApproval = false,
+    this.isMerged = false,
+    this.mergedWith = const [],
+    this.mergedInto = '',
   });
 
   final String id;
@@ -41,6 +44,9 @@ class GameModel {
   final DateTime? createdAt;
   final bool isPrivate;
   final bool requiresApproval;
+  final bool isMerged;
+  final List<String> mergedWith;
+  final String mergedInto;
 
   // ── Computed ──────────────────────────────────────────────
   int get approvedCount => players.where((p) => p.status == 'approved').length;
@@ -73,20 +79,20 @@ class GameModel {
 
   // ── Serialisation ─────────────────────────────────────────
   factory GameModel.fromJson(Map<String, dynamic> json) {
+    final mergedWithRaw = json['mergedWith'];
+    final mergedWith = mergedWithRaw is List
+        ? mergedWithRaw
+            .map((e) => e?.toString() ?? '')
+            .where((s) => s.isNotEmpty)
+            .toList()
+        : const <String>[];
+
     return GameModel(
-      id: json['_id'] as String? ?? json['id'] as String,
+      id: (json['id'] ?? json['_id'])?.toString() ?? '',
       title: json['title'] as String,
       description: json['description'] as String?,
       sport: json['sport'] as String,
-      organizer: (json['organizer'] is Map<String, dynamic>)
-          ? GameOrganizer.fromJson(json['organizer'] as Map<String, dynamic>)
-          : const GameOrganizer(
-              id: '',
-              username: 'unknown',
-              firstName: 'Unknown',
-              lastName: 'Organizer',
-              profilePicture: null,
-            ),
+      organizer: _parseGameOrganizer(json['organizer']),
       scheduledAt: DateTime.parse(json['scheduledAt'] as String),
       durationMinutes: json['durationMinutes'] as int? ?? 60,
       location: GameLocation.fromJson(json['location'] as Map<String, dynamic>),
@@ -112,6 +118,9 @@ class GameModel {
           : null,
       isPrivate: json['isPrivate'] as bool? ?? false,
       requiresApproval: json['requiresApproval'] as bool? ?? false,
+      isMerged: json['isMerged'] as bool? ?? false,
+      mergedWith: mergedWith,
+      mergedInto: json['mergedInto']?.toString() ?? '',
     );
   }
 
@@ -156,6 +165,11 @@ class GameModel {
       tags: tags,
       result: result,
       createdAt: createdAt,
+      isPrivate: isPrivate,
+      requiresApproval: requiresApproval,
+      isMerged: isMerged,
+      mergedWith: mergedWith,
+      mergedInto: mergedInto,
     );
   }
 
@@ -187,13 +201,33 @@ class GameOrganizer {
   String get fullName => '$firstName $lastName';
 
   factory GameOrganizer.fromJson(Map<String, dynamic> json) => GameOrganizer(
-        id: json['_id'] as String? ?? json['id'] as String,
-        username: json['username'] as String,
-        firstName: json['firstName'] as String,
-        lastName: json['lastName'] as String,
+        id: (json['id'] ?? json['_id'])?.toString() ?? '',
+        username: json['username'] as String? ?? 'unknown',
+        firstName: json['firstName'] as String? ?? 'Unknown',
+        lastName: json['lastName'] as String? ?? 'Organizer',
         profilePicture: json['profilePicture'] as String?,
         averageRating: _readAverageRating(json),
       );
+}
+
+GameOrganizer _parseGameOrganizer(dynamic raw) {
+  if (raw is Map<String, dynamic>) {
+    return GameOrganizer.fromJson(raw);
+  }
+  if (raw != null) {
+    return GameOrganizer(
+      id: raw.toString(),
+      username: 'unknown',
+      firstName: 'Unknown',
+      lastName: 'Organizer',
+    );
+  }
+  return const GameOrganizer(
+    id: '',
+    username: 'unknown',
+    firstName: 'Unknown',
+    lastName: 'Organizer',
+  );
 }
 
 // Backend populates `stats.averageRating`; tolerate flat `averageRating` too.
@@ -351,10 +385,12 @@ class GamePlayer {
     final userRaw = json['user'];
     final Map<String, dynamic>? user =
         userRaw is Map<String, dynamic> ? userRaw : null;
-    // Backend may send user as String (e.g. id reference) or as populated map
+    // Backend may send user as String (ObjectId ref) or as populated map.
     final String userId = user != null
-        ? (user['_id'] as String? ?? user['id'] as String? ?? '')
-        : (userRaw is String ? userRaw : (json['userId'] as String? ?? ''));
+        ? (user['id'] ?? user['_id'])?.toString() ?? ''
+        : (userRaw is String
+            ? userRaw
+            : (json['userId']?.toString() ?? ''));
     final String username =
         user?['username'] as String? ?? json['username'] as String? ?? '';
 

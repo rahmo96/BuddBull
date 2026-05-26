@@ -70,7 +70,9 @@ abstract class ApiEndpoints {
       '/games/$gameId/join-request/$userId';
 
   static String completeGame(String id) => '/games/$id/complete';
-  static String mergeGroups(String id) => '/games/$id/merge';
+  /// Merge endpoint: `POST /games/:sourceId/merge/:targetId`
+  static String mergeGroups(String sourceId, String targetId) =>
+      '/games/$sourceId/merge/$targetId';
   static String gamePendingRequests(String id) =>
       '/games/$id/players/pending';
 

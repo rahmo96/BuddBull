@@ -47,8 +47,6 @@ const AndroidNotificationDetails kBuddbullAndroidHeadsUpDetails =
   priority: Priority.high,
   playSound: true,
   enableVibration: true,
-  enableLights: true,
-  ledColor: Color(0xFF1565C0),
 );
 
 const NotificationDetails kBuddbullForegroundNotificationDetails =

@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/error/app_exception.dart';
 import 'package:buddbull/core/network/api_endpoints.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
@@ -1498,6 +1499,238 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
   }
 }
 
+Future<void> _showMergeSelectorSheet(
+  BuildContext context,
+  WidgetRef ref,
+  GameModel sourceGame,
+) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (_) => _GameMergeSelectorSheet(
+      sourceGame: sourceGame,
+      parentContext: context,
+    ),
+  );
+}
+
+class _GameMergeSelectorSheet extends ConsumerStatefulWidget {
+  const _GameMergeSelectorSheet({
+    required this.sourceGame,
+    required this.parentContext,
+  });
+
+  final GameModel sourceGame;
+  final BuildContext parentContext;
+
+  @override
+  ConsumerState<_GameMergeSelectorSheet> createState() =>
+      _GameMergeSelectorSheetState();
+}
+
+class _GameMergeSelectorSheetState extends ConsumerState<_GameMergeSelectorSheet> {
+  late final Future<List<GameModel>> _targetsFuture = _loadTargets();
+
+  Future<List<GameModel>> _loadTargets() async {
+    final repo = ref.read(gameRepositoryProvider);
+    final params = GameSearchParams(
+      sport: widget.sourceGame.sport,
+      city: widget.sourceGame.location.city,
+      status: 'open',
+      limit: 20,
+    );
+    final games = await repo.searchGames(params);
+    return games.where((g) => g.id != widget.sourceGame.id).toList();
+  }
+
+  Future<bool> _confirmMerge(GameModel target) async {
+    final res = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Merge game?'),
+        content: Text(
+          "Merge '${widget.sourceGame.title}' into '${target.title}'?\n"
+          'Your game will be cancelled and players moved to the target.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Merge'),
+          ),
+        ],
+      ),
+    );
+    return res ?? false;
+  }
+
+  Future<bool> _confirmForceCapacity() async {
+    final res = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Increase capacity?'),
+        content: const Text(
+          'The target game is too full for this merge. Expand its capacity '
+          'and complete the merge?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Force merge'),
+          ),
+        ],
+      ),
+    );
+    return res ?? false;
+  }
+
+  Future<void> _performMerge(String targetId, {required bool expandCapacity}) async {
+    final notifier =
+        ref.read(gameActionsProvider(widget.sourceGame.id).notifier);
+
+    try {
+      final targetGame = await notifier.mergeGames(
+        sourceId: widget.sourceGame.id,
+        targetId: targetId,
+        expandCapacity: expandCapacity,
+      );
+      if (!mounted || targetGame == null) return;
+
+      // 1) Close the selector sheet.
+      Navigator.of(context).pop();
+
+      final parent = widget.parentContext;
+      if (!parent.mounted) return;
+
+      showSuccessSnackBar(parent, 'Game merged successfully.');
+
+      // 2) Replace only the source GameDetailScreen — keep Home beneath.
+      parent.pushReplacement(Routes.gameDetail(targetGame.id));
+    } on AppException catch (e) {
+      if (e.statusCode != 400) {
+        if (mounted) showErrorSnackBar(context, e.message);
+        return;
+      }
+
+      final force = await _confirmForceCapacity();
+      if (!mounted || !force) return;
+
+      await _performMerge(targetId, expandCapacity: true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final busy =
+        ref.watch(gameActionsProvider(widget.sourceGame.id)).isProcessing;
+
+    return SafeArea(
+      top: false,
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.65,
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 12,
+            bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Merge Game', style: AppTextStyles.headlineSmall),
+              const SizedBox(height: 8),
+              Text(
+                'Pick an open ${widget.sourceGame.sport} game in '
+                '${widget.sourceGame.location.city}.',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: FutureBuilder<List<GameModel>>(
+                  future: _targetsFuture,
+                  builder: (ctx, snap) {
+                    if (snap.connectionState == ConnectionState.waiting) {
+                      return const Center(child: BbLoadingIndicator(size: 28));
+                    }
+                    if (snap.hasError) {
+                      return Center(
+                        child: Text(
+                          snap.error.toString(),
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.error,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    }
+
+                    final targets = snap.data ?? const <GameModel>[];
+                    if (targets.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No eligible open games found.',
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    }
+
+                    return ListView.separated(
+                      itemCount: targets.length,
+                      separatorBuilder: (_, __) => const Divider(
+                        height: 1,
+                        color: AppColors.grey200,
+                      ),
+                      itemBuilder: (_, i) {
+                        final target = targets[i];
+                        return ListTile(
+                          enabled: !busy,
+                          title: Text(target.title),
+                          subtitle: Text(
+                            '${target.location.displayName} • ${target.formattedDate}',
+                          ),
+                          trailing: const Icon(
+                            Icons.merge_type_outlined,
+                            color: AppColors.primary,
+                          ),
+                          onTap: busy
+                              ? null
+                              : () async {
+                                  final confirmed = await _confirmMerge(target);
+                                  if (!mounted || !confirmed) return;
+                                  await _performMerge(
+                                    target.id,
+                                    expandCapacity: false,
+                                  );
+                                },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              if (busy) ...[
+                const SizedBox(height: 12),
+                const LinearProgressIndicator(minHeight: 2),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 Future<void> _showManageSheet(
   BuildContext context,
   WidgetRef ref,
@@ -1529,6 +1762,17 @@ Future<void> _showManageSheet(
                 Navigator.pop(sheetCtx);
                 if (!context.mounted) return;
                 _showInviteFriendsSheet(context, ref, gameId);
+              },
+            ),
+          if (game.status == 'open')
+            ListTile(
+              leading: const Icon(Icons.merge_type_outlined),
+              title: const Text('Merge Game'),
+              subtitle: const Text('Combine this game into another open game'),
+              onTap: () {
+                Navigator.pop(sheetCtx);
+                if (!context.mounted) return;
+                _showMergeSelectorSheet(context, ref, game);
               },
             ),
           ListTile(

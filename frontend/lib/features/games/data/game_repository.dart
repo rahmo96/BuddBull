@@ -239,6 +239,22 @@ class GameRepository {
     return GameModel.fromJson(data['game'] as Map<String, dynamic>);
   }
 
+  // ── Merge games ─────────────────────────────────────────
+  Future<GameModel> mergeGames({
+    required String sourceId,
+    required String targetId,
+    bool expandCapacity = false,
+  }) async {
+    final body = await _api.post(
+      ApiEndpoints.mergeGroups(sourceId, targetId),
+      data: <String, dynamic>{
+        'expandCapacity': expandCapacity,
+      },
+    );
+    final data = body['data'] as Map<String, dynamic>;
+    return GameModel.fromJson(data['game'] as Map<String, dynamic>);
+  }
+
   // ── Pending requests ──────────────────────────────────────
   Future<List<GamePlayer>> getPendingRequests(String gameId) async {
     final body = await _api.get(ApiEndpoints.gamePendingRequests(gameId));

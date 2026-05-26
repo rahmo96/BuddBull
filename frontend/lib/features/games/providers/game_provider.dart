@@ -393,6 +393,41 @@ class GameActionsNotifier extends StateNotifier<GameActionsState> {
     }
   }
 
+  /// Merge [targetId] into [sourceId]. Returns the surviving target game.
+  ///
+  /// Rethrows [AppException] with `statusCode == 400` so the UI can offer
+  /// a force merge via [expandCapacity].
+  Future<GameModel?> mergeGames({
+    required String sourceId,
+    required String targetId,
+    bool expandCapacity = false,
+  }) async {
+    state = state.copyWith(isProcessing: true, clearError: true);
+    try {
+      final game = await _repo.mergeGames(
+        sourceId: sourceId,
+        targetId: targetId,
+        expandCapacity: expandCapacity,
+      );
+      state = state.copyWith(
+        isProcessing: false,
+        successMessage: 'Game merged successfully.',
+      );
+      _ref.invalidate(gameDetailProvider(sourceId));
+      _ref.invalidate(gameDetailProvider(targetId));
+      _ref.invalidate(myGamesProvider);
+      _ref.invalidate(calendarGamesProvider);
+      return game;
+    } catch (e) {
+      if (e is AppException && e.statusCode == 400) {
+        state = state.copyWith(isProcessing: false);
+        rethrow;
+      }
+      state = state.copyWith(isProcessing: false, error: _msg(e));
+      return null;
+    }
+  }
+
   void clearError() => state = state.copyWith(clearError: true);
   void clearSuccess() => state = state.copyWith(clearSuccess: true);
 
