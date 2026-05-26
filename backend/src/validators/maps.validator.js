@@ -3,6 +3,7 @@ const Joi = require('joi');
 const autocompleteSchema = Joi.object({
   input: Joi.string().trim().min(3).max(200).required(),
   sessionToken: Joi.string().trim().max(200).allow('', null),
+  types: Joi.string().trim().max(100).allow('', null),
 });
 
 const placeDetailsSchema = Joi.object({

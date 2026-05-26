@@ -88,7 +88,9 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
       final requestId = ++_autocompleteRequestId;
       setState(() => _isFetchingSuggestions = true);
       try {
-        final suggestions = await ref.read(gameRepositoryProvider).autocompleteAddress(query);
+        final suggestions = await ref
+            .read(gameRepositoryProvider)
+            .autocompleteAddress(query, types: 'address');
         if (!mounted || requestId != _autocompleteRequestId) return;
         setState(() => _suggestions = suggestions);
       } catch (_) {

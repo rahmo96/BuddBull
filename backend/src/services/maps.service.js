@@ -58,10 +58,10 @@ const toAddressParts = (components = []) => {
   };
 };
 
-const autocompleteAddress = async ({ input, sessionToken }) => {
+const autocompleteAddress = async ({ input, sessionToken, types }) => {
   const body = await getJson(GOOGLE_PLACES_AUTOCOMPLETE_URL, {
     input,
-    types: 'address',
+    types: types?.trim() || 'address',
     sessiontoken: sessionToken || undefined,
   });
 

@@ -249,10 +249,16 @@ class GameRepository {
         .toList();
   }
 
-  Future<List<AddressSuggestion>> autocompleteAddress(String input) async {
+  Future<List<AddressSuggestion>> autocompleteAddress(
+    String input, {
+    String? types,
+  }) async {
     final body = await _api.get(
       ApiEndpoints.mapsAutocomplete,
-      queryParams: {'input': input},
+      queryParams: {
+        'input': input,
+        if (types != null && types.trim().isNotEmpty) 'types': types.trim(),
+      },
     );
     final data = body['data'] as Map<String, dynamic>;
     final list = data['suggestions'] as List<dynamic>? ?? [];

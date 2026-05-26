@@ -5,6 +5,8 @@ import 'package:buddbull/features/auth/data/models/user_model.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/onboarding/data/onboarding_mock_data.dart';
 import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
+import 'package:buddbull/features/profile/presentation/widgets/city_autocomplete_field.dart';
+import 'package:buddbull/features/profile/presentation/widgets/neighborhood_autocomplete_field.dart';
 import 'package:buddbull/features/profile/presentation/widgets/sport_chip.dart';
 import 'package:buddbull/features/profile/providers/profile_provider.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
@@ -28,8 +30,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _firstNameCtrl = TextEditingController();
   final _lastNameCtrl = TextEditingController();
   final _bioCtrl = TextEditingController();
-  final _cityCtrl = TextEditingController();
-  final _neighborhoodCtrl = TextEditingController();
+
+  /// Validated city name from Google Places (saved to `UserModel.location.city`).
+  String? _selectedCity;
+  /// Validated neighbourhood name from Google Places (saved to `UserModel.location.neighborhood`).
+  String? _selectedNeighborhood;
 
   int _radiusKm = 10;
   List<SportInterest> _sports = [];
@@ -59,8 +64,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _firstNameCtrl.dispose();
     _lastNameCtrl.dispose();
     _bioCtrl.dispose();
-    _cityCtrl.dispose();
-    _neighborhoodCtrl.dispose();
     super.dispose();
   }
 
@@ -70,8 +73,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _firstNameCtrl.text = user.firstName;
     _lastNameCtrl.text = user.lastName;
     _bioCtrl.text = user.bio ?? '';
-    _cityCtrl.text = user.location?.city ?? '';
-    _neighborhoodCtrl.text = user.location?.neighborhood ?? '';
+    _selectedCity = user.location?.city;
+    _selectedNeighborhood = user.location?.neighborhood;
     _radiusKm = user.location?.radiusKm ?? 10;
     _sports = List.from(user.sportsInterests);
   }
@@ -176,10 +179,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       'lastName': _lastNameCtrl.text.trim(),
       if (_bioCtrl.text.trim().isNotEmpty) 'bio': _bioCtrl.text.trim(),
       'location': {
-        if (_cityCtrl.text.trim().isNotEmpty)
-          'city': _cityCtrl.text.trim(),
-        if (_neighborhoodCtrl.text.trim().isNotEmpty)
-          'neighborhood': _neighborhoodCtrl.text.trim(),
+        if (_selectedCity != null && _selectedCity!.trim().isNotEmpty)
+          'city': _selectedCity!.trim(),
+        if (_selectedNeighborhood != null &&
+            _selectedNeighborhood!.trim().isNotEmpty)
+          'neighborhood': _selectedNeighborhood!.trim(),
         'radiusKm': _radiusKm,
       },
       'sportsInterests': _sports.map((s) => s.toJson()).toList(),
@@ -314,18 +318,24 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 // ── Location ──────────────────────────────────────
                 const _SectionHeader(title: 'Location'),
                 const SizedBox(height: 12),
-                BbTextField(
+                CityAutocompleteField(
+                  selectedCity: _selectedCity,
                   label: AppStrings.cityLabel,
-                  hint: 'e.g. London',
-                  controller: _cityCtrl,
-                  prefixIcon: Icons.location_city_rounded,
+                  hint: 'Start typing a city…',
+                  onCitySelected: (city) => setState(() {
+                    _selectedCity = city;
+                    _selectedNeighborhood = null;
+                  }),
                 ),
                 const SizedBox(height: 16),
-                BbTextField(
+                NeighborhoodAutocompleteField(
+                  key: ValueKey(_selectedCity ?? ''),
+                  selectedCity: _selectedCity,
+                  selectedNeighborhood: _selectedNeighborhood,
                   label: AppStrings.neighborhoodLabel,
-                  hint: 'e.g. Shoreditch',
-                  controller: _neighborhoodCtrl,
-                  prefixIcon: Icons.map_rounded,
+                  hint: 'Start typing an area or street…',
+                  onNeighborhoodSelected: (neighborhood) =>
+                      setState(() => _selectedNeighborhood = neighborhood),
                 ),
                 const SizedBox(height: 16),
                 _RadiusSlider(
