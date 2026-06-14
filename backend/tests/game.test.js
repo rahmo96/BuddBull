@@ -144,6 +144,53 @@ describe('GET /games (search)', () => {
     expect(res.status).toBe(200);
     expect(res.body.games.every((g) => g.location.city.toLowerCase().includes('london'))).toBe(true);
   });
+
+  it('returns games within radius sorted by distance when lat/lng provided', async () => {
+    const { token } = await registerAndLogin(1, 'organizer');
+
+    await createGameAs(token, {
+      title: 'Near Game',
+      location: {
+        neighborhood: 'Westminster',
+        city: 'London',
+        country: 'GB',
+        coordinates: { type: 'Point', coordinates: [-0.1276, 51.5074] },
+      },
+    });
+    await createGameAs(token, {
+      title: 'Far Game',
+      location: {
+        neighborhood: 'Manhattan',
+        city: 'New York',
+        country: 'US',
+        coordinates: { type: 'Point', coordinates: [-74.006, 40.7128] },
+      },
+    });
+
+    const res = await request(app).get(
+      `${GAMES}?lat=51.5074&lng=-0.1276&radiusKm=50&sortBy=distance&status=open`,
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.games.length).toBe(1);
+    expect(res.body.games[0].title).toBe('Near Game');
+    expect(res.body.games[0].distanceKm).toBeDefined();
+    expect(res.body.games[0].distanceKm).toBeLessThan(1);
+  });
+
+  it('rejects sortBy=distance without lat/lng', async () => {
+    const res = await request(app).get(`${GAMES}?sortBy=distance`);
+
+    expect(res.status).toBe(422);
+    expect(Array.isArray(res.body.errors)).toBe(true);
+  });
+
+  it('rejects lat without lng', async () => {
+    const res = await request(app).get(`${GAMES}?lat=51.5`);
+
+    expect(res.status).toBe(422);
+    expect(Array.isArray(res.body.errors)).toBe(true);
+  });
 });
 
 describe('POST /games/:id/join', () => {

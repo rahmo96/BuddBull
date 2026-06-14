@@ -383,13 +383,9 @@ const getGame = async (gameId) => {
 // ─────────────────────────────────────────────
 
 /**
- * Full-featured game search with area-based geographic filtering.
- * Never filters by precise GPS; uses city + neighbourhood strings.
- *
- * @param {object} filters  Validated searchGamesSchema fields
- * @param {object|null} viewer  req.user (may be null for unauthenticated)
+ * Shared Mongo filter for game search (string + geo paths).
  */
-const searchGames = async (filters, viewer = null) => {
+const buildGameSearchFilter = (filters, viewer = null) => {
   const {
     sport,
     city,
@@ -399,16 +395,10 @@ const searchGames = async (filters, viewer = null) => {
     dateFrom,
     dateTo,
     isPrivate,
-    q,
-    page = 1,
-    limit = 20,
-    sortBy = 'scheduledAt',
-    sortOrder = 'asc',
   } = filters;
 
   const query = { deletedAt: null };
 
-  // Exclude private games from unauthenticated viewers
   if (!viewer || isPrivate === false) {
     query.isPrivate = false;
   } else if (isPrivate === true && viewer) {
@@ -416,9 +406,7 @@ const searchGames = async (filters, viewer = null) => {
   }
 
   if (status) query.status = status;
-
   if (sport) query.sport = sport.toLowerCase();
-
   if (city) query['location.city'] = new RegExp(city.trim(), 'i');
   if (neighborhood) query['location.neighborhood'] = new RegExp(neighborhood.trim(), 'i');
 
@@ -431,9 +419,124 @@ const searchGames = async (filters, viewer = null) => {
     if (dateFrom) query.scheduledAt.$gte = new Date(dateFrom);
     if (dateTo) query.scheduledAt.$lte = new Date(dateTo);
   } else if (status === 'open' || status === 'full') {
-    // Default: only future games when searching active matches
     query.scheduledAt = { $gt: new Date() };
   }
+
+  return query;
+};
+
+/**
+ * Proximity search via $geoNear on game venue coordinates.
+ */
+const searchGamesByGeo = async (filters, viewer = null) => {
+  const {
+    lat,
+    lng,
+    radiusKm = 10,
+    page = 1,
+    limit = 20,
+    sortBy = 'distance',
+    sortOrder = 'asc',
+  } = filters;
+
+  const query = buildGameSearchFilter(filters, viewer);
+  query['location.coordinates'] = { $exists: true, $ne: null };
+
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const geoNearStage = {
+    $geoNear: {
+      near: { type: 'Point', coordinates: [Number(lng), Number(lat)] },
+      distanceField: 'distanceMeters',
+      maxDistance: Number(radiusKm) * 1000,
+      spherical: true,
+      query,
+    },
+  };
+
+  const pipeline = [
+    geoNearStage,
+    {
+      $addFields: {
+        distanceKm: { $round: [{ $divide: ['$distanceMeters', 1000] }, 2] },
+      },
+    },
+  ];
+
+  if (sortBy && sortBy !== 'distance') {
+    pipeline.push({ $sort: { [sortBy]: sortOrder === 'asc' ? 1 : -1 } });
+  }
+
+  pipeline.push(
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'organizer',
+        foreignField: '_id',
+        as: 'organizerArr',
+        pipeline: [
+          {
+            $project: {
+              username: 1,
+              firstName: 1,
+              lastName: 1,
+              profilePicture: 1,
+              'stats.averageRating': 1,
+            },
+          },
+        ],
+      },
+    },
+    { $unwind: { path: '$organizerArr', preserveNullAndEmptyArrays: true } },
+    { $addFields: { organizer: '$organizerArr' } },
+    { $project: { organizerArr: 0, distanceMeters: 0 } },
+    { $skip: skip },
+    { $limit: Number(limit) },
+  );
+
+  const [games, countResult] = await Promise.all([
+    Game.aggregate(pipeline),
+    Game.aggregate([geoNearStage, { $count: 'total' }]),
+  ]);
+
+  const total = countResult[0]?.total ?? 0;
+
+  return {
+    games,
+    pagination: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      pages: Math.ceil(total / Number(limit)) || 0,
+    },
+  };
+};
+
+/**
+ * Full-featured game search with string-based or geospatial filtering.
+ *
+ * @param {object} filters  Validated searchGamesSchema fields
+ * @param {object|null} viewer  req.user (may be null for unauthenticated)
+ */
+const searchGames = async (filters, viewer = null) => {
+  const {
+    lat,
+    lng,
+    q,
+    page = 1,
+    limit = 20,
+    sortBy = 'scheduledAt',
+    sortOrder = 'asc',
+  } = filters;
+
+  if (lat != null && lng != null) {
+    return searchGamesByGeo(
+      { ...filters, sortBy: sortBy === 'scheduledAt' ? 'distance' : sortBy },
+      viewer,
+    );
+  }
+
+  const query = buildGameSearchFilter(filters, viewer);
 
   if (q) {
     query.$text = { $search: q };

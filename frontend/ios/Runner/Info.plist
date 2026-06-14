@@ -49,5 +49,7 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>BuddBull uses your location to show games near you.</string>
 </dict>
 </plist>

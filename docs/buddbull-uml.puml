@@ -1,0 +1,1007 @@
+' =============================================================================
+' BuddBull — Social-Sport Platform
+' UML Documentation (PlantUML)
+' =============================================================================
+
+
+@startuml BuddBull_System_Component
+!theme plain
+title BuddBull — System Component Diagram
+
+scale 1.5
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam defaultFontSize 11
+skinparam svgDimensionStyle false
+
+
+actor "Player /\nOrganizer" as User
+actor "Admin" as Admin
+
+package "Client Tier" {
+  component "Flutter App\n(iOS / Android)" as Flutter {
+    port "REST" as FlutterREST
+    port "WebSocket" as FlutterWS
+    port "FCM" as FlutterFCM
+  }
+}
+
+package "Server Tier" {
+  component "Express API\n/api/v1" as API {
+    port "HTTP" as APIHTTP
+    port "Socket.IO" as APISocket
+  }
+  component "Cron Jobs\n(game auto-complete)" as Cron
+}
+
+package "Data & External Services" {
+  database "MongoDB 7\n(Mongoose)" as Mongo
+  component "Firebase Auth\n(ID tokens)" as Firebase
+  component "Firebase Cloud\nMessaging" as FCM
+  component "SendGrid\n(Email)" as SendGrid
+  component "Google Maps API" as Maps
+  component "AWS S3\n(prod uploads)" as S3
+}
+
+User --> Flutter
+Admin --> Flutter
+
+FlutterREST --> APIHTTP : Dio + JWT
+FlutterWS --> APISocket : Socket.IO
+FlutterFCM <-- FCM : push notifications
+
+API --> Mongo
+API --> Firebase : verify tokens
+API --> FCM : sendPush
+API --> SendGrid : transactional email
+API --> Maps : autocomplete / static maps
+API --> S3 : profile pictures (prod)
+Cron --> API
+
+note right of Flutter
+  **Features:** Auth, Onboarding, Games,
+  Chat, Performance, Ratings,
+  Notifications, Profile, Admin
+  **State:** Riverpod | **Nav:** go_router
+end note
+
+note right of API
+  **Layers:** Routes → Controllers
+  → Services → Models
+  **Auth:** Firebase ID token → req.user
+end note
+
+@enduml
+
+
+@startuml BuddBull_Domain_Model
+!theme plain
+title BuddBull — Domain Model (Class Diagram)
+
+scale 1.5
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+
+enum UserRole {
+  player
+  organizer
+  admin
+}
+
+enum GameStatus {
+  draft
+  open
+  full
+  in_progress
+  completed
+  cancelled
+}
+
+enum ChatType {
+  group
+  dm
+}
+
+enum MessageType {
+  text
+  image
+  video
+  file
+  system
+  pinned
+}
+
+enum PerformanceLogType {
+  match
+  training
+  fitness
+}
+
+enum FriendRequestStatus {
+  pending
+  accepted
+  declined
+}
+
+class User {
+  +firstName: String
+  +lastName: String
+  +username: String
+  +email: String
+  +firebaseUid: String
+  +role: UserRole
+  +bio: String
+  +profilePicture: String
+  +sportsInterests: SportInterest[]
+  +location: Location
+  +stats: UserStats
+  +friends: ObjectId[]
+  +pushTokens: String[]
+  +isVerified: Boolean
+  +isActive: Boolean
+  +isBanned: Boolean
+  --
+  +createPasswordResetToken()
+  +softDelete()
+  +updateStreak()
+}
+
+class SportInterest <<embedded>> {
+  +sport: String
+  +skillLevel: String
+}
+
+class UserStats <<embedded>> {
+  +gamesPlayed: Number
+  +gamesWon: Number
+  +averageRating: Number
+  +currentStreak: Number
+  +longestStreak: Number
+}
+
+class Location <<embedded>> {
+  +city: String
+  +neighborhood: String
+  +radiusKm: Number
+}
+
+class Game {
+  +title: String
+  +description: String
+  +sport: String
+  +organizer: ObjectId
+  +scheduledAt: Date
+  +durationMinutes: Number
+  +location: GameLocation
+  +players: GamePlayer[]
+  +maxPlayers: Number
+  +requiredSkillLevel: String
+  +status: GameStatus
+  +isPrivate: Boolean
+  +requiresApproval: Boolean
+  +groupChat: ObjectId
+  +result: GameResult
+  --
+  +hasPlayer(userId): Boolean
+  +hasConflict(): Boolean
+  +toPublicJSON()
+}
+
+class GamePlayer <<embedded>> {
+  +user: ObjectId
+  +status: String
+  +role: String
+  +joinedAt: Date
+}
+
+class GameResult <<embedded>> {
+  +winner: String
+  +score: String
+  +mvpUser: ObjectId
+  +recordedBy: ObjectId
+}
+
+class Chat {
+  +type: ChatType
+  +name: String
+  +game: ObjectId
+  +participants: Participant[]
+  +pinnedMessages: ObjectId[]
+  +lastMessage: ObjectId
+  +messageCount: Number
+  +isActive: Boolean
+  --
+  +findOrCreateDM(userA, userB)
+  +getParticipant(userId)
+}
+
+class Participant <<embedded>> {
+  +user: ObjectId
+  +lastReadMessage: ObjectId
+  +isAdmin: Boolean
+  +mutedUntil: Date
+}
+
+class Message {
+  +chat: ObjectId
+  +sender: ObjectId
+  +type: MessageType
+  +content: String
+  +replyTo: ObjectId
+  +reactions: Map<String, String>
+  +readBy: ReadReceipt[]
+  +isPinned: Boolean
+  +isDeleted: Boolean
+  --
+  +softDelete()
+  +markAsRead(userId)
+}
+
+class Rating {
+  +rater: ObjectId
+  +ratee: ObjectId
+  +game: ObjectId
+  +reliabilityScore: Number
+  +behaviorScore: Number
+  +compositeScore: Number
+  +comment: String
+  +isAnonymous: Boolean
+  --
+  +recalculateUserStats()
+  +toPublicJSON()
+}
+
+class RatingDismissal {
+  +rater: ObjectId
+  +game: ObjectId
+}
+
+class PerformanceLog {
+  +user: ObjectId
+  +game: ObjectId
+  +type: PerformanceLogType
+  +sport: String
+  +loggedAt: Date
+  +matchOutcome: String
+  +durationMinutes: Number
+  +stats: KVPair[]
+  +selfRating: Number
+  +mood: String
+  +streakAtLog: Number
+  --
+  +aggregateForUser(userId)
+  +getStreakHistory(userId)
+}
+
+class FriendRequest {
+  +requester: ObjectId
+  +recipient: ObjectId
+  +status: FriendRequestStatus
+}
+
+class Notification {
+  +recipient: ObjectId
+  +type: String
+  +title: String
+  +body: String
+  +data: Mixed
+  +read: Boolean
+  --
+  +unreadCountFor(recipientId)
+}
+
+class SportCategory {
+  +name: String
+  +slug: String
+  +icon: String
+  +color: String
+  +isActive: Boolean
+  +createdBy: ObjectId
+}
+
+' ── Relationships ──────────────────────────────────────────────
+User "1" *-- "0..*" SportInterest
+User "1" *-- "0..1" UserStats
+User "1" *-- "0..1" Location
+
+User "1" --> "0..*" Game : organizes
+
+Game "1" *-- "0..*" GamePlayer : includes
+GamePlayer "0..*" --> "1" User : represents
+
+Game "1" --> "0..1" Chat : groupChat
+
+Chat "1" --> "0..*" Message : contains
+User "1" --> "0..*" Message : sends
+
+User "1" --> "0..*" Rating : rates / receives
+Game "1" --> "0..*" Rating : context
+
+User "1" --> "0..*" PerformanceLog : logs
+Game "0..1" --> "0..*" PerformanceLog : linked
+
+User "1" --> "0..*" FriendRequest : requester
+User "1" --> "0..*" FriendRequest : recipient
+User "0..*" --> "0..*" User : friends
+
+User "1" --> "0..*" Notification : receives
+User "1" --> "0..*" RatingDismissal : dismisses
+Game "1" --> "0..*" RatingDismissal
+
+User "1" --> "0..*" SportCategory : creates
+
+@enduml
+
+
+@startuml BuddBull_Backend_Architecture
+!theme plain
+title BuddBull — Backend Layered Architecture
+
+scale 1.5
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+package "HTTP Layer" {
+  package "Routes (/api/v1)" {
+    class auth.routes
+    class user.routes
+    class game.routes
+    class performance.routes
+    class chat.routes
+    class rating.routes
+    class notification.routes
+    class admin.routes
+    class maps.routes
+  }
+
+  package "Middleware" {
+    class protect <<middleware>>
+    class restrictTo <<middleware>>
+    class optionalAuth <<middleware>>
+    class validate <<middleware>>
+    class upload.middleware
+    class errorHandler
+    class rateLimit
+  }
+
+  package "Controllers" {
+    class AuthController {
+      +syncUser()
+    }
+    class UserController {
+      +getMe()
+      +updateMe()
+      +searchUsers()
+      +followUser()
+      +acceptFriendRequest()
+      +uploadProfilePicture()
+      +adminBanUser()
+    }
+    class GameController {
+      +createGame()
+      +searchGames()
+      +joinGame()
+      +leaveGame()
+      +approvePlayer()
+      +kickPlayer()
+      +mergeGroups()
+      +completeGame()
+    }
+    class PerformanceController {
+      +createLog()
+      +getStats()
+      +getStreakHistory()
+      +getLeaderboard()
+    }
+    class ChatController {
+      +getChats()
+      +sendMessage()
+      +pinMessage()
+      +getUnreadCounts()
+    }
+    class RatingController {
+      +ratePlayer()
+      +getPendingRatings()
+      +getProfileSummary()
+    }
+    class NotificationController {
+      +list()
+      +markRead()
+      +markAllRead()
+    }
+    class AdminController {
+      +getDashboard()
+      +broadcast()
+      +exportUsers()
+    }
+    class MapsController {
+      +autocompleteAddress()
+      +getPlaceDetails()
+    }
+  }
+}
+
+package "Business Layer (Services)" {
+  class auth.service {
+    +syncUser()
+  }
+  class user.service {
+    +getMe()
+    +updateMe()
+    +searchUsers()
+    +setBanStatus()
+  }
+  class friend.service {
+    +sendFriendRequest()
+    +acceptFriendRequest()
+    +getFriends()
+    +areFriends()
+  }
+  class game.service {
+    +createGame()
+    +joinGame()
+    +approvePlayer()
+    +kickPlayer()
+    +mergeGroups()
+    +completeGame()
+    +autoCompleteStaleGames()
+  }
+  class chat.service {
+    +getChats()
+    +sendMessage()
+    +pinMessage()
+    +getUnreadCounts()
+  }
+  class chatPresence.service {
+    +emitToUser()
+    +revokeChatAccess()
+  }
+  class rating.service {
+    +ratePlayer()
+    +getPendingRatings()
+    +recalculateAllStats()
+  }
+  class performance.service {
+    +createLog()
+    +getStats()
+    +getLeaderboard()
+  }
+  class notificationInbox.service {
+    +createForUser()
+    +listForUser()
+    +markAsRead()
+  }
+  class notification.service {
+    +sendPush()
+    +notifyGameInvite()
+    +notifyChatMessage()
+  }
+  class admin.service {
+    +getDashboardStats()
+    +broadcastMessage()
+    +exportUsersCSV()
+  }
+  class maps.service {
+    +autocompleteAddress()
+    +getStaticMapImage()
+  }
+}
+
+package "Persistence Layer (Mongoose Models)" {
+  class User.model
+  class Game.model
+  class Chat.model
+  class Message.model
+  class Rating.model
+  class PerformanceLog.model
+  class FriendRequest.model
+  class Notification.model
+  class SportCategory.model
+}
+
+package "Real-time Layer" {
+  class socket.manager {
+    +registerSocketHandlers()
+    +socketAuthMiddleware()
+    --
+    Events in: join_chat, send_message,
+    typing, markAsRead, pin_message
+    Events out: receive_message,
+    notification:new, chat:kicked
+  }
+}
+
+' Route → Controller
+auth.routes --> AuthController
+user.routes --> UserController
+game.routes --> GameController
+performance.routes --> PerformanceController
+chat.routes --> ChatController
+rating.routes --> RatingController
+notification.routes --> NotificationController
+admin.routes --> AdminController
+maps.routes --> MapsController
+
+protect ..> user.routes
+protect ..> game.routes
+restrictTo ..> admin.routes
+
+' Controller → Service
+AuthController --> auth.service
+UserController --> user.service
+UserController --> friend.service
+GameController --> game.service
+PerformanceController --> performance.service
+ChatController --> chat.service
+ChatController --> socket.manager
+RatingController --> rating.service
+NotificationController --> notificationInbox.service
+AdminController --> admin.service
+MapsController --> maps.service
+
+' Service → Service (cross-cutting)
+game.service --> notificationInbox.service
+game.service --> notification.service
+game.service --> chatPresence.service
+chat.service --> chatPresence.service
+notificationInbox.service --> socket.manager
+admin.service --> notification.service
+
+' Service → Model
+auth.service --> User.model
+user.service --> User.model
+friend.service --> FriendRequest.model
+game.service --> Game.model
+game.service --> Chat.model
+chat.service --> Chat.model
+chat.service --> Message.model
+rating.service --> Rating.model
+performance.service --> PerformanceLog.model
+notificationInbox.service --> Notification.model
+admin.service --> User.model
+admin.service --> Game.model
+
+@enduml
+
+
+@startuml BuddBull_Frontend_Architecture
+!theme plain
+title BuddBull — Frontend Feature Architecture (Flutter)
+
+scale 1.5
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+package "Core Layer" {
+  class ApiClient {
+    +get()
+    +post()
+    +patch()
+    +delete()
+    +postMultipart()
+  }
+  class ApiEndpoints <<constants>>
+  class SocketService {
+    +connect()
+    +joinChat()
+    +sendMessage()
+    +startTyping()
+    +messageStream
+    +notificationStream
+  }
+  class PushNotificationService {
+    +registerToken()
+    +handleDeepLink()
+  }
+  class AppRouter {
+    +routerProvider
+    +redirect logic
+  }
+  class SecureStorage
+  class AppTheme
+}
+
+package "Shared Widgets" {
+  class BBButton
+  class BBTextField
+  class ErrorView
+  class LoadingOverlay
+}
+
+package "feature: auth" {
+  class UserModel {
+    +id, username, email, role
+    +stats, location, sportsInterests
+    +friendRequestStatus
+  }
+  class AuthRepository {
+    +syncUserProfile()
+    +getMe()
+    +tryRestoreSession()
+  }
+  class AuthNotifier {
+    +login()
+    +register()
+    +logout()
+    +forgotPassword()
+  }
+  class LoginScreen
+  class RegisterScreen
+  class SplashScreen
+}
+
+package "feature: onboarding" {
+  class OnboardingDraft
+  class OnboardingDraftNotifier
+  class OnboardingWelcomeScreen
+  class OnboardingProfileScreen
+}
+
+package "feature: home" {
+  class HomeScaffold {
+    +bottom nav (5 tabs)
+    +connects SocketService
+  }
+  class HomeScreen
+}
+
+package "feature: games" {
+  class GameModel {
+    +title, sport, organizer
+    +players, status, location
+    +isFull, availableSlots
+  }
+  class GameRepository {
+    +searchGames()
+    +createGame()
+    +joinGame()
+    +approvePlayer()
+    +completeGame()
+  }
+  class GameSearchNotifier
+  class GameActionsNotifier {
+    +join()
+    +leave()
+    +approvePlayer()
+    +kickPlayer()
+  }
+  class GamesScreen
+  class GameDetailScreen
+  class CreateGameScreen
+  class CalendarScreen
+}
+
+package "feature: chat" {
+  class ChatModel
+  class MessageModel
+  class ChatRepository {
+    +getChats()
+    +sendMessage()
+    +getUnreadCounts()
+  }
+  class MessagesNotifier {
+    +loadMessages()
+    +sendMessage()
+    +startTyping()
+  }
+  class ChatListScreen
+  class ChatScreen
+}
+
+package "feature: profile" {
+  class UserRepository {
+    +updateMe()
+    +getFriends()
+    +sendFriendRequest()
+    +searchUsers()
+  }
+  class ProfileNotifier
+  class ProfileScreen
+  class EditProfileScreen
+  class FriendsListScreen
+}
+
+package "feature: performance" {
+  class PerformanceLogModel
+  class UserPerformanceStats
+  class PerformanceRepository {
+    +createLog()
+    +getStats()
+    +getStreakHistory()
+  }
+  class PerformanceScreen
+  class CreateLogScreen
+}
+
+package "feature: rating" {
+  class RatingModel
+  class RatingRepository {
+    +ratePlayer()
+    +getPendingRatings()
+    +getProfileSummary()
+  }
+  class RatePlayerSheet
+}
+
+package "feature: notifications" {
+  class NotificationModel
+  class NotificationRepository {
+    +getNotifications()
+    +markAsRead()
+  }
+  class NotificationsNotifier {
+    +handleJoinRequest()
+    +handleFriendRequest()
+  }
+  class NotificationsScreen
+}
+
+package "feature: admin" {
+  class AdminRepository {
+    +getDashboard()
+    +banUser()
+    +broadcast()
+  }
+  class AdminDashboardScreen
+}
+
+' Core dependencies
+AuthRepository --> ApiClient
+GameRepository --> ApiClient
+ChatRepository --> ApiClient
+UserRepository --> ApiClient
+PerformanceRepository --> ApiClient
+RatingRepository --> ApiClient
+NotificationRepository --> ApiClient
+AdminRepository --> ApiClient
+
+AuthNotifier --> AuthRepository
+GameSearchNotifier --> GameRepository
+GameActionsNotifier --> GameRepository
+MessagesNotifier --> ChatRepository
+MessagesNotifier --> SocketService
+ProfileNotifier --> UserRepository
+NotificationsNotifier --> NotificationRepository
+NotificationsNotifier --> SocketService
+
+HomeScaffold --> SocketService
+ChatScreen --> SocketService
+AppRouter --> AuthNotifier
+
+LoginScreen --> AuthNotifier
+GamesScreen --> GameSearchNotifier
+GameDetailScreen --> GameActionsNotifier
+ChatScreen --> MessagesNotifier
+PerformanceScreen --> PerformanceRepository
+ProfileScreen --> ProfileNotifier
+NotificationsScreen --> NotificationsNotifier
+AdminDashboardScreen --> AdminRepository
+
+@enduml
+
+
+@startuml BuddBull_Sequence_Auth
+!theme plain
+title BuddBull — Sequence: Authentication & Session Restore
+
+scale 1.5
+
+actor User
+participant "LoginScreen" as UI
+participant "AuthNotifier" as Auth
+participant "FirebaseAuth" as FB
+participant "AuthRepository" as Repo
+participant "ApiClient" as API
+participant "auth.service" as Svc
+database "MongoDB\n(User)" as DB
+participant "AppRouter" as Router
+
+== Register / Login ==
+User -> UI : enter credentials
+UI -> Auth : login() / register()
+Auth -> FB : signInWithEmail / createUser
+FB --> Auth : Firebase User + ID token
+Auth -> Repo : syncUserProfile()
+Repo -> API : POST /auth/sync\nAuthorization: Bearer <token>
+API -> Svc : syncUser()
+Svc -> DB : upsert User by firebaseUid
+DB --> Svc : User document
+Svc --> API : user JSON
+API --> Repo : UserModel
+Repo --> Auth : UserModel
+Auth -> Auth : state = authenticated
+Router -> Router : redirect → /home or /onboarding
+
+== Session Restore (cold start) ==
+UI -> Auth : tryRestoreSession()
+Auth -> FB : currentUser + getIdToken()
+FB --> Auth : token
+Auth -> Repo : getMe()
+Repo -> API : GET /users/me
+API -> DB : find User
+DB --> API : user
+API --> Auth : UserModel
+Auth --> Router : authenticated
+
+== API Request (every call) ==
+note over API
+  _AuthInterceptor attaches
+  Firebase ID token to every request.
+  401 → AuthNotifier.setSessionExpired()
+end note
+
+@enduml
+
+
+@startuml BuddBull_Sequence_JoinGame
+!theme plain
+title BuddBull — Sequence: Join Game & Organizer Approval
+
+scale 1.5
+
+actor Player
+actor Organizer
+participant "GameDetailScreen" as UI
+participant "GameActionsNotifier" as Notifier
+participant "GameRepository" as Repo
+participant "GameController" as Ctrl
+participant "game.service" as Svc
+database "MongoDB" as DB
+participant "notificationInbox\n.service" as Inbox
+participant "Socket.IO" as Socket
+participant "NotificationsNotifier" as NNotif
+
+== Player joins open game ==
+Player -> UI : tap Join
+UI -> Notifier : join()
+Notifier -> Repo : joinGame(gameId)
+Repo -> Ctrl : POST /games/:id/join
+Ctrl -> Svc : joinGame(user, game)
+Svc -> DB : add player (pending or approved)
+alt requiresApproval
+  Svc -> Inbox : createForUser(organizer,\ngameJoinRequest)
+  Inbox -> Socket : emit notification:new
+  Socket --> NNotif : organizer inbox update
+else auto-approve
+  Svc -> Inbox : createForUser(organizer,\ngamePlayerJoined)
+end
+Svc --> Ctrl : updated Game
+Ctrl --> Repo : Game JSON
+Repo --> Notifier : GameModel
+Notifier -> Notifier : invalidate gameDetailProvider
+
+== Organizer approves ==
+Organizer -> UI : approve player
+UI -> Notifier : approvePlayer(userId)
+Notifier -> Repo : approvePlayer(gameId, userId)
+Repo -> Ctrl : PATCH /games/:id/players/:userId/approve
+Ctrl -> Svc : approvePlayer()
+Svc -> DB : player.status = approved
+Svc -> Inbox : createForUser(player, gameApproved)
+Inbox -> Socket : notification:new
+Socket --> NNotif : player notified
+Svc --> Ctrl : Game
+Ctrl --> Repo : Game
+Repo --> Notifier : success
+
+@enduml
+
+
+@startuml BuddBull_Sequence_Chat
+!theme plain
+title BuddBull — Sequence: Real-time Chat Message
+
+scale 1.5
+
+actor User
+participant "ChatScreen" as UI
+participant "MessagesNotifier" as Notifier
+participant "SocketService" as Sock
+participant "socket.manager" as SM
+participant "chat.service" as Svc
+database "MongoDB" as DB
+participant "Other Clients" as Others
+
+== User opens chat ==
+User -> UI : navigate /chats/:id
+UI -> Sock : joinChat(chatId)
+Sock -> SM : emit join_chat
+SM -> SM : socket.join(chatId)
+SM --> Sock : joined_chat
+
+== Send message (socket path) ==
+User -> UI : type + send
+UI -> Notifier : sendMessage(content)
+Notifier -> Sock : sendMessage(chatId, content)
+Sock -> SM : emit send_message
+SM -> Svc : sendMessage()
+Svc -> DB : create Message,\nupdate Chat.lastMessage
+DB --> Svc : Message
+SM -> SM : io.to(chatId).emit\nreceive_message
+SM --> Sock : receive_message
+SM --> Others : receive_message
+Sock --> Notifier : messageStream
+Notifier -> UI : append MessageModel
+
+== Typing indicator ==
+User -> UI : typing
+UI -> Sock : startTyping(chatId)
+Sock -> SM : emit typing
+SM --> Others : typing { userId, chatId }
+Others -> Others : show typing bubble
+
+== Unread count (all participants) ==
+SM -> SM : emit chat:unread_update
+Sock --> Notifier : chatUnreadStream
+Notifier -> UI : update badge
+
+== HTTP fallback (offline socket) ==
+note over UI
+  ChatRepository.sendMessage() via POST
+  /chats/:chatId/messages also persists
+  and emits receive_message from controller.
+end note
+
+@enduml
+
+
+@startuml BuddBull_UseCase_Overview
+!theme plain
+title BuddBull — Application Functionality (Use Case Overview)
+
+scale 1.5
+
+left to right direction
+skinparam shadowing false
+
+actor Player
+actor Organizer
+actor Admin
+
+rectangle "BuddBull Platform" {
+  usecase "Register / Login\n(Firebase Auth)" as UC1
+  usecase "Complete Onboarding\n(sports, avatar, location)" as UC2
+  usecase "Search & Join Games" as UC3
+  usecase "Create & Manage Games" as UC4
+  usecase "Approve / Kick Players" as UC5
+  usecase "Group & DM Chat" as UC6
+  usecase "Log Performance\n(match / training)" as UC7
+  usecase "Rate Players\n(post-game)" as UC8
+  usecase "Friend Requests\n& Social Graph" as UC9
+  usecase "Notifications\n(inbox + push)" as UC10
+  usecase "View Profile & Stats" as UC11
+  usecase "Admin Dashboard\nban, broadcast, export" as UC12
+}
+
+Player --> UC1
+Player --> UC2
+Player --> UC3
+Player --> UC6
+Player --> UC7
+Player --> UC8
+Player --> UC9
+Player --> UC10
+Player --> UC11
+
+Organizer --> UC1
+Organizer --> UC4
+Organizer --> UC5
+Organizer --> UC3
+Organizer --> UC6
+Organizer --> UC7
+Organizer --> UC11
+
+Admin --> UC12
+Admin --> UC1
+
+UC4 ..> UC6 : creates group chat
+UC3 ..> UC10 : join request notify
+UC8 ..> UC11 : updates rating stats
+UC7 ..> UC11 : updates streak / heatmap
+
+@enduml

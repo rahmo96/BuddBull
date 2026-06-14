@@ -21,6 +21,7 @@ class GameModel {
     this.createdAt,
     this.isPrivate = false,
     this.requiresApproval = false,
+    this.distanceKm,
   });
 
   final String id;
@@ -41,6 +42,7 @@ class GameModel {
   final DateTime? createdAt;
   final bool isPrivate;
   final bool requiresApproval;
+  final double? distanceKm;
 
   // ── Computed ──────────────────────────────────────────────
   int get approvedCount => players.where((p) => p.status == 'approved').length;
@@ -112,6 +114,7 @@ class GameModel {
           : null,
       isPrivate: json['isPrivate'] as bool? ?? false,
       requiresApproval: json['requiresApproval'] as bool? ?? false,
+      distanceKm: (json['distanceKm'] as num?)?.toDouble(),
     );
   }
 
@@ -402,6 +405,9 @@ class GameSearchParams {
     this.sport,
     this.city,
     this.skillLevel,
+    this.lat,
+    this.lng,
+    this.radiusKm,
     this.status = 'open',
     this.page = 1,
     this.limit = 20,
@@ -411,15 +417,23 @@ class GameSearchParams {
   final String? sport;
   final String? city;
   final String? skillLevel;
+  final double? lat;
+  final double? lng;
+  final int? radiusKm;
   final String status;
   final int page;
   final int limit;
   final String sortBy;
 
+  bool get nearMe => lat != null && lng != null && sortBy == 'distance';
+
   Map<String, dynamic> toQueryParams() => {
         if (sport != null) 'sport': sport,
         if (city != null) 'city': city,
         if (skillLevel != null) 'skillLevel': skillLevel,
+        if (lat != null) 'lat': lat,
+        if (lng != null) 'lng': lng,
+        if (radiusKm != null) 'radiusKm': radiusKm,
         'status': status,
         'page': page,
         'limit': limit,
@@ -430,25 +444,33 @@ class GameSearchParams {
     String? sport,
     String? city,
     String? skillLevel,
+    double? lat,
+    double? lng,
+    int? radiusKm,
     String? status,
     int? page,
+    int? limit,
+    String? sortBy,
+    bool clearSport = false,
+    bool clearCity = false,
+    bool clearSkillLevel = false,
+    bool clearGeo = false,
   }) {
     return GameSearchParams(
-      sport: sport ?? this.sport,
-      city: city ?? this.city,
-      skillLevel: skillLevel ?? this.skillLevel,
+      sport: clearSport ? null : (sport ?? this.sport),
+      city: clearCity ? null : (city ?? this.city),
+      skillLevel: clearSkillLevel ? null : (skillLevel ?? this.skillLevel),
+      lat: clearGeo ? null : (lat ?? this.lat),
+      lng: clearGeo ? null : (lng ?? this.lng),
+      radiusKm: clearGeo ? null : (radiusKm ?? this.radiusKm),
       status: status ?? this.status,
       page: page ?? this.page,
-      limit: limit,
-      sortBy: sortBy,
+      limit: limit ?? this.limit,
+      sortBy: sortBy ?? this.sortBy,
     );
   }
 
-  GameSearchParams clearSport() => GameSearchParams(
-        city: city,
-        skillLevel: skillLevel,
-        status: status,
-      );
+  GameSearchParams clearSport() => copyWith(clearSport: true);
 
   @override
   bool operator ==(Object other) =>
@@ -456,9 +478,23 @@ class GameSearchParams {
       other.sport == sport &&
       other.city == city &&
       other.skillLevel == skillLevel &&
+      other.lat == lat &&
+      other.lng == lng &&
+      other.radiusKm == radiusKm &&
       other.status == status &&
-      other.page == page;
+      other.page == page &&
+      other.sortBy == sortBy;
 
   @override
-  int get hashCode => Object.hash(sport, city, skillLevel, status, page);
+  int get hashCode => Object.hash(
+        sport,
+        city,
+        skillLevel,
+        lat,
+        lng,
+        radiusKm,
+        status,
+        page,
+        sortBy,
+      );
 }

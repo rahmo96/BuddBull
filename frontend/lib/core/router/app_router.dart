@@ -16,6 +16,7 @@ import 'package:buddbull/features/home/home_scaffold.dart';
 import 'package:buddbull/features/home/presentation/home_screen.dart';
 import 'package:buddbull/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:buddbull/features/onboarding/data/onboarding_prefs.dart';
+import 'package:buddbull/features/onboarding/presentation/screens/onboarding_location_screen.dart';
 import 'package:buddbull/features/onboarding/presentation/screens/onboarding_profile_screen.dart';
 import 'package:buddbull/features/onboarding/presentation/screens/onboarding_welcome_screen.dart';
 import 'package:buddbull/features/onboarding/providers/onboarding_redirect_listen.dart';
@@ -42,6 +43,7 @@ abstract class Routes {
 
   /// Post-registration introduction (Riverpod onboarding draft persists here).
   static const String onboardingWelcome = '/onboarding/welcome';
+  static const String onboardingLocation = '/onboarding/location';
   static const String onboardingProfile = '/onboarding/profile';
 
   // Shell tabs
@@ -90,6 +92,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               .getBool(OnboardingPrefs.pendingKey) ??
           false;
       final isOnOnboarding = loc == Routes.onboardingWelcome ||
+          loc == Routes.onboardingLocation ||
           loc == Routes.onboardingProfile;
 
       if (authStatus == AuthStatus.loading) return null;
@@ -145,6 +148,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'onboardingWelcome',
         pageBuilder: (_, s) =>
             _slide(s, const OnboardingWelcomeScreen()),
+      ),
+      GoRoute(
+        path: Routes.onboardingLocation,
+        name: 'onboardingLocation',
+        pageBuilder: (_, s) =>
+            _slide(s, const OnboardingLocationScreen()),
       ),
       GoRoute(
         path: Routes.onboardingProfile,

@@ -8,6 +8,7 @@ import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar
 import 'package:buddbull/features/profile/presentation/widgets/city_autocomplete_field.dart';
 import 'package:buddbull/features/profile/presentation/widgets/neighborhood_autocomplete_field.dart';
 import 'package:buddbull/features/profile/presentation/widgets/sport_chip.dart';
+import 'package:buddbull/features/profile/presentation/widgets/travel_radius_slider.dart';
 import 'package:buddbull/features/profile/providers/profile_provider.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
@@ -338,7 +339,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       setState(() => _selectedNeighborhood = neighborhood),
                 ),
                 const SizedBox(height: 16),
-                _RadiusSlider(
+                TravelRadiusSlider(
                   value: _radiusKm,
                   onChanged: (v) => setState(() => _radiusKm = v),
                 ),
@@ -406,50 +407,7 @@ class _SectionHeader extends StatelessWidget {
 }
 
 // ── Radius slider ─────────────────────────────────────────────────────────────
-class _RadiusSlider extends StatelessWidget {
-  const _RadiusSlider({required this.value, required this.onChanged});
-  final int value;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(AppStrings.radiusLabel, style: AppTextStyles.labelLarge),
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                '$value km',
-                style: AppTextStyles.labelMedium.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        Slider(
-          value: value.toDouble(),
-          min: 1,
-          max: 100,
-          divisions: 99,
-          activeColor: AppColors.primary,
-          inactiveColor: AppColors.grey300,
-          onChanged: (v) => onChanged(v.round()),
-        ),
-      ],
-    );
-  }
-}
+// Moved to TravelRadiusSlider widget.
 
 // ── Add sport button ──────────────────────────────────────────────────────────
 class _AddSportButton extends StatelessWidget {

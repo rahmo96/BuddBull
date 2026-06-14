@@ -14,7 +14,8 @@
     "format": "prettier --write \"src/**/*.js\"",
     "test": "jest --forceExit --detectOpenHandles",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage --forceExit"
+    "test:coverage": "jest --coverage --forceExit",
+    "seed:games": "node scripts/seed-games.js"
   },
   "dependencies": {
     "compression": "^1.7.4",

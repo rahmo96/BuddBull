@@ -132,6 +132,13 @@ class _FullContent extends StatelessWidget {
                 icon: Icons.location_on_outlined,
                 text: game.location.displayName,
               ),
+              if (game.distanceKm != null) ...[
+                const SizedBox(height: 4),
+                _InfoRow(
+                  icon: Icons.near_me_outlined,
+                  text: _formatDistance(game.distanceKm!),
+                ),
+              ],
               const SizedBox(height: 4),
               _InfoRow(
                 icon: Icons.timer_outlined,
@@ -229,6 +236,16 @@ class _CompactContent extends StatelessWidget {
                   '${game.formattedDate}\n${game.formattedTime}',
                   style: AppTextStyles.bodySmall,
                 ),
+                if (game.distanceKm != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    _formatDistance(game.distanceKm!),
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 8),
                 _PlayerSlots(
                   filled: game.approvedCount,
@@ -434,6 +451,13 @@ class _InfoRow extends StatelessWidget {
 }
 
 // ── Sport colour / emoji helpers ─────────────────────────────────────────────
+String _formatDistance(double km) {
+  if (km < 1) {
+    return '${(km * 1000).round()} m away';
+  }
+  return '${km.toStringAsFixed(km < 10 ? 1 : 0)} km away';
+}
+
 Color _sportColor(String sport) {
   return switch (sport.toLowerCase()) {
     'football' || 'soccer' => AppColors.footballBadge,

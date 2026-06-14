@@ -278,6 +278,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
     if (p.sport != null) count++;
     if (p.city != null) count++;
     if (p.skillLevel != null) count++;
+    if (p.nearMe) count++;
     return count;
   }
 }

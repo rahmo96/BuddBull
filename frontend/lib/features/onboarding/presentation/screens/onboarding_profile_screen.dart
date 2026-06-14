@@ -124,7 +124,7 @@ class _OnboardingProfileScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const OnboardingProgressHeader(step: 2, totalSteps: 2),
+                  const OnboardingProgressHeader(step: 3, totalSteps: 3),
                   Text(
                     AppStrings.onboardingProfileTitle,
                     style: AppTextStyles.headlineMedium.copyWith(
