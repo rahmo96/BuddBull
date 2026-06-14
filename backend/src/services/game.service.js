@@ -5,6 +5,7 @@ const Chat = require('../models/Chat.model');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
 const notificationInboxService = require('./notificationInbox.service');
+const scheduledNotificationService = require('./scheduledNotification.service');
 const chatPresenceService = require('./chatPresence.service');
 const userService = require('./user.service');
 
@@ -191,7 +192,7 @@ const _dispatchers = {
     recipients: p.approvedPlayerIds ?? [],
     type: 'gameCompleted',
     title: 'Game Completed',
-    body: 'Tap to rate the players.',
+    body: 'Rate your teammates — tap to leave feedback.',
     data: { gameId: String(p.gameId) },
   }),
 };
@@ -357,6 +358,12 @@ const createGame = async (organizerId, dto) => {
   await User.findByIdAndUpdate(organizerId, { $inc: { 'stats.gamesOrganized': 1 } });
 
   logger.info(`Game created: ${game._id} by organizer ${organizerId}`);
+
+  try {
+    await scheduledNotificationService.schedulePreGameReminder(game);
+  } catch (err) {
+    logger.warn(`[game] Failed to schedule pre-game reminder for ${game._id}: ${err.message}`);
+  }
 
   return game.populate('organizer', 'username firstName lastName profilePicture');
 };
@@ -728,8 +735,24 @@ const updateGame = async (gameId, userId, userRole, updates) => {
     throw new AppError(`Cannot reduce max players below the current approved count (${approvedCount(game)}).`, 400);
   }
 
+  const previousScheduledAt = game.scheduledAt?.getTime?.() ?? null;
+
   Object.assign(game, updates);
   await game.save();
+
+  const scheduledAtChanged =
+    updates.scheduledAt &&
+    previousScheduledAt !== (game.scheduledAt?.getTime?.() ?? null);
+
+  if (scheduledAtChanged) {
+    try {
+      game.preGameReminderSentAt = null;
+      await game.save({ validateBeforeSave: false });
+      await scheduledNotificationService.schedulePreGameReminder(game);
+    } catch (err) {
+      logger.warn(`[game] Failed to reschedule pre-game reminder for ${gameId}: ${err.message}`);
+    }
+  }
 
   logger.info(`Game updated: ${gameId}`);
   return game;
@@ -753,6 +776,12 @@ const cancelGame = async (gameId, userId, userRole, reason) => {
   game.cancelledAt = new Date();
   game.cancelledBy = userId;
   await game.save();
+
+  try {
+    await scheduledNotificationService.cancelPreGameReminder(String(gameId));
+  } catch (err) {
+    logger.warn(`[game] Failed to cancel pre-game reminder for ${gameId}: ${err.message}`);
+  }
 
   // Notify all approved players
   const playerIds = game.players.filter((p) => p.status === 'approved').map((p) => p.user);
@@ -1334,6 +1363,12 @@ const _finalizeGameCompletion = async (game, { result, source = 'manual' }) => {
 
   await notify('game:completed', { gameId, approvedPlayerIds });
   logger.info(`Game completed (${source}): ${gameId}`);
+
+  try {
+    await scheduledNotificationService.cancelPreGameReminder(String(gameId));
+  } catch (err) {
+    logger.warn(`[game] Failed to cancel pre-game reminder on complete for ${gameId}: ${err.message}`);
+  }
 
   return game;
 };

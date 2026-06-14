@@ -64,6 +64,7 @@ const notificationPrefsSchema = new mongoose.Schema(
     groupMerges: { type: Boolean, default: true },
     broadcasts: { type: Boolean, default: true },
     recordsBroken: { type: Boolean, default: true },
+    retentionReminders: { type: Boolean, default: true },
   },
   { _id: false },
 );
@@ -204,6 +205,10 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
+    // ── Activity tracking (retention notifications) ───────────
+    lastLoginAt: { type: Date, default: null, index: true },
+    lastRetentionNotifiedAt: { type: Date, default: null },
+
     // ── Password change tracking ─────────────────────────────
     // Set whenever the password is changed post-registration.
     // JWT iat is compared against this to invalidate old tokens.
@@ -260,6 +265,8 @@ userSchema.index({
 });
 // Leaderboard / ranking queries
 userSchema.index({ 'stats.averageRating': -1, 'stats.gamesPlayed': -1 });
+// Retention sweep: active, non-banned users by last login
+userSchema.index({ isActive: 1, isBanned: 1, lastLoginAt: 1 });
 
 // ─────────────────────────────────────────────
 //  Instance Methods

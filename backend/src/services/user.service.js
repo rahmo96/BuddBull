@@ -21,6 +21,16 @@ const friendService = require('./friend.service');
 const getMe = async (userId) => {
   const user = await User.findById(userId).active();
   if (!user) throw new AppError('User not found.', 404);
+
+  // Debounced last-login touch for retention notifications (max once per 5 min).
+  const now = Date.now();
+  const lastLoginMs = user.lastLoginAt ? user.lastLoginAt.getTime() : 0;
+  const LOGIN_TOUCH_DEBOUNCE_MS = 5 * 60 * 1000;
+  if (!lastLoginMs || now - lastLoginMs >= LOGIN_TOUCH_DEBOUNCE_MS) {
+    User.findByIdAndUpdate(userId, { $set: { lastLoginAt: new Date() } }).catch(() => {});
+    user.lastLoginAt = new Date();
+  }
+
   return user;
 };
 

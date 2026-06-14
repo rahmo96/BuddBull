@@ -304,7 +304,7 @@ describe('game.service.notify — Phase 2 inbox writes', () => {
         expect(completed).toBeDefined();
         expect(completed).toMatchObject({
           title: 'Game Completed',
-          body: 'Tap to rate the players.',
+          body: 'Rate your teammates — tap to leave feedback.',
         });
         expect(completed.data).toMatchObject({ gameId: String(gameId) });
       }

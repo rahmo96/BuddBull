@@ -543,6 +543,8 @@ class _LeadingIcon extends StatelessWidget {
         return (Icons.person_off_outlined, AppColors.error);
       case 'gameReminder':
         return (Icons.alarm_rounded, AppColors.warning);
+      case 'retentionReminder':
+        return (Icons.favorite_outline_rounded, AppColors.primary);
       case 'gameCancelled':
         return (Icons.cancel_outlined, AppColors.error);
       case 'gameCompleted':

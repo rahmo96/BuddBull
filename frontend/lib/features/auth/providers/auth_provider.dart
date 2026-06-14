@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:buddbull/core/error/app_exception.dart';
 import 'package:buddbull/core/storage/shared_preferences_provider.dart';
+import 'package:buddbull/core/services/push_notification_service.dart';
 import 'package:buddbull/features/auth/data/auth_repository.dart';
 import 'package:buddbull/features/auth/data/models/user_model.dart';
 import 'package:buddbull/features/onboarding/data/onboarding_prefs.dart';
@@ -56,6 +57,8 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>(
   (ref) => AuthNotifier(
     ref.watch(authRepositoryProvider),
     ref.watch(sharedPreferencesProvider),
+    onBeforeLogout: () =>
+        ref.read(pushNotificationServiceProvider).unregisterTokenIfAuthenticated(),
   ),
 );
 
@@ -69,12 +72,15 @@ final currentUserProvider = Provider<UserModel?>(
 
 // ── Notifier ─────────────────────────────────────────────────────────────────
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier(this._repo, this._prefs) : super(const AuthState()) {
+  AuthNotifier(this._repo, this._prefs, {Future<void> Function()? onBeforeLogout})
+      : _onBeforeLogout = onBeforeLogout,
+        super(const AuthState()) {
     _listenToAuthChanges();
   }
 
   final AuthRepository _repo;
   final SharedPreferences _prefs;
+  final Future<void> Function()? _onBeforeLogout;
   bool _isRegistering = false;
 
   /// A [ChangeNotifier] that go_router listens to for redirects.
@@ -232,6 +238,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   // ── Logout ────────────────────────────────────────────────────
   Future<void> logout() async {
+    try {
+      await _onBeforeLogout?.call();
+    } catch (_) {}
     await FirebaseAuth.instance.signOut();
     await _prefs.setBool(OnboardingPrefs.pendingKey, false);
     state = const AuthState(status: AuthStatus.unauthenticated);

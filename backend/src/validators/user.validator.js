@@ -31,6 +31,7 @@ const notificationPrefsSchema = Joi.object({
   groupMerges: Joi.boolean(),
   broadcasts: Joi.boolean(),
   recordsBroken: Joi.boolean(),
+  retentionReminders: Joi.boolean(),
 });
 
 // ─────────────────────────────────────────────

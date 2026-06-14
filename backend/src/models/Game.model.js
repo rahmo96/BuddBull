@@ -237,6 +237,10 @@ const gameSchema = new mongoose.Schema(
     // ── Post-game result ──────────────────────────────────────
     result: { type: gameResultSchema, default: null },
 
+    // ── Pre-game reminder scheduling ──────────────────────────
+    preGameReminderSentAt: { type: Date, default: null },
+    preGameReminderJobName: { type: String, default: null, select: false },
+
     // ── Soft delete ───────────────────────────────────────────
     deletedAt: { type: Date, default: null },
   },

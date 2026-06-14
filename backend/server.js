@@ -22,6 +22,8 @@ const registerSocketHandlers = require('./src/socket/socket.manager');
 const notificationInboxService = require('./src/services/notificationInbox.service');
 const chatPresenceService = require('./src/services/chatPresence.service');
 const GameService = require('./src/services/game.service');
+const { initAgenda, shutdownAgenda } = require('./src/config/agenda');
+const scheduledNotificationService = require('./src/services/scheduledNotification.service');
 const { port, nodeEnv, clientUrl } = require('./src/config/environment');
 
 const startServer = async () => {
@@ -65,7 +67,12 @@ const startServer = async () => {
   // messages and the client gets a `chat:kicked` push.
   chatPresenceService.setIo(io);
 
-  // ── 4e. Hourly sweep: auto-complete stale games (PRD) ─────────
+  // ── 4e. Agenda scheduler (pre-game reminders) ───────────────────
+  const agenda = await initAgenda();
+  await scheduledNotificationService.initScheduledNotifications(agenda);
+  await scheduledNotificationService.bootstrapUpcomingReminders();
+
+  // ── 4f. Hourly sweep: auto-complete stale games (PRD) ─────────
   cron.schedule('0 * * * *', async () => {
     try {
       const summary = await GameService.autoCompleteStaleGames();
@@ -77,6 +84,20 @@ const startServer = async () => {
     }
   });
 
+  // ── 4g. Daily retention sweep: 7 PM UTC ───────────────────────
+  const retentionTz = process.env.RETENTION_CRON_TZ || 'UTC';
+  const retentionHour = Number(process.env.RETENTION_CRON_HOUR) || 19;
+  cron.schedule(`0 ${retentionHour} * * *`, async () => {
+    try {
+      const summary = await scheduledNotificationService.runRetentionSweep();
+      if (summary.sent > 0) {
+        logger.info(`[cron:retention] ${JSON.stringify(summary)}`);
+      }
+    } catch (err) {
+      logger.error(`[cron:retention] job failed: ${err.message}`);
+    }
+  }, { timezone: retentionTz });
+
   // ── 5. Listen ───────────────────────────────────────────────
   server.listen(port, () => {
     logger.info(`BuddBull API  [${nodeEnv}]  →  http://localhost:${port}`);
@@ -86,12 +107,26 @@ const startServer = async () => {
   // ── Unhandled promise rejections ────────────────────────────
   process.on('unhandledRejection', (reason) => {
     logger.error(`Unhandled Rejection: ${reason}`);
-    server.close(() => process.exit(1));
+    shutdownAgenda()
+      .catch(() => {})
+      .finally(() => server.close(() => process.exit(1)));
   });
 
   process.on('uncaughtException', (err) => {
     logger.error(`Uncaught Exception: ${err.message}\n${err.stack}`);
-    process.exit(1);
+    shutdownAgenda()
+      .catch(() => {})
+      .finally(() => process.exit(1));
+  });
+
+  process.on('SIGTERM', async () => {
+    logger.info('SIGTERM received — shutting down Agenda');
+    await shutdownAgenda();
+  });
+
+  process.on('SIGINT', async () => {
+    logger.info('SIGINT received — shutting down Agenda');
+    await shutdownAgenda();
   });
 };
 

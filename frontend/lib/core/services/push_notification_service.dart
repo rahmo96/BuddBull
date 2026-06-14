@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:buddbull/core/network/api_client.dart';
 import 'package:buddbull/core/network/api_endpoints.dart';
 import 'package:buddbull/core/router/app_router.dart';
+import 'package:buddbull/features/auth/data/auth_repository.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/chat/providers/chat_provider.dart';
 import 'package:buddbull/firebase_options.dart';
@@ -172,6 +173,38 @@ class PushNotificationService {
     }
   }
 
+  /// Removes the current FCM token from the backend (call before sign-out).
+  Future<void> unregisterTokenIfAuthenticated() async {
+    if (kIsWeb) return;
+    final auth = _ref.read(authProvider);
+    if (auth.status != AuthStatus.authenticated) return;
+
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null || token.isEmpty) return;
+
+      await _ref.read(apiClientProvider).delete(
+            ApiEndpoints.pushToken,
+            data: {'token': token},
+          );
+    } catch (e, st) {
+      debugPrint('⚠️ Push token unregister failed: $e\n$st');
+    }
+  }
+
+  /// Refreshes `lastLoginAt` on the backend via GET /users/me (retention tracking).
+  Future<void> recordActivityHeartbeat() async {
+    if (kIsWeb) return;
+    final auth = _ref.read(authProvider);
+    if (auth.status != AuthStatus.authenticated) return;
+
+    try {
+      await _ref.read(authRepositoryProvider).getMe();
+    } catch (e, st) {
+      debugPrint('⚠️ Activity heartbeat failed: $e\n$st');
+    }
+  }
+
   void _onForegroundMessage(RemoteMessage message) {
     if (!_isAppInForeground) return;
 
@@ -325,8 +358,18 @@ class PushNotificationService {
       return Routes.chatRoom(chatId);
     }
 
+    if (type == 'retention_reminder') {
+      return Routes.home;
+    }
+
     final gameId = data['gameId'];
     if (gameId != null && gameId.isNotEmpty) {
+      if (type == 'game_reminder' ||
+          type == 'game_completed' ||
+          type == 'game_invite' ||
+          type == 'join_approved') {
+        return Routes.gameDetail(gameId);
+      }
       return Routes.gameDetail(gameId);
     }
 
