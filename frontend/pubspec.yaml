@@ -78,6 +78,7 @@ flutter:
     - assets/icons/
     - assets/lottie/
     - assets/avatars/
+    - assets/wallpapers/
 
 flutter_launcher_icons:
   android: true

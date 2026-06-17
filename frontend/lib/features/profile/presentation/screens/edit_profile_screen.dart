@@ -132,37 +132,34 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   title: Text('Choose preset avatar'),
                 ),
                 const SizedBox(height: 10),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 5,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                  ),
-                  itemCount: OnboardingMockData.avatars.length,
-                  itemBuilder: (_, i) {
-                    final option = OnboardingMockData.avatars[i];
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(14),
-                      onTap: () async {
-                        Navigator.pop(ctx);
-                        await _setPresetAvatar(option.id);
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: option.background,
+                SizedBox(
+                  height: MediaQuery.of(ctx).size.height * 0.45,
+                  child: GridView.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 5,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    itemCount: OnboardingMockData.avatars.length,
+                    itemBuilder: (_, i) {
+                      final option = OnboardingMockData.avatars[i];
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          await _setPresetAvatar(option.id);
+                        },
+                        child: ClipRRect(
                           borderRadius: BorderRadius.circular(14),
+                          child: Image.asset(
+                            option.assetPath,
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          option.emoji,
-                          style: const TextStyle(fontSize: 24),
-                        ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ],
             ),

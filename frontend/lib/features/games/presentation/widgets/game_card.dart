@@ -1,6 +1,7 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
+import 'package:buddbull/features/games/presentation/widgets/game_sport_wallpaper.dart';
 import 'package:flutter/material.dart';
 
 /// A rich game card used in the games list and home screen.
@@ -63,125 +64,88 @@ class _FullContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GameSportWallpaper(
+          sport: game.sport,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppColors.radiusMd),
+          ),
+          child: _GameNameHeader(game: game),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _SportIcon(sport: game.sport),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            game.title,
-                            style: AppTextStyles.titleSmall.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+              _InfoRow(
+                icon: Icons.calendar_today_rounded,
+                iconColor: AppColors.info,
+                text: '${game.formattedDate} · ${game.formattedTime}',
+              ),
+              const SizedBox(height: 6),
+              _InfoRow(
+                icon: Icons.location_on_rounded,
+                iconColor: AppColors.metricStreakAccent,
+                text: game.location.displayName,
+              ),
+              if (game.distanceKm != null) ...[
+                const SizedBox(height: 6),
+                _InfoRow(
+                  icon: Icons.near_me_rounded,
+                  iconColor: AppColors.teal,
+                  text: _formatDistance(game.distanceKm!),
+                ),
+              ],
+              const SizedBox(height: 14),
+              _RosterProgressBar(
+                filled: game.approvedCount,
+                total: game.maxPlayers,
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  _SkillBadge(level: game.requiredSkillLevel),
+                  const Spacer(),
+                  if (canJoin)
+                    FilledButton(
+                      onPressed: onJoin,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.slate,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 10,
                         ),
-                        if (game.isPrivate || game.requiresApproval) ...[
-                          const SizedBox(width: 6),
-                          Icon(
-                            Icons.lock_rounded,
-                            size: 14,
-                            color: _sportColor(game.sport),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Join Game',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
+                    )
+                  else
                     Text(
-                      game.sport,
-                      style: AppTextStyles.labelSmall.copyWith(
-                        color: _sportColor(game.sport),
+                      '${game.approvedCount}/${game.maxPlayers} players',
+                      style: AppTextStyles.labelMedium.copyWith(
                         fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
                       ),
                     ),
-                  ],
-                ),
+                ],
               ),
-              if (game.isFull && !game.isCompleted && !game.isCancelled)
-                const _FullBadge()
-              else
-                _StatusBadge(status: game.status),
             ],
           ),
-          const SizedBox(height: 14),
-          _InfoRow(
-            icon: Icons.calendar_today_rounded,
-            iconColor: AppColors.info,
-            text: '${game.formattedDate} · ${game.formattedTime}',
-          ),
-          const SizedBox(height: 6),
-          _InfoRow(
-            icon: Icons.location_on_rounded,
-            iconColor: AppColors.metricStreakAccent,
-            text: game.location.displayName,
-          ),
-          if (game.distanceKm != null) ...[
-            const SizedBox(height: 6),
-            _InfoRow(
-              icon: Icons.near_me_rounded,
-              iconColor: AppColors.teal,
-              text: _formatDistance(game.distanceKm!),
-            ),
-          ],
-          const SizedBox(height: 14),
-          _RosterProgressBar(
-            filled: game.approvedCount,
-            total: game.maxPlayers,
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              _SkillBadge(level: game.requiredSkillLevel),
-              const Spacer(),
-              if (canJoin)
-                FilledButton(
-                  onPressed: onJoin,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.slate,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 10,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Join Game',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                    ),
-                  ),
-                )
-              else
-                Text(
-                  '${game.approvedCount}/${game.maxPlayers} players',
-                  style: AppTextStyles.labelMedium.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -194,53 +158,95 @@ class _CompactContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 220,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GameSportWallpaper(
+            sport: game.sport,
+            height: 88,
+            padding: const EdgeInsets.all(14),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppColors.radiusMd),
+            ),
+            child: _GameNameHeader(game: game, compact: true),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SportIcon(sport: game.sport, size: 32),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    game.sport,
-                    style: AppTextStyles.labelMedium.copyWith(
-                      color: _sportColor(game.sport),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                Text(
+                  '${game.formattedDate} · ${game.formattedTime}',
+                  style: AppTextStyles.bodySmall,
                 ),
-                if (game.isFull && !game.isCompleted && !game.isCancelled)
-                  const _FullBadge(small: true)
-                else
-                  _StatusBadge(status: game.status, small: true),
+                const SizedBox(height: 12),
+                _RosterProgressBar(
+                  filled: game.approvedCount,
+                  total: game.maxPlayers,
+                  compact: true,
+                ),
               ],
             ),
-            const SizedBox(height: 10),
-            Text(
-              game.title,
-              style: AppTextStyles.titleSmall.copyWith(
-                fontWeight: FontWeight.w700,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GameNameHeader extends StatelessWidget {
+  const _GameNameHeader({required this.game, this.compact = false});
+
+  final GameModel game;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                game.title,
+                style: AppTextStyles.titleSmall.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+                maxLines: compact ? 2 : 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 6),
-            Text(
-              '${game.formattedDate} · ${game.formattedTime}',
-              style: AppTextStyles.bodySmall,
-            ),
-            const SizedBox(height: 12),
-            _RosterProgressBar(
-              filled: game.approvedCount,
-              total: game.maxPlayers,
-              compact: true,
-            ),
+            if (game.isPrivate || game.requiresApproval) ...[
+              const SizedBox(width: 6),
+              Icon(
+                Icons.lock_rounded,
+                size: compact ? 13 : 14,
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
+            ],
+            const SizedBox(width: 8),
+            if (game.isFull && !game.isCompleted && !game.isCancelled)
+              _FullBadge(small: compact, onWallpaper: true)
+            else
+              _StatusBadge(
+                status: game.status,
+                small: compact,
+                onWallpaper: true,
+              ),
           ],
         ),
-      ),
+        const SizedBox(height: 4),
+        Text(
+          game.sport,
+          style: AppTextStyles.labelSmall.copyWith(
+            color: Colors.white.withValues(alpha: 0.9),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -302,35 +308,15 @@ class _RosterProgressBar extends StatelessWidget {
   }
 }
 
-class _SportIcon extends StatelessWidget {
-  const _SportIcon({required this.sport, this.size = 44});
-  final String sport;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _sportColor(sport);
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Center(
-        child: Text(
-          _sportEmoji(sport),
-          style: TextStyle(fontSize: size * 0.5),
-        ),
-      ),
-    );
-  }
-}
-
 class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status, this.small = false});
+  const _StatusBadge({
+    required this.status,
+    this.small = false,
+    this.onWallpaper = false,
+  });
   final String status;
   final bool small;
+  final bool onWallpaper;
 
   @override
   Widget build(BuildContext context) {
@@ -349,14 +335,16 @@ class _StatusBadge extends StatelessWidget {
         vertical: small ? 3 : 4,
       ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: onWallpaper
+            ? Colors.white.withValues(alpha: 0.22)
+            : color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         label,
         style: (small ? AppTextStyles.labelSmall : AppTextStyles.labelMedium)
             .copyWith(
-          color: color,
+          color: onWallpaper ? Colors.white : color,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -365,8 +353,9 @@ class _StatusBadge extends StatelessWidget {
 }
 
 class _FullBadge extends StatelessWidget {
-  const _FullBadge({this.small = false});
+  const _FullBadge({this.small = false, this.onWallpaper = false});
   final bool small;
+  final bool onWallpaper;
 
   @override
   Widget build(BuildContext context) {
@@ -376,7 +365,7 @@ class _FullBadge extends StatelessWidget {
         vertical: small ? 3 : 4,
       ),
       decoration: BoxDecoration(
-        color: AppColors.statusFull,
+        color: onWallpaper ? Colors.white.withValues(alpha: 0.22) : AppColors.statusFull,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -452,28 +441,4 @@ String _formatDistance(double km) {
     return '${(km * 1000).round()} m away';
   }
   return '${km.toStringAsFixed(km < 10 ? 1 : 0)} km away';
-}
-
-Color _sportColor(String sport) {
-  return switch (sport.toLowerCase()) {
-    'football' || 'soccer' => AppColors.footballBadge,
-    'basketball' => AppColors.basketballBadge,
-    'tennis' => AppColors.tennisBadge,
-    'running' => AppColors.runningBadge,
-    _ => AppColors.defaultBadge,
-  };
-}
-
-String _sportEmoji(String sport) {
-  return switch (sport.toLowerCase()) {
-    'football' || 'soccer' => '⚽',
-    'basketball' => '🏀',
-    'tennis' => '🎾',
-    'running' => '🏃',
-    'swimming' => '🏊',
-    'cycling' => '🚴',
-    'volleyball' => '🏐',
-    'cricket' => '🏏',
-    _ => '🏅',
-  };
 }

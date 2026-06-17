@@ -16,7 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
-/// Second onboarding step: device photo upload or preset emoji avatars.
+/// Second onboarding step: device photo upload or preset avatars.
 class OnboardingProfileScreen extends ConsumerStatefulWidget {
   const OnboardingProfileScreen({super.key});
 
@@ -96,14 +96,16 @@ class _OnboardingProfileScreenState
           height: 120,
         ),
       );
-    } else {
-      avatarChild = Text(
-        avatarPick?.emoji ?? '🙂',
-        style: const TextStyle(fontSize: 52),
+    } else if (avatarPick != null) {
+      avatarChild = Image.asset(
+        avatarPick.assetPath,
+        fit: BoxFit.cover,
+        width: 120,
+        height: 120,
       );
+    } else {
+      avatarChild = const Text('🙂', style: TextStyle(fontSize: 52));
     }
-
-    final bgForPreview = avatarPick?.background;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -147,7 +149,7 @@ class _OnboardingProfileScreenState
                       height: 128,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: bgForPreview ?? AppColors.grey100,
+                        color: AppColors.grey100,
                         border: Border.all(
                           color: AppColors.grey300,
                           width: 2,
@@ -263,7 +265,7 @@ class _AvatarTile extends StatelessWidget {
           duration: const Duration(milliseconds: 160),
           curve: Curves.easeOut,
           decoration: BoxDecoration(
-            color: option.background,
+            color: AppColors.grey100,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: selected ? AppColors.primary : Colors.transparent,
@@ -279,8 +281,11 @@ class _AvatarTile extends StatelessWidget {
                   ]
                 : null,
           ),
-          alignment: Alignment.center,
-          child: Text(option.emoji, style: const TextStyle(fontSize: 32)),
+          clipBehavior: Clip.antiAlias,
+          child: Image.asset(
+            option.assetPath,
+            fit: BoxFit.cover,
+          ),
         ),
       ),
     );

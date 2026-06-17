@@ -5,6 +5,7 @@ import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/games/data/game_repository.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
+import 'package:buddbull/features/games/presentation/widgets/game_sport_wallpaper.dart';
 import 'package:buddbull/features/games/presentation/widgets/player_slot_row.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
 import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
@@ -410,56 +411,43 @@ class _GameDetailAppBar extends StatelessWidget {
         onPressed: () => context.pop(),
       ),
       flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          color: _sportColor.withValues(alpha: 0.9),
+        background: GameSportWallpaper(
+          sport: game.sport,
+          expand: true,
+          padding: const EdgeInsets.fromLTRB(20, 56, 20, 16),
           child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 56, 20, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        _sportEmoji(game.sport),
-                        style: const TextStyle(fontSize: 32),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          game.title,
-                          style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  game.title,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    spacing: 8,
-                    children: [
-                      _HeaderBadge(
-                        label: game.sport,
-                        color: Colors.white24,
-                      ),
-                      _HeaderBadge(
-                        label: game.requiredSkillLevel[0]
-                                .toUpperCase() +
-                            game.requiredSkillLevel.substring(1),
-                        color: Colors.white24,
-                      ),
-                      _StatusBadge(status: game.status),
-                    ],
-                  ),
-                ],
-              ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  spacing: 8,
+                  children: [
+                    _HeaderBadge(
+                      label: game.sport,
+                      color: Colors.white24,
+                    ),
+                    _HeaderBadge(
+                      label: game.requiredSkillLevel[0].toUpperCase() +
+                          game.requiredSkillLevel.substring(1),
+                      color: Colors.white24,
+                    ),
+                    _StatusBadge(status: game.status),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
@@ -1284,20 +1272,6 @@ class _PendingRequestPanel extends StatelessWidget {
       ),
     );
   }
-}
-
-String _sportEmoji(String sport) {
-  return switch (sport.toLowerCase()) {
-    'football' || 'soccer' => '⚽',
-    'basketball' => '🏀',
-    'tennis' => '🎾',
-    'running' => '🏃',
-    'swimming' => '🏊',
-    'cycling' => '🚴',
-    'volleyball' => '🏐',
-    'cricket' => '🏏',
-    _ => '🏅',
-  };
 }
 
 Future<void> _showInviteFriendsSheet(
