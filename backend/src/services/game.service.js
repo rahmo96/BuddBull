@@ -8,6 +8,10 @@ const notificationInboxService = require('./notificationInbox.service');
 const scheduledNotificationService = require('./scheduledNotification.service');
 const chatPresenceService = require('./chatPresence.service');
 const userService = require('./user.service');
+const {
+  buildCaseInsensitiveRegex,
+  runWithTextOrRegexFallback,
+} = require('../utils/search.utils');
 
 // ─────────────────────────────────────────────
 //  Helpers
@@ -544,39 +548,57 @@ const searchGames = async (filters, viewer = null) => {
   }
 
   const query = buildGameSearchFilter(filters, viewer);
-
-  if (q) {
-    query.$text = { $search: q };
-  }
-
-  const sortOptions = {};
-  if (q) {
-    sortOptions.score = { $meta: 'textScore' };
-  } else {
-    sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
-  }
-
   const skip = (Number(page) - 1) * Number(limit);
 
-  const [games, total] = await Promise.all([
-    Game.find(query)
-      .populate('organizer', 'username firstName lastName profilePicture stats.averageRating')
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(Number(limit))
-      .lean(),
-    Game.countDocuments(query),
-  ]);
+  const runQuery = async (textClause, { useTextScore } = {}) => {
+    const merged = { ...query, ...textClause };
+    const sortOptions = useTextScore
+      ? { score: { $meta: 'textScore' } }
+      : { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
 
-  return {
-    games,
-    pagination: {
-      total,
-      page: Number(page),
-      limit: Number(limit),
-      pages: Math.ceil(total / Number(limit)),
-    },
+    const [games, total] = await Promise.all([
+      Game.find(merged)
+        .populate('organizer', 'username firstName lastName profilePicture stats.averageRating')
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(Number(limit))
+        .lean(),
+      Game.countDocuments(merged),
+    ]);
+
+    return {
+      games,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / Number(limit)),
+      },
+    };
   };
+
+  if (!q) {
+    return runQuery({});
+  }
+
+  return runWithTextOrRegexFallback({
+    q,
+    applyText: (term) => ({ $text: { $search: term } }),
+    applyRegex: (term) => {
+      const regex = buildCaseInsensitiveRegex(term);
+      return {
+        $or: [
+          { title: regex },
+          { description: regex },
+          { sport: regex },
+          { 'location.city': regex },
+          { 'location.neighborhood': regex },
+          { tags: regex },
+        ],
+      };
+    },
+    runQuery,
+  });
 };
 
 // ─────────────────────────────────────────────

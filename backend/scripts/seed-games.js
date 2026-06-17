@@ -7,15 +7,15 @@
  * player slot, and a linked group chat — matching normal API behaviour.
  *
  * Usage (from backend/):
- *   node scripts/seed-games.js
- *   node scripts/seed-games.js --count 20
- *   node scripts/seed-games.js --dry-run
+ * node scripts/seed-games.js
+ * node scripts/seed-games.js --count 20
+ * node scripts/seed-games.js --dry-run
  *
  * Environment:
- *   MONGO_URI  MongoDB connection string (reads backend/.env via dotenv)
+ * MONGO_URI  MongoDB connection string (reads backend/.env via dotenv)
  *
  * Prerequisites:
- *   At least one user document in the `users` collection.
+ * At least one user document in the `users` collection.
  */
 
 const path = require('path');
@@ -56,95 +56,50 @@ const SKILL_LEVELS = ['any', 'beginner', 'intermediate', 'advanced', 'profession
 
 const VENUES = [
   {
-    venueName: 'Central Park Great Lawn',
-    neighborhood: 'Upper East Side',
-    city: 'New York',
-    state: 'NY',
-    country: 'US',
-    formattedAddress: 'Central Park, New York, NY 10024, USA',
-    coordinates: [-73.9654, 40.7829],
+    venueName: 'מגרש קט-רגל - מכללת סמי שמעון (SCE)',
+    neighborhood: 'רובע ב',
+    city: 'Ashdod',
+    state: 'South District',
+    country: 'IL',
+    formattedAddress: 'Bialik St 56, Ashdod, Israel',
+    coordinates: [34.6465, 31.8054],
   },
   {
-    venueName: 'Venice Beach Courts',
-    neighborhood: 'Venice',
-    city: 'Los Angeles',
-    state: 'CA',
-    country: 'US',
-    formattedAddress: '1800 Ocean Front Walk, Venice, CA 90291, USA',
-    coordinates: [-118.4695, 33.985],
+    venueName: 'אצטדיון סלה',
+    neighborhood: 'רמת אשכול',
+    city: 'Ashkelon',
+    state: 'South District',
+    country: 'IL',
+    formattedAddress: 'Sela Stadium, Ashkelon, Israel',
+    coordinates: [34.5775, 31.6667],
   },
   {
-    venueName: 'Grant Park Fields',
-    neighborhood: 'Loop',
-    city: 'Chicago',
-    state: 'IL',
-    country: 'US',
-    formattedAddress: '337 E Randolph St, Chicago, IL 60601, USA',
-    coordinates: [-87.6197, 41.8826],
+    venueName: 'פארק אשדוד ים',
+    neighborhood: 'רובע יא',
+    city: 'Ashdod',
+    state: 'South District',
+    country: 'IL',
+    formattedAddress: 'Sderot Moshe Dayan, Ashdod, Israel',
+    coordinates: [34.6318, 31.7891],
   },
   {
-    venueName: 'Hyde Park Pitch',
-    neighborhood: 'Hyde Park',
-    city: 'London',
-    state: 'England',
-    country: 'GB',
-    formattedAddress: 'Hyde Park, London W2 2UH, UK',
-    coordinates: [-0.1657, 51.5073],
+    venueName: 'פארק אגמים',
+    neighborhood: 'אגמים',
+    city: 'Ashkelon',
+    state: 'South District',
+    country: 'IL',
+    formattedAddress: 'Agamim, Ashkelon, Israel',
+    coordinates: [34.5822, 31.6483],
   },
   {
-    venueName: 'Heaton Park',
-    neighborhood: 'Heaton Park',
-    city: 'Manchester',
-    state: 'England',
-    country: 'GB',
-    formattedAddress: 'Middleton Rd, Manchester M25 2SW, UK',
-    coordinates: [-2.2494, 53.5314],
-  },
-  {
-    venueName: 'Zilker Park',
-    neighborhood: 'Zilker',
-    city: 'Austin',
-    state: 'TX',
-    country: 'US',
-    formattedAddress: '2100 Barton Springs Rd, Austin, TX 78746, USA',
-    coordinates: [-97.7713, 30.2669],
-  },
-  {
-    venueName: 'Gas Works Park',
-    neighborhood: 'Wallingford',
-    city: 'Seattle',
-    state: 'WA',
-    country: 'US',
-    formattedAddress: '2101 N Northlake Way, Seattle, WA 98103, USA',
-    coordinates: [-122.3348, 47.6456],
-  },
-  {
-    venueName: 'Boston Common',
-    neighborhood: 'Downtown',
-    city: 'Boston',
-    state: 'MA',
-    country: 'US',
-    formattedAddress: '139 Tremont St, Boston, MA 02111, USA',
-    coordinates: [-71.0636, 42.3554],
-  },
-  {
-    venueName: 'Bayfront Park',
-    neighborhood: 'Downtown',
-    city: 'Miami',
-    state: 'FL',
-    country: 'US',
-    formattedAddress: '301 N Biscayne Blvd, Miami, FL 33132, USA',
-    coordinates: [-80.1859, 25.7753],
-  },
-  {
-    venueName: 'Washington Park',
-    neighborhood: 'Capitol Hill',
-    city: 'Denver',
-    state: 'CO',
-    country: 'US',
-    formattedAddress: '701 E Colfax Ave, Denver, CO 80203, USA',
-    coordinates: [-104.9719, 39.7392],
-  },
+    venueName: 'ספורטק אשדוד',
+    neighborhood: 'רובע יג',
+    city: 'Ashdod',
+    state: 'South District',
+    country: 'IL',
+    formattedAddress: 'Bne Brit Blvd, Ashdod, Israel',
+    coordinates: [34.6541, 31.7772],
+  }
 ];
 
 const TITLE_PREFIX = {
@@ -348,6 +303,6 @@ It should look like:
 Or switch your PC DNS to 1.1.1.1 / 8.8.8.8 and retry the SRV URI.`);
   }
 
-  await mongoose.disconnect().catch(() => {});
+  await mongoose.disconnect().catch(() => { });
   process.exit(1);
 });

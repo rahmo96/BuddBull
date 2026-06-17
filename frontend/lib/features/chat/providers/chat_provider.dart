@@ -39,7 +39,7 @@ class ChatUnreadNotifier extends StateNotifier<Map<String, int>> {
   final Ref _ref;
   StreamSubscription<ChatUnreadUpdateEvent>? _socketSub;
 
-  /// Sum across every chat — drives the BottomNavigationBar badge.
+  /// Sum across every chat — drives the Messages tab badge on the shell nav.
   int get totalUnread =>
       state.values.fold<int>(0, (sum, n) => sum + (n > 0 ? n : 0));
 

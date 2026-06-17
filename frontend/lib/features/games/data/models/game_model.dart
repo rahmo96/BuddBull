@@ -402,6 +402,7 @@ class GameResult {
 // ── Search parameters ─────────────────────────────────────────────────────────
 class GameSearchParams {
   const GameSearchParams({
+    this.q,
     this.sport,
     this.city,
     this.skillLevel,
@@ -414,6 +415,7 @@ class GameSearchParams {
     this.sortBy = 'scheduledAt',
   });
 
+  final String? q;
   final String? sport;
   final String? city;
   final String? skillLevel;
@@ -428,6 +430,7 @@ class GameSearchParams {
   bool get nearMe => lat != null && lng != null && sortBy == 'distance';
 
   Map<String, dynamic> toQueryParams() => {
+        if (q != null) 'q': q,
         if (sport != null) 'sport': sport,
         if (city != null) 'city': city,
         if (skillLevel != null) 'skillLevel': skillLevel,
@@ -441,6 +444,7 @@ class GameSearchParams {
       };
 
   GameSearchParams copyWith({
+    String? q,
     String? sport,
     String? city,
     String? skillLevel,
@@ -451,12 +455,14 @@ class GameSearchParams {
     int? page,
     int? limit,
     String? sortBy,
+    bool clearQ = false,
     bool clearSport = false,
     bool clearCity = false,
     bool clearSkillLevel = false,
     bool clearGeo = false,
   }) {
     return GameSearchParams(
+      q: clearQ ? null : (q ?? this.q),
       sport: clearSport ? null : (sport ?? this.sport),
       city: clearCity ? null : (city ?? this.city),
       skillLevel: clearSkillLevel ? null : (skillLevel ?? this.skillLevel),
@@ -475,6 +481,7 @@ class GameSearchParams {
   @override
   bool operator ==(Object other) =>
       other is GameSearchParams &&
+      other.q == q &&
       other.sport == sport &&
       other.city == city &&
       other.skillLevel == skillLevel &&
@@ -487,6 +494,7 @@ class GameSearchParams {
 
   @override
   int get hashCode => Object.hash(
+        q,
         sport,
         city,
         skillLevel,

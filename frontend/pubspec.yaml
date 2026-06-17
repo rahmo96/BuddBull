@@ -53,7 +53,6 @@ dependencies:
   logger: ^2.4.0
 
   # ── Extras ────────────────────────────────────────────────
-  video_player: ^2.10.1
   flutter_form_builder: ^10.2.0
   form_builder_validators: ^11.2.0
   geolocator: ^14.0.2
@@ -64,7 +63,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0 # השארתי את הגרסה הזו (ניתן לשנות ל-5.0.0 אם תרצה)
-  flutter_native_splash: ^2.4.3
+  flutter_launcher_icons: ^0.14.4
   firebase_auth_mocks: ^0.15.1
   firebase_core_platform_interface: ^6.0.3
   mocktail: ^1.0.4
@@ -75,6 +74,14 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/logo.png
     - assets/icons/
     - assets/lottie/
     - assets/avatars/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/images/logo.png
+  adaptive_icon_background: "#14B8A6"
+  adaptive_icon_foreground: assets/images/logo.png

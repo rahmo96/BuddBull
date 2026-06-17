@@ -3,7 +3,6 @@ import 'package:buddbull/features/admin/presentation/screens/admin_dashboard_scr
 import 'package:buddbull/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:buddbull/features/auth/presentation/screens/login_screen.dart';
 import 'package:buddbull/features/auth/presentation/screens/register_screen.dart';
-import 'package:buddbull/features/auth/presentation/screens/splash_screen.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/chat/presentation/screens/chat_list_screen.dart';
 import 'package:buddbull/features/chat/presentation/screens/chat_screen.dart';
@@ -25,6 +24,8 @@ import 'package:buddbull/features/performance/presentation/screens/performance_s
 import 'package:buddbull/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:buddbull/features/profile/presentation/screens/friends_list_screen.dart';
 import 'package:buddbull/features/profile/presentation/screens/profile_screen.dart';
+import 'package:buddbull/features/search/presentation/screens/global_search_screen.dart';
+import 'package:buddbull/features/search/presentation/widgets/search_transition.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -36,7 +37,6 @@ final GlobalKey<NavigatorState> rootNavigatorKey =
 
 // ── Route path constants ──────────────────────────────────────────────────────
 abstract class Routes {
-  static const String splash = '/';
   static const String login = '/login';
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
@@ -63,6 +63,7 @@ abstract class Routes {
   static const String editProfile = '/profile/edit';
   static String publicProfile(String id) => '/profile/$id';
   static const String notifications = '/notifications';
+  static const String search = '/search';
 
   Routes._();
 }
@@ -75,17 +76,15 @@ final routerProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: Routes.splash,
+    initialLocation: Routes.login,
     refreshListenable: Listenable.merge([authListenable, onboardingRefresh]),
     redirect: (BuildContext context, GoRouterState state) {
       final authStatus = ref.read(authProvider).status;
       final loc = state.matchedLocation;
 
-      // Splash is not "on auth" — we must leave it when we know auth state
       final isOnAuthPage = loc == Routes.login ||
           loc == Routes.register ||
           loc == Routes.forgotPassword;
-      final isOnSplash = loc == Routes.splash;
 
       final onboardingPending = ref
               .read(sharedPreferencesProvider)
@@ -97,8 +96,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (authStatus == AuthStatus.loading) return null;
 
-      if (authStatus == AuthStatus.unauthenticated &&
-          (!isOnAuthPage || isOnSplash)) {
+      if (authStatus == AuthStatus.unauthenticated && !isOnAuthPage) {
         return Routes.login;
       }
 
@@ -112,19 +110,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         if (isOnOnboarding) {
           return Routes.home;
         }
-        if (isOnAuthPage || isOnSplash) {
+        if (isOnAuthPage) {
           return Routes.home;
         }
       }
       return null;
     },
     routes: [
-      // ── Public / auth routes ──────────────────────────────
       GoRoute(
-        path: Routes.splash,
-        name: 'splash',
-        builder: (_, __) => const SplashScreen(),
+        path: '/',
+        redirect: (_, __) => Routes.login,
       ),
+      // ── Public / auth routes ──────────────────────────────
       GoRoute(
         path: Routes.login,
         name: 'login',
@@ -162,7 +159,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             _slide(s, const OnboardingProfileScreen()),
       ),
 
-      // ── Shell (bottom nav) ────────────────────────────────
+      // ── Shell (floating top nav) ────────────────────────────────
       ShellRoute(
         builder: (context, state, child) =>
             HomeScaffold(child: child),
@@ -282,6 +279,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'notifications',
         pageBuilder: (_, s) => _slide(s, const NotificationsScreen()),
       ),
+      GoRoute(
+        path: Routes.search,
+        name: 'search',
+        pageBuilder: (_, s) => _searchExpandFromBar(
+          s,
+          const GlobalSearchScreen(),
+          s.extra as Rect?,
+        ),
+      ),
     ],
     errorBuilder: (context, state) =>
         _ErrorPage(error: state.error),
@@ -296,6 +302,26 @@ CustomTransitionPage<void> _fade(GoRouterState s, Widget child) =>
       transitionDuration: const Duration(milliseconds: 250),
       transitionsBuilder: (_, anim, __, child) =>
           FadeTransition(opacity: anim, child: child),
+    );
+
+CustomTransitionPage<void> _searchExpandFromBar(
+  GoRouterState s,
+  Widget child,
+  Rect? origin,
+) =>
+    CustomTransitionPage<void>(
+      key: s.pageKey,
+      opaque: false,
+      child: child,
+      transitionDuration: const Duration(milliseconds: 250),
+      reverseTransitionDuration: const Duration(milliseconds: 200),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return SearchExpandFromBarTransition(
+          animation: animation,
+          originRect: origin,
+          child: child,
+        );
+      },
     );
 
 CustomTransitionPage<void> _slide(GoRouterState s, Widget child) =>

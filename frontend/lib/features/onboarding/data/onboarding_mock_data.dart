@@ -63,7 +63,7 @@ abstract class OnboardingMockData {
       id: 'basketball',
       label: 'Basketball',
       emoji: '🏀',
-      accent: Color(0xFFFF6B35),
+      accent: Color(0xFF1E3A5F),
     ),
     OnboardingSportOption(
       id: 'tennis',
@@ -107,22 +107,22 @@ abstract class OnboardingMockData {
     OnboardingAvatarOption(
       id: 'av_bull',
       emoji: '🐂',
-      background: Color(0xFFFFEDD5),
+      background: Color(0xFFD4F0E8),
     ),
     OnboardingAvatarOption(
       id: 'av_fire',
       emoji: '🔥',
-      background: Color(0xFFFEE2E2),
+      background: Color(0xFFE8F7F2),
     ),
     OnboardingAvatarOption(
       id: 'av_soccer',
       emoji: '⚽',
-      background: Color(0xFFD1FAE5),
+      background: Color(0xFFD4F0E8),
     ),
     OnboardingAvatarOption(
       id: 'av_basket',
       emoji: '🏀',
-      background: Color(0xFFFFEDD5),
+      background: Color(0xFFDCE6F0),
     ),
     OnboardingAvatarOption(
       id: 'av_trophy',

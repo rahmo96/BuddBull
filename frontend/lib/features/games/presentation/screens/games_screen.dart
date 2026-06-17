@@ -6,6 +6,7 @@ import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/games/presentation/widgets/game_card.dart';
 import 'package:buddbull/features/games/presentation/widgets/game_filter_sheet.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
+import 'package:buddbull/features/home/home_scaffold.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -53,6 +54,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
     final result = await showModalBottomSheet<GameSearchParams>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -74,17 +76,9 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text(AppStrings.navGames),
+        backgroundColor: AppColors.background,
+        elevation: 0,
         actions: [
-          IconButton(
-            icon: Badge(
-              isLabelVisible: activeFilters > 0,
-              label: Text('$activeFilters'),
-              backgroundColor: AppColors.primary,
-              child: const Icon(Icons.tune_rounded),
-            ),
-            onPressed: _openFilters,
-            tooltip: 'Filter',
-          ),
           if (user?.isOrganizer ?? false)
             IconButton(
               icon: const Icon(Icons.add_circle_outline_rounded),
@@ -95,40 +89,45 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
       ),
       body: Column(
         children: [
-          // ── Search bar ──────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: SearchBar(
-              controller: _searchCtrl,
-              hintText: 'Search games…',
-              leading: const Icon(Icons.search_rounded, size: 20),
-              trailing: [
-                if (_searchCtrl.text.isNotEmpty)
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded, size: 18),
-                    onPressed: () {
-                      _searchCtrl.clear();
-                      ref
-                          .read(gameSearchProvider.notifier)
-                          .clearFilters();
-                    },
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppColors.radiusMd),
+                boxShadow: AppColors.cardShadow,
+              ),
+              child: TextField(
+                controller: _searchCtrl,
+                onSubmitted: (q) => ref.read(gameSearchProvider.notifier).search(
+                      searchState.params.copyWith(city: q.isEmpty ? null : q),
+                    ),
+                decoration: InputDecoration(
+                  hintText: 'Search games, sports, locations…',
+                  hintStyle: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textDisabled,
                   ),
-              ],
-              elevation: const WidgetStatePropertyAll(0),
-              backgroundColor: const WidgetStatePropertyAll(
-                  AppColors.surface),
-              shape: WidgetStatePropertyAll(
-                RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: const BorderSide(color: AppColors.grey300),
+                  prefixIcon: const Icon(
+                    Icons.search_rounded,
+                    color: AppColors.textSecondary,
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Badge(
+                      isLabelVisible: activeFilters > 0,
+                      label: Text('$activeFilters'),
+                      backgroundColor: AppColors.teal,
+                      child: const Icon(Icons.tune_rounded),
+                    ),
+                    onPressed: _openFilters,
+                    tooltip: 'Filter',
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 14,
+                  ),
                 ),
               ),
-              onSubmitted: (q) => ref
-                  .read(gameSearchProvider.notifier)
-                  .search(
-                    searchState.params
-                        .copyWith(city: q.isEmpty ? null : q),
-                  ),
             ),
           ),
 
@@ -211,12 +210,18 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
         ],
       ),
       floatingActionButton: (user?.isOrganizer ?? false)
-          ? FloatingActionButton.extended(
-              onPressed: () => context.push('/games/create'),
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Create Game'),
+          ? Padding(
+              padding: const EdgeInsets.only(
+                bottom: HomeScaffold.islandHeight + HomeScaffold.islandMargin,
+              ),
+              child: FloatingActionButton.extended(
+                onPressed: () => context.push('/games/create'),
+                backgroundColor: AppColors.slate,
+                foregroundColor: Colors.white,
+                elevation: 4,
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('Create Game'),
+              ),
             )
           : null,
     );
@@ -250,7 +255,12 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
           ref.read(gameSearchProvider.notifier).search(),
       child: ListView.separated(
         controller: _scrollCtrl,
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          4,
+          16,
+          HomeScaffold.navBottomInset(context),
+        ),
         itemCount: state.games.length + (state.isLoadingMore ? 1 : 0),
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (_, i) {
@@ -264,9 +274,12 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
             );
           }
           final game = state.games[i];
+          final gameId = game.id;
           return GameCard(
             game: game,
-            onTap: () => context.push('/games/${game.id}'),
+            showJoinButton: true,
+            onTap: () => context.push('/games/$gameId'),
+            onJoin: () => context.push('/games/$gameId'),
           );
         },
       ),
@@ -305,16 +318,20 @@ class _SportFilterChip extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? AppColors.primary : AppColors.grey300,
-          ),
+          color: selected ? AppColors.slate : AppColors.chipUnselected,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: selected ? AppColors.cardShadow : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 14)),
+            Text(
+              emoji,
+              style: TextStyle(
+                fontSize: 14,
+                color: selected ? Colors.white : null,
+              ),
+            ),
             const SizedBox(width: 5),
             Text(
               label,

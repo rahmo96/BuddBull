@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:buddbull/core/error/app_exception.dart';
-import 'package:buddbull/core/storage/shared_preferences_provider.dart';
 import 'package:buddbull/core/services/push_notification_service.dart';
+import 'package:buddbull/core/storage/shared_preferences_provider.dart';
 import 'package:buddbull/features/auth/data/auth_repository.dart';
 import 'package:buddbull/features/auth/data/models/user_model.dart';
 import 'package:buddbull/features/onboarding/data/onboarding_prefs.dart';
@@ -206,7 +206,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isSubmitting: false,
-        error: 'Registration failed. Please try again.',
+        error: _extractMessage(e),
       );
     } finally {
       _isRegistering = false;
@@ -282,6 +282,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   // ── Helpers ───────────────────────────────────────────────────
   String _extractMessage(Object e) {
+    if (e is FirebaseAuthException) {
+      return switch (e.code) {
+        'network-request-failed' =>
+          'Network error. Check your connection and try again.',
+        'email-already-in-use' =>
+          'This email is already registered. Try logging in.',
+        'weak-password' => 'Password is too weak. Use at least 6 characters.',
+        'invalid-email' => 'Enter a valid email address.',
+        _ => e.message ?? 'Authentication failed. Please try again.',
+      };
+    }
+
     final raw = e.toString();
     // Strip class name prefix added by AppException.toString()
     final match = RegExp(r'\): (.+)$').firstMatch(raw);

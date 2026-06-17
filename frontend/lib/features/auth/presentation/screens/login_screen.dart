@@ -3,6 +3,7 @@ import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
+import 'package:buddbull/shared/widgets/app_logo.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
@@ -214,31 +215,14 @@ class _AuthHeader extends StatelessWidget {
           bottomRight: Radius.circular(32),
         ),
       ),
-      child: SafeArea(
+      child: const SafeArea(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.12),
-                      blurRadius: 20,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Text('🏆', style: TextStyle(fontSize: 38)),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
+              AppLogo(size: 72),
+              SizedBox(height: 12),
+              Text(
                 'BuddBull',
                 style: TextStyle(
                   fontFamily: 'Inter',

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
@@ -8,11 +10,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// The root shell that wraps all main tabs with a branded
-/// [NavigationBar] (Material 3).
+/// Root shell for main tabs with a floating bottom "Dynamic Island" nav pill.
 class HomeScaffold extends ConsumerStatefulWidget {
   const HomeScaffold({super.key, required this.child});
   final Widget child;
+
+  static const double islandMargin = 12;
+  static const double islandHeight = 52;
+
+  /// Space scrollable content should reserve so the last items clear the pill.
+  static double navBottomInset(BuildContext context) {
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
+    return safeBottom + islandMargin + islandHeight + islandMargin;
+  }
+
+  static EdgeInsets scrollPadding(BuildContext context) {
+    return EdgeInsets.only(bottom: navBottomInset(context));
+  }
 
   @override
   ConsumerState<HomeScaffold> createState() => _HomeScaffoldState();
@@ -34,7 +48,6 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
 
   @override
   void dispose() {
-    // Do not use ref in dispose — widget may already be unmounted (e.g. session-expired redirect)
     _socketService?.disconnect();
     super.dispose();
   }
@@ -92,19 +105,29 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
     final selectedIndex = _selectedIndex(context);
 
     return Scaffold(
-      body: widget.child,
-      bottomNavigationBar: _BrandedNavBar(
-        tabs: _tabs,
-        selectedIndex: selectedIndex,
-        onTap: (i) => context.go(_tabs[i].route),
+      extendBody: true,
+      body: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(child: widget.child),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _DynamicIslandNavBar(
+              tabs: _tabs,
+              selectedIndex: selectedIndex,
+              onTap: (i) => context.go(_tabs[i].route),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// ── Branded nav bar ───────────────────────────────────────────────────────────
-class _BrandedNavBar extends ConsumerWidget {
-  const _BrandedNavBar({
+class _DynamicIslandNavBar extends ConsumerWidget {
+  const _DynamicIslandNavBar({
     required this.tabs,
     required this.selectedIndex,
     required this.onTap,
@@ -117,31 +140,52 @@ class _BrandedNavBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final unreadTotal = ref.watch(totalUnreadChatCountProvider);
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.grey200)),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 10,
-            offset: Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 60,
-          child: Row(
-            children: List.generate(
-              tabs.length,
-              (i) => Expanded(
-                child: _NavItem(
-                  tab: tabs[i],
-                  selected: selectedIndex == i,
-                  onTap: () => onTap(i),
-                  badgeCount: tabs[i].route == '/chats' ? unreadTotal : 0,
+
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.only(bottom: HomeScaffold.islandMargin),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          16,
+          0,
+          16,
+          HomeScaffold.islandMargin,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(HomeScaffold.islandHeight / 2),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppColors.slate.withValues(alpha: 0.5),
+                borderRadius:
+                    BorderRadius.circular(HomeScaffold.islandHeight / 2),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.12),
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x33000000),
+                    blurRadius: 24,
+                    offset: Offset(0, -6),
+                  ),
+                ],
+              ),
+              child: SizedBox(
+                height: HomeScaffold.islandHeight,
+                child: Row(
+                  children: List.generate(
+                    tabs.length,
+                    (i) => Expanded(
+                      child: _NavItem(
+                        tab: tabs[i],
+                        selected: selectedIndex == i,
+                        onTap: () => onTap(i),
+                        badgeCount:
+                            tabs[i].route == '/chats' ? unreadTotal : 0,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -167,43 +211,54 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      customBorder: const CircleBorder(),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              transitionBuilder: (child, anim) => ScaleTransition(
-                scale: anim,
-                child: child,
-              ),
-              child: Badge(
-                key: ValueKey(selected),
-                isLabelVisible: badgeCount > 0,
-                label: Text(badgeCount > 99 ? '99+' : '$badgeCount'),
-                backgroundColor: AppColors.error,
-                child: Icon(
-                  selected ? tab.selectedIcon : tab.icon,
-                  color: selected ? AppColors.primary : AppColors.grey500,
-                  size: 24,
+    final inactiveColor = Colors.white.withValues(alpha: 0.55);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const StadiumBorder(),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                transitionBuilder: (child, anim) => ScaleTransition(
+                  scale: anim,
+                  child: child,
+                ),
+                child: Badge(
+                  key: ValueKey(selected),
+                  isLabelVisible: badgeCount > 0,
+                  label: Text(
+                    badgeCount > 99 ? '99+' : '$badgeCount',
+                    style: const TextStyle(fontSize: 9),
+                  ),
+                  backgroundColor: AppColors.error,
+                  child: Icon(
+                    selected ? tab.selectedIcon : tab.icon,
+                    color: selected ? AppColors.mint : inactiveColor,
+                    size: 20,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              tab.label,
-              style: AppTextStyles.labelSmall.copyWith(
-                color: selected ? AppColors.primary : AppColors.grey500,
-                fontWeight:
-                    selected ? FontWeight.w600 : FontWeight.w400,
+              const SizedBox(height: 2),
+              Text(
+                tab.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.labelSmall.copyWith(
+                  fontSize: 9,
+                  height: 1.1,
+                  color: selected ? AppColors.mint : inactiveColor,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

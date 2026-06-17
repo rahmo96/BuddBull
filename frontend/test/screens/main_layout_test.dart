@@ -27,7 +27,7 @@ void main() {
     await initTestFirebaseAndBinding();
   });
 
-  group('HomeShell (bottom navigation)', () {
+  group('HomeShell (dynamic island navigation)', () {
     Future<void> pumpShell(WidgetTester tester) async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();

@@ -1,6 +1,7 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/features/home/home_scaffold.dart';
 import 'package:buddbull/features/performance/presentation/widgets/activity_heatmap.dart';
 import 'package:buddbull/features/performance/presentation/widgets/log_card.dart';
 import 'package:buddbull/features/performance/presentation/widgets/progress_chart.dart';
@@ -57,12 +58,18 @@ class _PerformanceScreenState
             ],
             bottom: TabBar(
               controller: _tabCtrl,
-              labelColor: AppColors.primary,
-              unselectedLabelColor: AppColors.grey500,
-              indicatorColor: AppColors.primary,
+              labelColor: AppColors.slate,
+              unselectedLabelColor: AppColors.textSecondary,
+              indicatorColor: AppColors.teal,
+              indicatorWeight: 3,
               indicatorSize: TabBarIndicatorSize.label,
+              dividerColor: Colors.transparent,
+              overlayColor: WidgetStateProperty.all(Colors.transparent),
               labelStyle: AppTextStyles.labelLarge.copyWith(
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
+              ),
+              unselectedLabelStyle: AppTextStyles.labelLarge.copyWith(
+                fontWeight: FontWeight.w500,
               ),
               tabs: const [
                 Tab(text: 'Overview'),
@@ -81,12 +88,18 @@ class _PerformanceScreenState
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/performance/log/create'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Log Session'),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(
+          bottom: HomeScaffold.islandHeight + HomeScaffold.islandMargin,
+        ),
+        child: FloatingActionButton.extended(
+          onPressed: () => context.push('/performance/log/create'),
+          backgroundColor: AppColors.slate,
+          foregroundColor: Colors.white,
+          elevation: 6,
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('Log Session'),
+        ),
       ),
     );
   }
@@ -115,7 +128,12 @@ class _OverviewTab extends ConsumerWidget {
           await ref.read(performanceStatsProvider.future);
         },
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            HomeScaffold.navBottomInset(context),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -256,8 +274,12 @@ class _LogsTab extends ConsumerWidget {
           onRefresh: () async =>
               ref.invalidate(performanceLogsProvider),
           child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(
-                16, 8, 16, 100),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              8,
+              16,
+              HomeScaffold.navBottomInset(context),
+            ),
             itemCount: logs.length,
             separatorBuilder: (_, __) =>
                 const SizedBox(height: 12),
@@ -292,7 +314,12 @@ class _StatsTab extends ConsumerWidget {
           const Center(child: BbLoadingIndicator()),
       error: (e, _) => ErrorView(message: e.toString()),
       data: (stats) => SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          HomeScaffold.navBottomInset(context),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -345,11 +372,11 @@ class _Card extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.grey200),
+        borderRadius: BorderRadius.circular(AppColors.radiusMd),
+        boxShadow: AppColors.cardShadow,
       ),
       child: child,
     );
@@ -372,19 +399,19 @@ class _SummaryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppColors.radiusMd),
+        boxShadow: AppColors.cardShadow,
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
+              color: color.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: color, size: 18),
           ),
@@ -396,7 +423,9 @@ class _SummaryTile extends StatelessWidget {
                 Text(
                   value,
                   style: AppTextStyles.titleMedium.copyWith(
-                      color: color),
+                    color: color,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 Text(label, style: AppTextStyles.labelSmall),
               ],

@@ -94,14 +94,34 @@ class UserRepository {
     int page = 1,
     int limit = 20,
   }) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return const [];
+
+    try {
+      return await _fetchUserSearchResults(
+        queryParams: {'q': trimmed, 'page': page, 'limit': limit},
+      );
+    } catch (_) {
+      // Fallback when full-text search is unavailable — match by city name.
+      return _fetchUserSearchResults(
+        queryParams: {'city': trimmed, 'page': page, 'limit': limit},
+      );
+    }
+  }
+
+  Future<List<UserModel>> _fetchUserSearchResults({
+    required Map<String, dynamic> queryParams,
+  }) async {
     final body = await _api.get(
       ApiEndpoints.searchUsers,
-      queryParams: {'q': query, 'page': page, 'limit': limit},
+      queryParams: queryParams,
     );
-    final data = body['data'] as Map<String, dynamic>;
-    final users = data['users'] as List<dynamic>;
-    return users
-        .map((e) => UserModel.fromJson(e as Map<String, dynamic>))
+    final list = (body['users'] as List<dynamic>?) ??
+        ((body['data'] as Map<String, dynamic>?)?['users'] as List<dynamic>?) ??
+        const [];
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map(UserModel.fromJson)
         .toList();
   }
 
