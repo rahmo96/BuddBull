@@ -41,48 +41,46 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAGaWAK0p3g6-z24DkrHWOmjZsaNs5Bz6E',
-    appId: '1:242098642508:web:c58b8f456d3950ae361ee9',
-    messagingSenderId: '242098642508',
-    projectId: 'newbudd-3f822',
-    authDomain: 'newbudd-3f822.firebaseapp.com',
-    storageBucket: 'newbudd-3f822.firebasestorage.app',
-    measurementId: 'G-5MHMM6ZSEL',
+    apiKey: 'AIzaSyD70Ce7nFRsWnYmg7kHUzWg77V3Kw7rYBc',
+    appId: '1:577177214284:web:7c44be884c901f80c4c3e9',
+    messagingSenderId: '577177214284',
+    projectId: 'budbull-app',
+    authDomain: 'budbull-app.firebaseapp.com',
+    storageBucket: 'budbull-app.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDcI6eXrAJndJaXRNhhmFlGPfVJ0jJPBms',
-    appId: '1:242098642508:android:bbbd6998ae512ff7361ee9',
-    messagingSenderId: '242098642508',
-    projectId: 'newbudd-3f822',
-    storageBucket: 'newbudd-3f822.firebasestorage.app',
+    apiKey: 'AIzaSyC7IronnJICfvWrMS12OqsyB1Zhp7gIL5E',
+    appId: '1:577177214284:android:5e80b080db0c297ac4c3e9',
+    messagingSenderId: '577177214284',
+    projectId: 'budbull-app',
+    storageBucket: 'budbull-app.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDGMPX--ozkwoB7IzW7_Ekj5JRXvNLJsbI',
-    appId: '1:242098642508:ios:69464002c211574a361ee9',
-    messagingSenderId: '242098642508',
-    projectId: 'newbudd-3f822',
-    storageBucket: 'newbudd-3f822.firebasestorage.app',
-    iosBundleId: 'com.buddbull.buddbull',
+    apiKey: 'AIzaSyCUboP4vtcXIWwSN21TVhSpdGSAFjsxW6c',
+    appId: '1:577177214284:ios:eea16209495876bdc4c3e9',
+    messagingSenderId: '577177214284',
+    projectId: 'budbull-app',
+    storageBucket: 'budbull-app.firebasestorage.app',
+    iosBundleId: 'com.example.buddbull',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDGMPX--ozkwoB7IzW7_Ekj5JRXvNLJsbI',
-    appId: '1:242098642508:ios:69464002c211574a361ee9',
-    messagingSenderId: '242098642508',
-    projectId: 'newbudd-3f822',
-    storageBucket: 'newbudd-3f822.firebasestorage.app',
-    iosBundleId: 'com.buddbull.buddbull',
+    apiKey: 'AIzaSyCUboP4vtcXIWwSN21TVhSpdGSAFjsxW6c',
+    appId: '1:577177214284:ios:eea16209495876bdc4c3e9',
+    messagingSenderId: '577177214284',
+    projectId: 'budbull-app',
+    storageBucket: 'budbull-app.firebasestorage.app',
+    iosBundleId: 'com.example.buddbull',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyAGaWAK0p3g6-z24DkrHWOmjZsaNs5Bz6E',
-    appId: '1:242098642508:web:089e7c3049e6d5b6361ee9',
-    messagingSenderId: '242098642508',
-    projectId: 'newbudd-3f822',
-    authDomain: 'newbudd-3f822.firebaseapp.com',
-    storageBucket: 'newbudd-3f822.firebasestorage.app',
-    measurementId: 'G-5QM9LR7TS8',
+    apiKey: 'AIzaSyD70Ce7nFRsWnYmg7kHUzWg77V3Kw7rYBc',
+    appId: '1:577177214284:web:e35958e3e5e0a0ebc4c3e9',
+    messagingSenderId: '577177214284',
+    projectId: 'budbull-app',
+    authDomain: 'budbull-app.firebaseapp.com',
+    storageBucket: 'budbull-app.firebasestorage.app',
   );
 }
