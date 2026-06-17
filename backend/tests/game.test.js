@@ -145,6 +145,18 @@ describe('GET /games (search)', () => {
     expect(res.body.games.every((g) => g.location.city.toLowerCase().includes('london'))).toBe(true);
   });
 
+  it('filters by free-text q across title fields', async () => {
+    const { token } = await registerAndLogin(1, 'organizer');
+    await createGameAs(token, { title: 'Unique Rooftop Volleyball' });
+    await createGameAs(token, { title: 'Regular Sunday Game' });
+
+    const res = await request(app).get(`${GAMES}?q=Rooftop&status=open`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.games.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.games.every((g) => g.title.toLowerCase().includes('rooftop'))).toBe(true);
+  });
+
   it('returns games within radius sorted by distance when lat/lng provided', async () => {
     const { token } = await registerAndLogin(1, 'organizer');
 

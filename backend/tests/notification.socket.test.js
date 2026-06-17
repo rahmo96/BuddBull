@@ -14,6 +14,7 @@
  */
 
 const testDb = require('./helpers/testDb');
+const User = require('../src/models/User.model');
 const notificationInboxService = require('../src/services/notificationInbox.service');
 
 beforeAll(testDb.connect);
@@ -24,6 +25,18 @@ afterEach(async () => {
   notificationInboxService.setIo(null);
 });
 afterAll(testDb.disconnect);
+
+const mkRecipient = async (overrides = {}) => {
+  const suffix = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  return User.create({
+    firstName: 'Notify',
+    lastName: 'Target',
+    username: `recv_${suffix}`,
+    email: `recv_${suffix}@test.com`,
+    firebaseUid: `fb_recv_${suffix}`,
+    ...overrides,
+  });
+};
 
 /**
  * Builds a fake io server with the only two methods the inbox service
@@ -49,7 +62,8 @@ describe('notificationInbox.service — socket emission', () => {
       const { io, emits } = buildIoSpy();
       notificationInboxService.setIo(io);
 
-      const recipient = '6504a4c70d2af9ac353ed2a1'; // arbitrary ObjectId-shaped string
+      const user = await mkRecipient();
+      const recipient = String(user._id);
       const doc = await notificationInboxService.createForUser(recipient, {
         type: 'gameInvite',
         title: 'Game Invite',
@@ -81,11 +95,8 @@ describe('notificationInbox.service — socket emission', () => {
       const { io, emits } = buildIoSpy();
       notificationInboxService.setIo(io);
 
-      const recipients = [
-        '6504a4c70d2af9ac353ed2c1',
-        '6504a4c70d2af9ac353ed2c2',
-        '6504a4c70d2af9ac353ed2c3',
-      ];
+      const users = await Promise.all([mkRecipient(), mkRecipient(), mkRecipient()]);
+      const recipients = users.map((u) => String(u._id));
 
       await notificationInboxService.createForManyUsers(recipients, {
         type: 'gameCompleted',
@@ -107,6 +118,24 @@ describe('notificationInbox.service — socket emission', () => {
         });
       }
     });
+
+  it('does not emit when the recipient opted out of that category', async () => {
+    const { io, emits } = buildIoSpy();
+    notificationInboxService.setIo(io);
+
+    const user = await mkRecipient({
+      notificationPreferences: { gameInvites: false },
+    });
+
+    const doc = await notificationInboxService.createForUser(String(user._id), {
+      type: 'gameInvite',
+      title: 'Blocked invite',
+      body: 'Should not arrive',
+    });
+
+    expect(doc).toBeNull();
+    expect(emits).toHaveLength(0);
+  });
 
   it('silently no-ops when no io has been wired',
     async () => {

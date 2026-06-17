@@ -26,10 +26,34 @@ void main() {
       );
 
       expect(find.text(AppStrings.onboardingWelcomeMessage), findsOneWidget);
+      expect(find.text(AppStrings.onboardingSportsSection), findsOneWidget);
       expect(find.text('Football'), findsOneWidget);
       expect(find.text('Basketball'), findsOneWidget);
       expect(find.text(AppStrings.onboardingNext), findsOneWidget);
       expect(find.text(AppStrings.onboardingSkip), findsOneWidget);
+    });
+
+    testWidgets('selecting a sport reveals per-sport skill chips', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+          ],
+          child: const MaterialApp(
+            home: OnboardingWelcomeScreen(),
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('onboarding_sport_football')));
+      await tester.pump();
+
+      expect(find.text(AppStrings.onboardingSkillPerSport), findsOneWidget);
+      expect(find.text(AppStrings.beginner), findsWidgets);
+      expect(find.byKey(const ValueKey('onboarding_skill_football')), findsOneWidget);
     });
 
     testWidgets('tapping a sport chip toggles selection', (tester) async {
@@ -51,9 +75,12 @@ void main() {
       await tester.tap(footballChip);
       await tester.pump();
       expect(find.byIcon(Icons.check_rounded), findsWidgets);
+      expect(find.text(AppStrings.onboardingSkillPerSport), findsOneWidget);
 
       await tester.tap(footballChip);
       await tester.pump();
+      expect(find.text(AppStrings.onboardingSkillPerSport), findsNothing);
+      expect(find.byKey(const ValueKey('onboarding_skill_football')), findsNothing);
     });
   });
 }

@@ -24,13 +24,18 @@ const runWithTextOrRegexFallback = async ({
   }
 
   try {
-    const textQuery = applyText(q);
-    return await runQuery(textQuery, { useTextScore: true });
+    const textResult = await runQuery(applyText(q), { useTextScore: true });
+    // Text indexes tokenize words — substring queries like "goal" inside
+    // "goalkeeper" may yield zero hits without erroring. Fall back to regex
+    // so discovery search stays predictable in tests and production.
+    if ((textResult.pagination?.total ?? 0) > 0) {
+      return textResult;
+    }
   } catch (err) {
     if (!isTextSearchError(err)) throw err;
-    const regexQuery = applyRegex(q);
-    return runQuery(regexQuery, { useTextScore: false });
   }
+
+  return runQuery(applyRegex(q), { useTextScore: false });
 };
 
 module.exports = {
