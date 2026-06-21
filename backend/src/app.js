@@ -24,6 +24,7 @@ const ratingRoutes = require('./routes/rating.routes');
 const adminRoutes = require('./routes/admin.routes');
 const mapsRoutes = require('./routes/maps.routes');
 const notificationRoutes = require('./routes/notification.routes');
+const reportRoutes = require('./routes/report.routes');
 
 const createApp = () => {
   const app = express();
@@ -128,6 +129,7 @@ const createApp = () => {
   app.use('/api/v1/admin', adminRoutes);
   app.use('/api/v1/maps', mapsRoutes);
   app.use('/api/v1/notifications', notificationRoutes);
+  app.use('/api/v1/reports', reportRoutes);
 
   // ── Catch-all 404 ────────────────────────────────────────────
   app.use(notFound);

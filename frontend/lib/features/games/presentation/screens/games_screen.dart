@@ -209,21 +209,6 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
           ),
         ],
       ),
-      floatingActionButton: (user?.isOrganizer ?? false)
-          ? Padding(
-              padding: const EdgeInsets.only(
-                bottom: HomeScaffold.islandHeight + HomeScaffold.islandMargin,
-              ),
-              child: FloatingActionButton.extended(
-                onPressed: () => context.push('/games/create'),
-                backgroundColor: AppColors.slate,
-                foregroundColor: Colors.white,
-                elevation: 4,
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('Create Game'),
-              ),
-            )
-          : null,
     );
   }
 

@@ -88,19 +88,6 @@ class _PerformanceScreenState
           ],
         ),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(
-          bottom: HomeScaffold.islandHeight + HomeScaffold.islandMargin,
-        ),
-        child: FloatingActionButton.extended(
-          onPressed: () => context.push('/performance/log/create'),
-          backgroundColor: AppColors.slate,
-          foregroundColor: Colors.white,
-          elevation: 6,
-          icon: const Icon(Icons.add_rounded),
-          label: const Text('Log Session'),
-        ),
-      ),
     );
   }
 }

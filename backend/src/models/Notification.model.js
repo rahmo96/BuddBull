@@ -45,6 +45,7 @@ const NOTIFICATION_TYPES = [
   'friendRequestAccepted',
   'broadcast',
   'retentionReminder',
+  'reportClosed',
   'system',
 ];
 

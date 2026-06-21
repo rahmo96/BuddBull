@@ -120,13 +120,20 @@ abstract class ApiEndpoints {
   static const String notificationsReadAll = '/notifications/read-all';
   static String notificationRead(String id) => '/notifications/$id/read';
 
+  // ── Reports ───────────────────────────────────────────────────
+  static const String reports = '/reports';
+  static const String myReports = '/reports/me';
+
   // ── Admin ─────────────────────────────────────────────────────
   static const String adminDashboard = '/admin/dashboard';
   static const String adminUsers = '/admin/users';
   static const String adminGames = '/admin/games';
   static String adminBanUser(String id) => '/admin/users/$id/ban';
+  static String adminRestrictUser(String id) => '/admin/users/$id/restrict';
   static String adminDeleteUser(String id) => '/admin/users/$id';
   static String adminDeleteGame(String id) => '/admin/games/$id';
+  static const String adminReports = '/admin/reports';
+  static String adminReport(String id) => '/admin/reports/$id';
   static const String adminBroadcast = '/admin/broadcast';
   static const String adminExportUsers = '/admin/export/users';
   static const String adminExportGames = '/admin/export/games';

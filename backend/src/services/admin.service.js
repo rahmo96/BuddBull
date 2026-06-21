@@ -12,6 +12,7 @@ const getDashboardStats = async ({ period = '30d' } = {}) => {
   const periodDays = { '7d': 7, '30d': 30, '90d': 90 }[period] ?? 30;
   const since = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const now = new Date();
 
   const [
     totalUsers,
@@ -22,6 +23,8 @@ const getDashboardStats = async ({ period = '30d' } = {}) => {
     activeGames,
     completedGames,
     cancelledGames,
+    inProgressGames,
+    scheduledGames,
     totalLogs,
     sportBreakdown,
     dailyRegistrations,
@@ -35,6 +38,12 @@ const getDashboardStats = async ({ period = '30d' } = {}) => {
     Game.countDocuments({ isDeleted: false, status: { $in: ['open', 'full'] } }),
     Game.countDocuments({ isDeleted: false, status: 'completed' }),
     Game.countDocuments({ isDeleted: false, status: 'cancelled' }),
+    Game.countDocuments({ deletedAt: null, status: 'in_progress' }),
+    Game.countDocuments({
+      deletedAt: null,
+      status: { $in: ['open', 'full'] },
+      scheduledAt: { $gt: now },
+    }),
     PerformanceLog.countDocuments({ isDeleted: false }),
     // Top sports by number of games
     Game.aggregate([
@@ -85,6 +94,8 @@ const getDashboardStats = async ({ period = '30d' } = {}) => {
       active: activeGames,
       completed: completedGames,
       cancelled: cancelledGames,
+      inProgress: inProgressGames,
+      scheduled: scheduledGames,
     },
     performance: { totalLogs },
     sportBreakdown,
@@ -114,7 +125,7 @@ const listUsers = async ({ page = 1, limit = 20, search, role, status, sort = '-
 
   const [users, total] = await Promise.all([
     User.find(filter)
-      .select('firstName lastName username email role isBanned isEmailVerified createdAt lastLoginAt stats.gamesPlayed')
+      .select('firstName lastName username email role isBanned isRestricted isEmailVerified createdAt lastLoginAt stats.gamesPlayed')
       .sort(sort)
       .skip((page - 1) * limit)
       .limit(limit)
@@ -141,6 +152,25 @@ const banUser = async (userId, { isBanned, reason } = {}) => {
   await user.save({ validateBeforeSave: false });
 
   logger.info(`[Admin] User ${isBanned ? 'banned' : 'unbanned'}: ${user.username} (${userId})`);
+  return user;
+};
+
+const restrictUser = async (userId, { isRestricted, reason } = {}) => {
+  const user = await User.findOne({ _id: userId, deletedAt: null });
+  if (!user) throw new AppError('User not found', 404);
+  if (user.role === 'admin') throw new AppError('Cannot restrict an admin account', 403);
+
+  user.isRestricted = isRestricted;
+  if (isRestricted) {
+    user.restrictReason = reason || 'Policy violation';
+    user.restrictedAt = new Date();
+  } else {
+    user.restrictReason = undefined;
+    user.restrictedAt = null;
+  }
+  await user.save({ validateBeforeSave: false });
+
+  logger.info(`[Admin] User ${isRestricted ? 'restricted' : 'unrestricted'}: ${user.username} (${userId})`);
   return user;
 };
 
@@ -286,6 +316,7 @@ module.exports = {
   getDashboardStats,
   listUsers,
   banUser,
+  restrictUser,
   adminDeleteUser,
   listGames,
   adminDeleteGame,

@@ -6,6 +6,7 @@ import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/services/socket_service.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/chat/providers/chat_provider.dart';
+import 'package:buddbull/features/home/presentation/widgets/global_add_fab.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -103,6 +104,7 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
     });
 
     final selectedIndex = _selectedIndex(context);
+    final showFab = ref.watch(authProvider).status == AuthStatus.authenticated;
 
     return Scaffold(
       extendBody: true,
@@ -110,6 +112,7 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
         clipBehavior: Clip.none,
         children: [
           Positioned.fill(child: widget.child),
+          if (showFab) const GlobalAddFab(),
           Positioned(
             left: 0,
             right: 0,

@@ -556,6 +556,8 @@ class _LeadingIcon extends StatelessWidget {
       case 'friendRequest':
       case 'friendRequestAccepted':
         return (Icons.person_add_alt_1_outlined, AppColors.info);
+      case 'reportClosed':
+        return (Icons.check_circle_outline, AppColors.success);
       case 'broadcast':
         return (Icons.campaign_outlined, AppColors.primary);
       default:

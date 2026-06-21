@@ -8,6 +8,8 @@ import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/chat/data/models/chat_model.dart';
 import 'package:buddbull/features/chat/providers/chat_provider.dart';
 import 'package:buddbull/features/home/home_scaffold.dart';
+import 'package:buddbull/features/reports/data/report_repository.dart';
+import 'package:buddbull/features/reports/presentation/widgets/report_flow.dart';
 import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
 import 'package:buddbull/features/profile/presentation/widgets/sport_chip.dart';
 import 'package:buddbull/features/profile/presentation/widgets/stats_card.dart';
@@ -528,7 +530,21 @@ class _PublicProfileView extends ConsumerWidget {
                   ),
                 ),
               ),
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  8,
+                  16,
+                  HomeScaffold.navBottomInset(context) + 16,
+                ),
+                child: ReportActionButton(
+                  targetType: ReportTargetType.user,
+                  targetId: user.id,
+                  targetLabel: '@${user.username}',
+                ),
+              ),
+            ),
           ],
         ),
       ),

@@ -5,15 +5,22 @@ const router = express.Router();
 
 const { protect, restrictTo } = require('../middleware/auth.middleware');
 const adminController = require('../controllers/admin.controller');
+const reportController = require('../controllers/report.controller');
 const {
   dashboardQuerySchema,
   userListSchema,
   banUserSchema,
+  restrictUserSchema,
   broadcastSchema,
   sportCategorySchema,
   gameListSchema,
   validate,
 } = require('../validators/admin.validator');
+const {
+  reportListSchema,
+  updateReportSchema,
+  validate: validateReport,
+} = require('../validators/report.validator');
 
 // ── All admin routes require authentication + admin role ──────────────────────
 router.use(protect, restrictTo('admin'));
@@ -35,11 +42,20 @@ router.get('/dashboard', validate(dashboardQuerySchema, 'query'), adminControlle
 // ── Users ─────────────────────────────────────────────────────────────────────
 router.get('/users', validate(userListSchema, 'query'), adminController.listUsers);
 router.patch('/users/:userId/ban', validate(banUserSchema), adminController.banUser);
+router.patch('/users/:userId/restrict', validate(restrictUserSchema), adminController.restrictUser);
 router.delete('/users/:userId', adminController.deleteUser);
 
 // ── Games ─────────────────────────────────────────────────────────────────────
 router.get('/games', validate(gameListSchema, 'query'), adminController.listGames);
 router.delete('/games/:gameId', adminController.deleteGame);
+
+// ── Reports ───────────────────────────────────────────────────────────────────
+router.get('/reports', validateReport(reportListSchema, 'query'), reportController.listAdmin);
+router.patch(
+  '/reports/:reportId',
+  validateReport(updateReportSchema),
+  reportController.updateAdmin,
+);
 
 // ── Exports ───────────────────────────────────────────────────────────────────
 router.get('/export/users', adminController.exportUsers);

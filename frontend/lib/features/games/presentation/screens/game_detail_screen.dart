@@ -14,6 +14,8 @@ import 'package:buddbull/features/rating/data/models/rating_model.dart';
 import 'package:buddbull/features/rating/presentation/widgets/rate_player_sheet.dart';
 import 'package:buddbull/features/rating/presentation/widgets/rating_stars.dart';
 import 'package:buddbull/features/rating/providers/rating_provider.dart';
+import 'package:buddbull/features/reports/data/report_repository.dart';
+import 'package:buddbull/features/reports/presentation/widgets/report_flow.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:buddbull/shared/widgets/loading_overlay.dart';
@@ -180,7 +182,7 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
             body: CustomScrollView(
               slivers: [
                 // ── Coloured header ──────────────────────────
-                _GameDetailAppBar(game: game),
+                _GameDetailAppBar(game: game, gameId: gameId),
 
                 SliverPadding(
                   padding: const EdgeInsets.all(16),
@@ -387,9 +389,10 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
 }
 
 // ── Coloured sliver app bar ───────────────────────────────────────────────────
-class _GameDetailAppBar extends StatelessWidget {
-  const _GameDetailAppBar({required this.game});
+class _GameDetailAppBar extends ConsumerWidget {
+  const _GameDetailAppBar({required this.game, required this.gameId});
   final GameModel game;
+  final String gameId;
 
   Color get _sportColor => switch (game.sport.toLowerCase()) {
         'football' || 'soccer' => AppColors.footballBadge,
@@ -400,7 +403,7 @@ class _GameDetailAppBar extends StatelessWidget {
       };
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SliverAppBar(
       expandedHeight: 200,
       pinned: true,
@@ -410,6 +413,34 @@ class _GameDetailAppBar extends StatelessWidget {
             color: Colors.white),
         onPressed: () => context.pop(),
       ),
+      actions: [
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert, color: Colors.white),
+          onSelected: (value) {
+            if (value == 'report') {
+              showReportFlow(
+                context,
+                ref,
+                targetType: ReportTargetType.game,
+                targetId: gameId,
+                targetLabel: game.title,
+              );
+            }
+          },
+          itemBuilder: (_) => const [
+            PopupMenuItem(
+              value: 'report',
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 20),
+                  SizedBox(width: 8),
+                  Text('Report Game', style: TextStyle(color: AppColors.error)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: GameSportWallpaper(
           sport: game.sport,

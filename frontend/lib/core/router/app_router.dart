@@ -1,5 +1,10 @@
 import 'package:buddbull/core/storage/shared_preferences_provider.dart';
 import 'package:buddbull/features/admin/presentation/screens/admin_dashboard_screen.dart';
+import 'package:buddbull/features/admin/presentation/screens/admin_games_screen.dart';
+import 'package:buddbull/features/admin/presentation/screens/admin_reports_screen.dart';
+import 'package:buddbull/features/admin/presentation/screens/admin_shell.dart';
+import 'package:buddbull/features/admin/presentation/screens/admin_sports_screen.dart';
+import 'package:buddbull/features/admin/presentation/screens/admin_users_screen.dart';
 import 'package:buddbull/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:buddbull/features/auth/presentation/screens/login_screen.dart';
 import 'package:buddbull/features/auth/presentation/screens/register_screen.dart';
@@ -55,7 +60,12 @@ abstract class Routes {
   static const String chats = '/chats';
   static String chatRoom(String id) => '/chats/$id';
   static const String newChat = '/chats/new';
-  static const String adminDashboard = '/admin';
+  static const String admin = '/admin';
+  static const String adminDashboard = '/admin/dashboard';
+  static const String adminUsers = '/admin/users';
+  static const String adminReports = '/admin/reports';
+  static const String adminSports = '/admin/sports';
+  static const String adminGames = '/admin/games';
   static const String performance = '/performance';
   static const String createLog = '/performance/log/create';
   static const String profile = '/profile';
@@ -111,6 +121,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           return Routes.home;
         }
         if (isOnAuthPage) {
+          return Routes.home;
+        }
+
+        final user = ref.read(authProvider).user;
+        final isAdminRoute = loc.startsWith(Routes.admin);
+        if (isAdminRoute && user?.role != 'admin') {
           return Routes.home;
         }
       }
@@ -267,11 +283,40 @@ final routerProvider = Provider<GoRouter>((ref) {
           ChatScreen(chatId: s.pathParameters['id']!),
         ),
       ),
-      // ── Admin dashboard (admin role only) ─────────────────────
+      // ── Admin area (admin role only) ──────────────────────────
       GoRoute(
-        path: Routes.adminDashboard,
-        name: 'adminDashboard',
-        pageBuilder: (_, s) => _slide(s, const AdminDashboardScreen()),
+        path: Routes.admin,
+        redirect: (_, __) => Routes.adminDashboard,
+      ),
+      ShellRoute(
+        builder: (_, __, child) => AdminShell(child: child),
+        routes: [
+          GoRoute(
+            path: Routes.adminDashboard,
+            name: 'adminDashboard',
+            pageBuilder: (_, s) => _slide(s, const AdminDashboardScreen()),
+          ),
+          GoRoute(
+            path: Routes.adminUsers,
+            name: 'adminUsers',
+            pageBuilder: (_, s) => _slide(s, const AdminUsersScreen()),
+          ),
+          GoRoute(
+            path: Routes.adminReports,
+            name: 'adminReports',
+            pageBuilder: (_, s) => _slide(s, const AdminReportsScreen()),
+          ),
+          GoRoute(
+            path: Routes.adminSports,
+            name: 'adminSports',
+            pageBuilder: (_, s) => _slide(s, const AdminSportsScreen()),
+          ),
+          GoRoute(
+            path: Routes.adminGames,
+            name: 'adminGames',
+            pageBuilder: (_, s) => _slide(s, const AdminGamesScreen()),
+          ),
+        ],
       ),
       // ── Notifications inbox (full screen — hides bottom nav) ──
       GoRoute(

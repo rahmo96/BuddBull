@@ -23,6 +23,11 @@ const banUserSchema = Joi.object({
   isBanned: Joi.boolean().required(),
 });
 
+const restrictUserSchema = Joi.object({
+  reason: Joi.string().trim().max(500).optional().allow(''),
+  isRestricted: Joi.boolean().required(),
+});
+
 const broadcastSchema = Joi.object({
   title: Joi.string().trim().min(1).max(100).required(),
   body: Joi.string().trim().min(1).max(1000).required(),
@@ -67,6 +72,7 @@ module.exports = {
   dashboardQuerySchema,
   userListSchema,
   banUserSchema,
+  restrictUserSchema,
   broadcastSchema,
   sportCategorySchema,
   gameListSchema,

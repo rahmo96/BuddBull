@@ -31,63 +31,52 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     final dashboardAsync = ref.watch(adminDashboardProvider(_period));
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        title: const Text('Admin Dashboard', style: AppTextStyles.titleLarge),
-        actions: [
-          // Period selector
-          PopupMenuButton<String>(
-            initialValue: _period,
-            onSelected: (v) => setState(() => _period = v),
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: '7d', child: Text('Last 7 days')),
-              PopupMenuItem(value: '30d', child: Text('Last 30 days')),
-              PopupMenuItem(value: '90d', child: Text('Last 90 days')),
-            ],
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Row(
-                children: [
-                  Text(_period, style: AppTextStyles.bodySmall.copyWith(color: AppColors.primary)),
-                  const Icon(Icons.arrow_drop_down, color: AppColors.primary),
-                ],
-              ),
+    return dashboardAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('Failed to load dashboard', style: AppTextStyles.bodyMedium),
+            TextButton(
+              onPressed: () => ref.invalidate(adminDashboardProvider(_period)),
+              child: const Text('Retry'),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(adminDashboardProvider(_period)),
-          ),
-        ],
-      ),
-      body: dashboardAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('Failed to load dashboard', style: AppTextStyles.bodyMedium),
-              TextButton(
-                onPressed: () => ref.invalidate(adminDashboardProvider(_period)),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+          ],
         ),
-        data: (stats) => _buildDashboard(stats),
       ),
-    );
-  }
-
-  Widget _buildDashboard(AdminDashboardStats stats) {
-    return RefreshIndicator(
-      onRefresh: () => ref.refresh(adminDashboardProvider(_period).future),
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
+      data: (stats) => RefreshIndicator(
+        onRefresh: () => ref.refresh(adminDashboardProvider(_period).future),
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                PopupMenuButton<String>(
+                  initialValue: _period,
+                  onSelected: (v) => setState(() => _period = v),
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(value: '7d', child: Text('Last 7 days')),
+                    PopupMenuItem(value: '30d', child: Text('Last 30 days')),
+                    PopupMenuItem(value: '90d', child: Text('Last 90 days')),
+                  ],
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Row(
+                      children: [
+                        Text(_period, style: AppTextStyles.bodySmall.copyWith(color: AppColors.primary)),
+                        const Icon(Icons.arrow_drop_down, color: AppColors.primary),
+                      ],
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () => ref.invalidate(adminDashboardProvider(_period)),
+                ),
+              ],
+            ),
           // ── User stats ──────────────────────────────────────────
           Text('Users', style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary)),
           const SizedBox(height: 10),
@@ -162,6 +151,18 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 icon: Icons.cancel_outlined,
                 color: Colors.red,
               ),
+              AdminStatCard(
+                label: 'Ongoing',
+                value: '${stats.games.inProgress}',
+                icon: Icons.timelapse,
+                color: AppColors.info,
+              ),
+              AdminStatCard(
+                label: 'Scheduled',
+                value: '${stats.games.scheduled}',
+                icon: Icons.schedule,
+                color: AppColors.warning,
+              ),
             ],
           ),
 
@@ -181,13 +182,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             bodyCtrl: _broadcastBodyCtrl,
             onSend: _sendBroadcast,
           ),
-
           const SizedBox(height: 32),
-
-          // ── Users table shortcut ─────────────────────────────────
-          _AdminUsersPreview(),
         ],
       ),
+    ),
     );
   }
 
@@ -361,122 +359,5 @@ class _BroadcastPanel extends ConsumerWidget {
         ],
       ),
     );
-  }
-}
-
-// ── Admin users mini-list ─────────────────────────────────────────────────────
-class _AdminUsersPreview extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final usersAsync = ref.watch(adminUsersProvider);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Recent Users', style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary)),
-        const SizedBox(height: 10),
-        usersAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const Text('Failed to load users', style: AppTextStyles.caption),
-          data: (data) {
-            final users = (data['users'] as List? ?? []).cast<Map<String, dynamic>>();
-            if (users.isEmpty) {
-              return Text('No users found', style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary));
-            }
-            return Column(
-              children: users.take(10).map((u) => _UserRow(user: u, ref: ref)).toList(),
-            );
-          },
-        ),
-      ],
-    );
-  }
-}
-
-class _UserRow extends StatelessWidget {
-  final Map<String, dynamic> user;
-  final WidgetRef ref;
-
-  const _UserRow({required this.user, required this.ref});
-
-  @override
-  Widget build(BuildContext context) {
-    final isBanned = user['isBanned'] == true;
-    final name = '${user['firstName'] ?? ''} ${user['lastName'] ?? ''}'.trim();
-    final username = user['username']?.toString() ?? '';
-    final role = user['role']?.toString() ?? '';
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isBanned ? Colors.red.withValues(alpha: 0.3) : AppColors.border),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-            child: Text(
-              username.isNotEmpty ? username[0].toUpperCase() : '?',
-              style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name.isNotEmpty ? name : username, style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600)),
-                Text('@$username · $role', style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
-              ],
-            ),
-          ),
-          if (isBanned)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-              child: Text('Banned', style: AppTextStyles.caption.copyWith(color: Colors.red)),
-            ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, size: 18, color: AppColors.textSecondary),
-            onSelected: (action) => _handleAction(context, action, user),
-            itemBuilder: (_) => [
-              PopupMenuItem(value: isBanned ? 'unban' : 'ban', child: Text(isBanned ? 'Unban' : 'Ban')),
-              const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _handleAction(BuildContext context, String action, Map<String, dynamic> user) async {
-    final userId = (user['_id'] ?? user['id'])?.toString() ?? '';
-    if (action == 'ban' || action == 'unban') {
-      await ref.read(banUserProvider.notifier).banUser(userId, isBanned: action == 'ban');
-      ref.invalidate(adminUsersProvider);
-    } else if (action == 'delete') {
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Delete User'),
-          content: Text('Are you sure you want to delete @${user['username']}? This cannot be undone.'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        ),
-      );
-      if (confirm == true) {
-        await ref.read(adminRepositoryProvider).deleteUser(userId);
-        ref.invalidate(adminUsersProvider);
-      }
-    }
   }
 }

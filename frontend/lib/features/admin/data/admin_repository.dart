@@ -62,19 +62,24 @@ class AdminUserStats {
 }
 
 class AdminGameStats {
-  final int total, active, completed, cancelled;
+  final int total, active, completed, cancelled, inProgress, scheduled;
 
-  const AdminGameStats(
-      {this.total = 0,
-      this.active = 0,
-      this.completed = 0,
-      this.cancelled = 0});
+  const AdminGameStats({
+    this.total = 0,
+    this.active = 0,
+    this.completed = 0,
+    this.cancelled = 0,
+    this.inProgress = 0,
+    this.scheduled = 0,
+  });
 
   factory AdminGameStats.fromJson(Map<String, dynamic> json) => AdminGameStats(
         total: (json['total'] as num?)?.toInt() ?? 0,
         active: (json['active'] as num?)?.toInt() ?? 0,
         completed: (json['completed'] as num?)?.toInt() ?? 0,
         cancelled: (json['cancelled'] as num?)?.toInt() ?? 0,
+        inProgress: (json['inProgress'] as num?)?.toInt() ?? 0,
+        scheduled: (json['scheduled'] as num?)?.toInt() ?? 0,
       );
 }
 
@@ -136,6 +141,17 @@ class AdminRepository {
     );
   }
 
+  Future<void> restrictUser(String userId,
+      {required bool isRestricted, String? reason}) async {
+    await _client.patch(
+      ApiEndpoints.adminRestrictUser(userId),
+      data: {
+        'isRestricted': isRestricted,
+        if (reason != null) 'reason': reason,
+      },
+    );
+  }
+
   Future<void> deleteUser(String userId) async {
     await _client.delete(ApiEndpoints.adminDeleteUser(userId));
   }
@@ -148,5 +164,88 @@ class AdminRepository {
       ApiEndpoints.adminBroadcast,
       data: {'title': title, 'body': body, 'channel': channel},
     );
+  }
+
+  Future<Map<String, dynamic>> listGames({
+    int page = 1,
+    int limit = 20,
+    String? status,
+  }) async {
+    final res = await _client.get(
+      ApiEndpoints.adminGames,
+      queryParams: {
+        'page': page,
+        'limit': limit,
+        if (status != null) 'status': status,
+      },
+    );
+    return res['data'] as Map<String, dynamic>;
+  }
+
+  Future<void> deleteGame(String gameId) async {
+    await _client.delete(ApiEndpoints.adminDeleteGame(gameId));
+  }
+
+  Future<List<Map<String, dynamic>>> listSports() async {
+    final res = await _client.get(ApiEndpoints.adminSports);
+    final data = res['data'] as Map<String, dynamic>? ?? {};
+    return (data['sports'] as List? ?? []).whereType<Map<String, dynamic>>().toList();
+  }
+
+  Future<Map<String, dynamic>> createSport(Map<String, dynamic> payload) async {
+    final res = await _client.post(ApiEndpoints.adminSports, data: payload);
+    return (res['data'] as Map<String, dynamic>? ?? {})['sport']
+            as Map<String, dynamic>? ??
+        {};
+  }
+
+  Future<Map<String, dynamic>> updateSport(
+      String sportId, Map<String, dynamic> payload) async {
+    final res =
+        await _client.patch(ApiEndpoints.adminSport(sportId), data: payload);
+    return (res['data'] as Map<String, dynamic>? ?? {})['sport']
+            as Map<String, dynamic>? ??
+        {};
+  }
+
+  Future<void> deleteSport(String sportId) async {
+    await _client.delete(ApiEndpoints.adminSport(sportId));
+  }
+
+  Future<Map<String, dynamic>> listReports({
+    int page = 1,
+    int limit = 20,
+    String? status,
+    String? targetType,
+    String sort = '-createdAt',
+  }) async {
+    final res = await _client.get(
+      ApiEndpoints.adminReports,
+      queryParams: {
+        'page': page,
+        'limit': limit,
+        if (status != null) 'status': status,
+        if (targetType != null) 'targetType': targetType,
+        'sort': sort,
+      },
+    );
+    return res['data'] as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> updateReport(
+    String reportId, {
+    String? status,
+    String? adminNotes,
+  }) async {
+    final res = await _client.patch(
+      ApiEndpoints.adminReport(reportId),
+      data: {
+        if (status != null) 'status': status,
+        if (adminNotes != null) 'adminNotes': adminNotes,
+      },
+    );
+    return (res['data'] as Map<String, dynamic>? ?? {})['report']
+            as Map<String, dynamic>? ??
+        {};
   }
 }

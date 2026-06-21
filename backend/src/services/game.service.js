@@ -12,6 +12,7 @@ const {
   buildCaseInsensitiveRegex,
   runWithTextOrRegexFallback,
 } = require('../utils/search.utils');
+const { assertNotRestricted } = require('../utils/userRestrictions');
 
 // ─────────────────────────────────────────────
 //  Helpers
@@ -340,6 +341,8 @@ const revokeGroupChatParticipant = async (game, userId, reason, detail) => {
  * @returns {Document} Populated game document
  */
 const createGame = async (organizerId, dto) => {
+  await assertNotRestricted(organizerId);
+
   const game = new Game({
     ...dto,
     organizer: organizerId,
@@ -835,6 +838,8 @@ const cancelGame = async (gameId, userId, userRole, reason) => {
  *  4. No schedule conflict with any of the player's other approved games
  */
 const joinGame = async (gameId, userId, { acceptInvite = false } = {}) => {
+  await assertNotRestricted(userId);
+
   const game = await Game.findById(gameId).where({ deletedAt: null });
   if (!game) throw new AppError('Game not found.', 404);
 
