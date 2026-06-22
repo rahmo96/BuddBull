@@ -151,7 +151,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                   Text(report.reason, style: AppTextStyles.bodyMedium),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: status,
+                    initialValue: status,
                     decoration: const InputDecoration(
                       labelText: 'Status',
                       border: OutlineInputBorder(),

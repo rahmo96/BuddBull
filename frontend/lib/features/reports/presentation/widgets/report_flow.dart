@@ -140,7 +140,7 @@ class _ReportFormSheetState extends State<_ReportFormSheet> {
               ),
             ),
             const SizedBox(height: 16),
-            Text('Report Details', style: AppTextStyles.titleMedium),
+            const Text('Report Details', style: AppTextStyles.titleMedium),
             const SizedBox(height: 16),
             BbTextField(
               label: 'Title',

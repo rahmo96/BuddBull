@@ -31,25 +31,13 @@ const DEFAULT_COUNT = 20;
 
 const SPORTS = [
   'football',
-  'soccer',
   'basketball',
   'tennis',
   'volleyball',
   'cricket',
-  'badminton',
-  'rugby',
   'running',
   'cycling',
   'swimming',
-  'yoga',
-  'boxing',
-  'golf',
-  'hockey',
-  'martial arts',
-  'table tennis',
-  'baseball',
-  'gym',
-  'other',
 ];
 
 const SKILL_LEVELS = ['any', 'beginner', 'intermediate', 'advanced', 'professional'];
@@ -104,25 +92,13 @@ const VENUES = [
 
 const TITLE_PREFIX = {
   football: 'Sunday Football',
-  soccer: 'Pickup Soccer',
   basketball: 'Hoops Night',
   tennis: 'Tennis Doubles',
   volleyball: 'Beach Volleyball',
   cricket: 'Cricket Match',
-  badminton: 'Badminton Rally',
-  rugby: 'Touch Rugby',
   running: 'Group Run',
   cycling: 'Weekend Ride',
   swimming: 'Open Water Swim',
-  yoga: 'Sunrise Yoga',
-  boxing: 'Boxing Sparring',
-  golf: 'Nine-Hole Golf',
-  hockey: 'Street Hockey',
-  'martial arts': 'Martial Arts Drills',
-  'table tennis': 'Table Tennis Club',
-  baseball: 'Softball Game',
-  gym: 'CrossFit Session',
-  other: 'Community Activity',
 };
 
 const DURATIONS = [60, 75, 90, 120];
