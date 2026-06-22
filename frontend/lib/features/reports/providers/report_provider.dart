@@ -17,14 +17,15 @@ class SubmitReportNotifier extends StateNotifier<SubmitReportState> {
   SubmitReportNotifier(this._repo) : super(const SubmitReportState());
   final ReportRepository _repo;
 
-  Future<bool> submit({
+  /// Returns `null` on success, or a user-facing error message on failure.
+  Future<String?> submit({
     required ReportTargetType targetType,
     String? reportedUserId,
     String? reportedGameId,
     required String title,
     required String reason,
   }) async {
-    state = const SubmitReportState(isLoading: true);
+    if (mounted) state = const SubmitReportState(isLoading: true);
     try {
       await _repo.createReport(
         targetType: targetType,
@@ -33,17 +34,17 @@ class SubmitReportNotifier extends StateNotifier<SubmitReportState> {
         title: title,
         reason: reason,
       );
-      state = const SubmitReportState();
-      return true;
+      if (mounted) state = const SubmitReportState();
+      return null;
     } catch (e) {
       final message = e is AppException ? e.message : e.toString();
-      state = SubmitReportState(error: message);
-      return false;
+      if (mounted) state = SubmitReportState(error: message);
+      return message;
     }
   }
 }
 
 final submitReportProvider =
-    StateNotifierProvider.autoDispose<SubmitReportNotifier, SubmitReportState>(
+    StateNotifierProvider<SubmitReportNotifier, SubmitReportState>(
   (ref) => SubmitReportNotifier(ref.watch(reportRepositoryProvider)),
 );

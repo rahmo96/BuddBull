@@ -5,13 +5,19 @@ const Chat = require('../models/Chat.model');
 const SportCategory = require('../models/SportCategory.model');
 const AppError = require('../utils/AppError');
 const { toCSV } = require('../utils/csvExport');
+const { buildCaseInsensitiveRegex } = require('../utils/search.utils');
 const logger = require('../utils/logger');
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
+const NOT_DELETED = {
+  $or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
+};
+
 const getDashboardStats = async ({ period = '30d' } = {}) => {
   const periodDays = { '7d': 7, '30d': 30, '90d': 90 }[period] ?? 30;
   const since = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
   const now = new Date();
 
   const [
@@ -30,24 +36,24 @@ const getDashboardStats = async ({ period = '30d' } = {}) => {
     dailyRegistrations,
     churnCount,
   ] = await Promise.all([
-    User.countDocuments({ isDeleted: false }),
-    User.countDocuments({ isDeleted: false, isBanned: false, lastLoginAt: { $gte: thirtyDaysAgo } }),
-    User.countDocuments({ isDeleted: false, createdAt: { $gte: since } }),
-    User.countDocuments({ isBanned: true }),
-    Game.countDocuments({ isDeleted: false }),
-    Game.countDocuments({ isDeleted: false, status: { $in: ['open', 'full'] } }),
-    Game.countDocuments({ isDeleted: false, status: 'completed' }),
-    Game.countDocuments({ isDeleted: false, status: 'cancelled' }),
-    Game.countDocuments({ deletedAt: null, status: 'in_progress' }),
+    User.countDocuments(NOT_DELETED),
+    User.countDocuments({ ...NOT_DELETED, isBanned: false, lastLoginAt: { $gte: thirtyDaysAgo } }),
+    User.countDocuments({ ...NOT_DELETED, createdAt: { $gte: since } }),
+    User.countDocuments({ ...NOT_DELETED, isBanned: true }),
+    Game.countDocuments(NOT_DELETED),
+    Game.countDocuments({ ...NOT_DELETED, status: { $in: ['open', 'full'] } }),
+    Game.countDocuments({ ...NOT_DELETED, status: 'completed' }),
+    Game.countDocuments({ ...NOT_DELETED, status: 'cancelled' }),
+    Game.countDocuments({ ...NOT_DELETED, status: 'in_progress' }),
     Game.countDocuments({
-      deletedAt: null,
+      ...NOT_DELETED,
       status: { $in: ['open', 'full'] },
       scheduledAt: { $gt: now },
     }),
-    PerformanceLog.countDocuments({ isDeleted: false }),
+    PerformanceLog.countDocuments(NOT_DELETED),
     // Top sports by number of games
     Game.aggregate([
-      { $match: { isDeleted: false } },
+      { $match: NOT_DELETED },
       { $group: { _id: '$sport', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 10 },
@@ -55,7 +61,7 @@ const getDashboardStats = async ({ period = '30d' } = {}) => {
     ]),
     // Daily new registrations for the period (for sparkline)
     User.aggregate([
-      { $match: { isDeleted: false, createdAt: { $gte: since } } },
+      { $match: { ...NOT_DELETED, createdAt: { $gte: since } } },
       {
         $group: {
           _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
@@ -67,13 +73,10 @@ const getDashboardStats = async ({ period = '30d' } = {}) => {
     ]),
     // Churned users: registered > 30d ago but never logged in OR lastLogin > 60d ago
     User.countDocuments({
-      isDeleted: false,
+      ...NOT_DELETED,
       isBanned: false,
       createdAt: { $lt: thirtyDaysAgo },
-      $or: [
-        { lastLoginAt: { $exists: false } },
-        { lastLoginAt: { $lt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000) } },
-      ],
+      $or: [{ lastLoginAt: null }, { lastLoginAt: { $lt: sixtyDaysAgo } }],
     }),
   ]);
 
@@ -104,31 +107,70 @@ const getDashboardStats = async ({ period = '30d' } = {}) => {
 };
 
 // ── User management ───────────────────────────────────────────────────────────
-const listUsers = async ({ page = 1, limit = 20, search, role, status, sort = '-createdAt' } = {}) => {
-  const filter = { isDeleted: false };
+const USER_LIST_SORT = {
+  createdAt: { createdAt: 1 },
+  '-createdAt': { createdAt: -1 },
+  username: { username: 1 },
+  '-username': { username: -1 },
+};
 
-  if (search) {
-    filter.$or = [
-      { username: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } },
-      { firstName: { $regex: search, $options: 'i' } },
-      { lastName: { $regex: search, $options: 'i' } },
-    ];
+const listUsers = async ({ page = 1, limit = 20, search, role, status, sort = '-createdAt' } = {}) => {
+  const pageNum = Math.max(1, Number(page) || 1);
+  const limitNum = Math.min(100, Math.max(1, Number(limit) || 20));
+  const conditions = [NOT_DELETED];
+
+  const term = typeof search === 'string' ? search.trim().replace(/^@+/, '') : '';
+  if (term) {
+    const regex = buildCaseInsensitiveRegex(term);
+    const searchClause = {
+      $or: [
+        { username: regex },
+        { email: regex },
+        { firstName: regex },
+        { lastName: regex },
+        {
+          $expr: {
+            $regexMatch: {
+              input: {
+                $trim: {
+                  input: {
+                    $concat: [{ $ifNull: ['$firstName', ''] }, ' ', { $ifNull: ['$lastName', ''] }],
+                  },
+                },
+              },
+              regex: regex.source,
+              options: 'i',
+            },
+          },
+        },
+      ],
+    };
+
+    if (/^[0-9a-fA-F]{24}$/.test(term)) {
+      searchClause.$or.push({ _id: term });
+    }
+
+    conditions.push(searchClause);
   }
-  if (role) filter.role = role;
-  if (status === 'banned') filter.isBanned = true;
-  else if (status === 'active') filter.isBanned = false;
+
+  if (role) conditions.push({ role });
+  if (status === 'banned') conditions.push({ isBanned: true });
+  else if (status === 'active') conditions.push({ isBanned: false });
   else if (status === 'deleted') {
-    delete filter.isDeleted;
-    filter.isDeleted = true;
+    conditions[0] = { deletedAt: { $ne: null } };
   }
+
+  const filter = conditions.length === 1 ? conditions[0] : { $and: conditions };
+  const sortObj = USER_LIST_SORT[sort] || USER_LIST_SORT['-createdAt'];
 
   const [users, total] = await Promise.all([
     User.find(filter)
-      .select('firstName lastName username email role isBanned isRestricted isEmailVerified createdAt lastLoginAt stats.gamesPlayed')
-      .sort(sort)
-      .skip((page - 1) * limit)
-      .limit(limit)
+      .select(
+        'firstName lastName username email role isBanned isRestricted isVerified createdAt lastLoginAt stats',
+      )
+      .sort(sortObj)
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum)
       .lean(),
     User.countDocuments(filter),
   ]);
@@ -136,13 +178,13 @@ const listUsers = async ({ page = 1, limit = 20, search, role, status, sort = '-
   return {
     users,
     total,
-    page,
-    totalPages: Math.ceil(total / limit),
+    page: pageNum,
+    totalPages: Math.ceil(total / limitNum) || 0,
   };
 };
 
 const banUser = async (userId, { isBanned, reason } = {}) => {
-  const user = await User.findOne({ _id: userId, isDeleted: false });
+  const user = await User.findOne({ _id: userId, ...NOT_DELETED });
   if (!user) throw new AppError('User not found', 404);
   if (user.role === 'admin') throw new AppError('Cannot ban an admin account', 403);
 
@@ -178,7 +220,7 @@ const adminDeleteUser = async (userId, adminId) => {
   if (userId.toString() === adminId.toString()) {
     throw new AppError('You cannot delete your own admin account', 403);
   }
-  const user = await User.findOne({ _id: userId, isDeleted: false });
+  const user = await User.findOne({ _id: userId, ...NOT_DELETED });
   if (!user) throw new AppError('User not found', 404);
   if (user.role === 'admin') throw new AppError('Cannot delete an admin account', 403);
 
@@ -188,7 +230,7 @@ const adminDeleteUser = async (userId, adminId) => {
 
 // ── Game management ───────────────────────────────────────────────────────────
 const listGames = async ({ page = 1, limit = 20, sport, status, sort = '-createdAt' } = {}) => {
-  const filter = { isDeleted: false };
+  const filter = { ...NOT_DELETED };
   if (sport) filter.sport = sport;
   if (status) filter.status = status;
 
@@ -212,7 +254,7 @@ const listGames = async ({ page = 1, limit = 20, sport, status, sort = '-created
 };
 
 const adminDeleteGame = async (gameId, adminId) => {
-  const game = await Game.findOne({ _id: gameId, isDeleted: false });
+  const game = await Game.findOne({ _id: gameId, ...NOT_DELETED });
   if (!game) throw new AppError('Game not found', 404);
   await game.softDelete(adminId);
   logger.info(`[Admin] Game deleted: ${game.title} (${gameId}) by admin ${adminId}`);
@@ -220,7 +262,7 @@ const adminDeleteGame = async (gameId, adminId) => {
 
 // ── CSV export ────────────────────────────────────────────────────────────────
 const exportUsersCSV = async () => {
-  const users = await User.find({ isDeleted: false })
+  const users = await User.find(NOT_DELETED)
     .select('firstName lastName username email role isBanned isEmailVerified createdAt lastLoginAt stats')
     .lean();
 
@@ -241,7 +283,7 @@ const exportUsersCSV = async () => {
 };
 
 const exportGamesCSV = async () => {
-  const games = await Game.find({ isDeleted: false }).populate('organizer', 'username').lean();
+  const games = await Game.find(NOT_DELETED).populate('organizer', 'username').lean();
 
   return toCSV(games, [
     { label: 'ID', path: '_id' },
@@ -268,9 +310,9 @@ const broadcastMessage = async ({ title, body, channel = 'socket' }, io, notific
   if (channel === 'email' || channel === 'both') {
     // Send to all non-banned, verified users in batches
     const users = await User.find({
-      isDeleted: false,
+      ...NOT_DELETED,
       isBanned: false,
-      isEmailVerified: true,
+      isVerified: true,
     })
       .select('email firstName')
       .lean();

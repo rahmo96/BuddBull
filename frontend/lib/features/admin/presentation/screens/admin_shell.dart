@@ -44,34 +44,48 @@ class AdminShell extends StatelessWidget {
     return 0;
   }
 
+  void _exitAdmin(BuildContext context) {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go(Routes.profile);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     final selected = _selectedIndex(location);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _exitAdmin(context);
+      },
+      child: Scaffold(
         backgroundColor: AppColors.background,
-        elevation: 0,
-        title: Text(_sections[selected].label, style: AppTextStyles.titleLarge),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+        appBar: AppBar(
+          backgroundColor: AppColors.background,
+          elevation: 0,
+          title: Text(_sections[selected].label, style: AppTextStyles.titleLarge),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => _exitAdmin(context),
+          ),
         ),
-      ),
-      body: child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: selected,
-        onDestinationSelected: (i) => context.go(_sections[i].route),
-        destinations: _sections
-            .map(
-              (s) => NavigationDestination(
-                icon: Icon(s.icon),
-                label: s.label,
-              ),
-            )
-            .toList(),
+        body: child,
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: selected,
+          onDestinationSelected: (i) => context.go(_sections[i].route),
+          destinations: _sections
+              .map(
+                (s) => NavigationDestination(
+                  icon: Icon(s.icon),
+                  label: s.label,
+                ),
+              )
+              .toList(),
+        ),
       ),
     );
   }

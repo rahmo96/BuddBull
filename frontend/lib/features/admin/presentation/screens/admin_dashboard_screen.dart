@@ -1,6 +1,7 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/admin/data/admin_repository.dart';
+import 'package:buddbull/features/admin/presentation/widgets/admin_user_search_section.dart';
 import 'package:buddbull/features/admin/presentation/widgets/stat_card.dart';
 import 'package:buddbull/features/admin/providers/admin_provider.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
@@ -80,13 +81,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           // ── User stats ──────────────────────────────────────────
           Text('Users', style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary)),
           const SizedBox(height: 10),
-          GridView.count(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.5,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+          AdminStatsGrid(
             children: [
               AdminStatCard(label: 'Total Users', value: '${stats.users.total}', icon: Icons.people),
               AdminStatCard(
@@ -102,6 +97,12 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 color: const Color(0xFF8B5CF6),
               ),
               AdminStatCard(
+                label: 'Banned',
+                value: '${stats.users.banned}',
+                icon: Icons.block,
+                color: Colors.red,
+              ),
+              AdminStatCard(
                 label: 'Churn Rate',
                 value: stats.users.churnRate,
                 icon: Icons.trending_down,
@@ -109,6 +110,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 subtitle: '${stats.users.churned} users',
               ),
             ],
+          ),
+
+          const SizedBox(height: 16),
+          const AdminUserSearchSection(
+            maxResults: 5,
+            showSeeAllLink: true,
+            showRecentWhenEmpty: true,
           ),
 
           const SizedBox(height: 24),
@@ -124,13 +132,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           // ── Game stats ──────────────────────────────────────────
           Text('Games', style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary)),
           const SizedBox(height: 10),
-          GridView.count(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.5,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+          AdminStatsGrid(
             children: [
               AdminStatCard(label: 'Total Games', value: '${stats.games.total}', icon: Icons.sports),
               AdminStatCard(
@@ -168,11 +170,32 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
           const SizedBox(height: 24),
 
+          // ── Performance logs ─────────────────────────────────────
+          Text('Performance', style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary)),
+          const SizedBox(height: 10),
+          AdminStatsGrid(
+            children: [
+              AdminStatCard(
+                label: 'Total Logs',
+                value: '${stats.totalLogs}',
+                icon: Icons.analytics_outlined,
+                color: AppColors.info,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
           // ── Sport breakdown ─────────────────────────────────────
           if (stats.sportBreakdown.isNotEmpty) ...[
             Text('Top Sports', style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary)),
             const SizedBox(height: 10),
-            ...stats.sportBreakdown.take(5).map((s) => _SportRow(sport: s)),
+            ...stats.sportBreakdown.take(5).map(
+                  (s) => _SportRow(
+                    sport: s,
+                    maxCount: stats.sportBreakdown.first.count,
+                  ),
+                ),
             const SizedBox(height: 24),
           ],
 
@@ -262,7 +285,8 @@ class _RegistrationChart extends StatelessWidget {
 // ── Sport breakdown row ───────────────────────────────────────────────────────
 class _SportRow extends StatelessWidget {
   final SportCount sport;
-  const _SportRow({required this.sport});
+  final int maxCount;
+  const _SportRow({required this.sport, required this.maxCount});
 
   @override
   Widget build(BuildContext context) {
@@ -281,7 +305,7 @@ class _SportRow extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: LinearProgressIndicator(
-              value: 1.0, // simplified — would need max for real ratio
+              value: maxCount > 0 ? sport.count / maxCount : 0,
               backgroundColor: AppColors.border,
               valueColor: const AlwaysStoppedAnimation(AppColors.primary),
               minHeight: 6,

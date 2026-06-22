@@ -122,15 +122,42 @@ class AdminRepository {
 
   Future<Map<String, dynamic>> listUsers(
       {int page = 1, int limit = 20, String? search}) async {
+    final normalizedSearch = search?.trim().replaceFirst(RegExp(r'^@+'), '');
     final res = await _client.get(
       ApiEndpoints.adminUsers,
       queryParams: {
         'page': page,
         'limit': limit,
-        if (search != null) 'search': search,
+        if (normalizedSearch != null && normalizedSearch.isNotEmpty)
+          'search': normalizedSearch,
       },
     );
-    return res['data'] as Map<String, dynamic>;
+    return _parseUserListResponse(res);
+  }
+
+  static Map<String, dynamic> _parseUserListResponse(Map<String, dynamic> res) {
+    final data = res['data'] as Map<String, dynamic>? ?? res;
+    final rawUsers = data['users'] as List? ?? [];
+    final users = rawUsers
+        .whereType<Map>()
+        .map((u) => Map<String, dynamic>.from(u))
+        .toList();
+    final total = (data['total'] as num?)?.toInt() ??
+        (data['pagination'] is Map
+            ? (data['pagination']['total'] as num?)?.toInt()
+            : null) ??
+        users.length;
+
+    return {
+      'users': users,
+      'total': total,
+      'page': (data['page'] as num?)?.toInt() ?? 1,
+      'totalPages': (data['totalPages'] as num?)?.toInt() ??
+          (data['pagination'] is Map
+              ? (data['pagination']['pages'] as num?)?.toInt()
+              : null) ??
+          0,
+    };
   }
 
   Future<void> banUser(String userId,

@@ -72,7 +72,7 @@ Future<void> showReportFlow(
   );
   if (submitConfirmed != true || !context.mounted) return;
 
-  final success = await ref.read(submitReportProvider.notifier).submit(
+  final error = await ref.read(submitReportProvider.notifier).submit(
         targetType: targetType,
         reportedUserId:
             targetType == ReportTargetType.user ? targetId : null,
@@ -83,7 +83,7 @@ Future<void> showReportFlow(
       );
 
   if (!context.mounted) return;
-  if (success) {
+  if (error == null) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Report submitted. Admins will review it shortly.'),
@@ -91,7 +91,6 @@ Future<void> showReportFlow(
       ),
     );
   } else {
-    final error = ref.read(submitReportProvider).error ?? 'Failed to submit report';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(error), backgroundColor: AppColors.error),
     );

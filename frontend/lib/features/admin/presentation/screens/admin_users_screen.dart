@@ -1,5 +1,7 @@
+import 'dart:async';
+
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/features/admin/presentation/widgets/admin_user_tile.dart';
 import 'package:buddbull/features/admin/providers/admin_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,12 +15,28 @@ class AdminUsersScreen extends ConsumerStatefulWidget {
 
 class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
   final _searchCtrl = TextEditingController();
+  Timer? _debounce;
   String _search = '';
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  void _onQueryChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
+      setState(() => _search = value.trim().replaceFirst(RegExp(r'^@+'), ''));
+    });
+  }
+
+  void _clearSearch() {
+    _debounce?.cancel();
+    _searchCtrl.clear();
+    setState(() => _search = '');
   }
 
   @override
@@ -32,18 +50,25 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
           child: TextField(
             controller: _searchCtrl,
             decoration: InputDecoration(
-              hintText: 'Search users…',
+              hintText: 'Search by name, username, or email',
               prefixIcon: const Icon(Icons.search),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.clear),
-                onPressed: () {
-                  _searchCtrl.clear();
-                  setState(() => _search = '');
-                },
-              ),
+              suffixIcon: _searchCtrl.text.isEmpty
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: _clearSearch,
+                    ),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            onSubmitted: (v) => setState(() => _search = v.trim()),
+            textInputAction: TextInputAction.search,
+            onChanged: (value) {
+              setState(() {});
+              _onQueryChanged(value);
+            },
+            onSubmitted: (value) {
+              _debounce?.cancel();
+              setState(() => _search = value.trim().replaceFirst(RegExp(r'^@+'), ''));
+            },
           ),
         ),
         Expanded(
@@ -51,17 +76,36 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('Failed to load users: $e')),
             data: (data) {
-              final users = (data['users'] as List? ?? []).cast<Map<String, dynamic>>();
+              final users = (data['users'] as List? ?? [])
+                  .whereType<Map>()
+                  .map((u) => Map<String, dynamic>.from(u))
+                  .toList();
+              final total = (data['total'] as num?)?.toInt() ?? users.length;
               if (users.isEmpty) {
-                return const Center(child: Text('No users found'));
+                return Center(
+                  child: Text(
+                    _search.isEmpty ? 'No users found' : 'No users match "$_search".',
+                  ),
+                );
               }
               return RefreshIndicator(
                 onRefresh: () => ref.refresh(adminUsersProvider(_search).future),
                 child: ListView.separated(
                   padding: const EdgeInsets.all(16),
-                  itemCount: users.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (_, i) => _AdminUserTile(user: users[i], search: _search),
+                  itemCount: users.length + 1,
+                  separatorBuilder: (_, i) => SizedBox(height: i == 0 ? 4 : 8),
+                  itemBuilder: (_, i) {
+                    if (i == 0) {
+                      return Text(
+                        '$total user${total == 1 ? '' : 's'}',
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                      );
+                    }
+                    final user = users[i - 1];
+                    return AdminUserTile(user: user, searchQuery: _search);
+                  },
                 ),
               );
             },
@@ -69,113 +113,5 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
         ),
       ],
     );
-  }
-}
-
-class _AdminUserTile extends ConsumerWidget {
-  const _AdminUserTile({required this.user, required this.search});
-  final Map<String, dynamic> user;
-  final String search;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final userId = (user['_id'] ?? user['id'])?.toString() ?? '';
-    final isBanned = user['isBanned'] == true;
-    final isRestricted = user['isRestricted'] == true;
-    final username = user['username']?.toString() ?? '';
-    final name = '${user['firstName'] ?? ''} ${user['lastName'] ?? ''}'.trim();
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name.isNotEmpty ? name : username,
-                  style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
-                ),
-                Text(
-                  '@$username · ${user['role'] ?? ''}',
-                  style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
-                ),
-                if (isBanned || isRestricted)
-                  Text(
-                    [
-                      if (isBanned) 'Banned',
-                      if (isRestricted) 'Restricted',
-                    ].join(' · '),
-                    style: AppTextStyles.caption.copyWith(color: AppColors.error),
-                  ),
-              ],
-            ),
-          ),
-          PopupMenuButton<String>(
-            onSelected: (action) => _handleAction(context, ref, action, userId),
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                value: isBanned ? 'unban' : 'ban',
-                child: Text(isBanned ? 'Unban' : 'Ban'),
-              ),
-              PopupMenuItem(
-                value: isRestricted ? 'unrestrict' : 'restrict',
-                child: Text(isRestricted ? 'Unrestrict' : 'Restrict'),
-              ),
-              const PopupMenuItem(
-                value: 'delete',
-                child: Text('Delete', style: TextStyle(color: AppColors.error)),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _handleAction(
-    BuildContext context,
-    WidgetRef ref,
-    String action,
-    String userId,
-  ) async {
-    if (action == 'ban' || action == 'unban') {
-      await ref.read(banUserProvider.notifier).banUser(
-            userId,
-            isBanned: action == 'ban',
-          );
-      ref.invalidate(adminUsersProvider(search));
-    } else if (action == 'restrict' || action == 'unrestrict') {
-      await ref.read(restrictUserProvider.notifier).restrictUser(
-            userId,
-            isRestricted: action == 'restrict',
-          );
-      ref.invalidate(adminUsersProvider(search));
-    } else if (action == 'delete') {
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Delete User'),
-          content: const Text('This cannot be undone.'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete', style: TextStyle(color: AppColors.error)),
-            ),
-          ],
-        ),
-      );
-      if (confirm == true) {
-        await ref.read(adminRepositoryProvider).deleteUser(userId);
-        ref.invalidate(adminUsersProvider(search));
-      }
-    }
   }
 }
