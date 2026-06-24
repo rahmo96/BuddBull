@@ -154,17 +154,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onPressed: _submit,
                           isLoading: authState.isSubmitting,
                         ),
-
-                        const SizedBox(height: 20),
-                        _OrDivider(),
-                        const SizedBox(height: 20),
-
-                        // Google sign-in placeholder
-                        _SocialLoginButton(
-                          label: 'Continue with Google',
-                          icon: Icons.g_mobiledata_rounded,
-                          onTap: () {/* Phase 6 */},
-                        ),
                       ],
                     ),
                   ),
@@ -234,63 +223,6 @@ class _AuthHeader extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Divider with "or" ─────────────────────────────────────────────────────────
-class _OrDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Expanded(child: Divider()),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(
-            'or',
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),
-          ),
-        ),
-        const Expanded(child: Divider()),
-      ],
-    );
-  }
-}
-
-// ── Social login button ───────────────────────────────────────────────────────
-class _SocialLoginButton extends StatelessWidget {
-  const _SocialLoginButton({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        height: 52,
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.grey300),
-          borderRadius: BorderRadius.circular(14),
-          color: AppColors.surface,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 24, color: AppColors.textSecondary),
-            const SizedBox(width: 10),
-            Text(label, style: AppTextStyles.labelLarge),
-          ],
         ),
       ),
     );
