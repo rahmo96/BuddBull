@@ -301,4 +301,27 @@ describe('GET /users/search', () => {
       expect(Array.isArray(res.body.users)).toBe(true);
     }
   });
+
+  it('filters users by free-text q on username', async () => {
+    const { token } = await registerAndLogin(1);
+
+    const target = await syncFirebaseUser(app, {
+      role: 'player',
+      username: `goalkeeper_${process.hrtime.bigint()}`,
+      email: `gk_${Date.now()}@example.com`,
+      firstName: 'Gordon',
+      lastName: 'Keeper',
+    });
+    expect(target.status).toBe(200);
+
+    const res = await request(app)
+      .get(`${USER_BASE}/search?q=goalkeeper`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.users.some((u) => String(u._id) === String(target.userId))).toBe(true);
+    expect(
+      res.body.users.some((u) => u.username.toLowerCase().includes('goalkeeper')),
+    ).toBe(true);
+  });
 });

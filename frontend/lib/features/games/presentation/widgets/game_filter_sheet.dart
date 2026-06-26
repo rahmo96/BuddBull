@@ -1,9 +1,13 @@
 import 'package:buddbull/core/constants/app_colors.dart';
+import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/location/location_provider.dart';
+import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const _sports = [
   'Football', 'Basketball', 'Tennis', 'Running',
@@ -15,24 +19,27 @@ const _skillLevels = [
 ];
 
 /// Bottom sheet for filtering the games list.
-class GameFilterSheet extends StatefulWidget {
+class GameFilterSheet extends ConsumerStatefulWidget {
   const GameFilterSheet({super.key, required this.params});
   final GameSearchParams params;
 
   @override
-  State<GameFilterSheet> createState() => _GameFilterSheetState();
+  ConsumerState<GameFilterSheet> createState() => _GameFilterSheetState();
 }
 
-class _GameFilterSheetState extends State<GameFilterSheet> {
+class _GameFilterSheetState extends ConsumerState<GameFilterSheet> {
   late String? _sport;
   late String? _skillLevel;
+  late bool _nearMe;
   late TextEditingController _cityCtrl;
+  bool _isResolvingLocation = false;
 
   @override
   void initState() {
     super.initState();
     _sport = widget.params.sport;
     _skillLevel = widget.params.skillLevel;
+    _nearMe = widget.params.nearMe;
     _cityCtrl =
         TextEditingController(text: widget.params.city ?? '');
   }
@@ -41,6 +48,49 @@ class _GameFilterSheetState extends State<GameFilterSheet> {
   void dispose() {
     _cityCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _apply() async {
+    if (_nearMe) {
+      setState(() => _isResolvingLocation = true);
+      final position =
+          await ref.read(locationServiceProvider).getCurrentPosition();
+      if (!mounted) return;
+      setState(() => _isResolvingLocation = false);
+
+      if (position == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(AppStrings.locationPermissionDenied)),
+        );
+        return;
+      }
+
+      final radiusKm =
+          ref.read(currentUserProvider)?.location?.radiusKm ?? 10;
+
+      Navigator.pop(
+        context,
+        GameSearchParams(
+          sport: _sport,
+          skillLevel: _skillLevel,
+          lat: position.latitude,
+          lng: position.longitude,
+          radiusKm: radiusKm,
+          sortBy: 'distance',
+        ),
+      );
+      return;
+    }
+
+    Navigator.pop(
+      context,
+      GameSearchParams(
+        sport: _sport,
+        city: _cityCtrl.text.trim().isEmpty ? null : _cityCtrl.text.trim(),
+        skillLevel: _skillLevel,
+        sortBy: 'scheduledAt',
+      ),
+    );
   }
 
   @override
@@ -58,7 +108,6 @@ class _GameFilterSheetState extends State<GameFilterSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Handle ─────────────────────────────────────────
             Center(
               child: Container(
                 width: 40,
@@ -70,7 +119,6 @@ class _GameFilterSheetState extends State<GameFilterSheet> {
               ),
             ),
             const SizedBox(height: 16),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -79,6 +127,7 @@ class _GameFilterSheetState extends State<GameFilterSheet> {
                   onPressed: () => setState(() {
                     _sport = null;
                     _skillLevel = null;
+                    _nearMe = false;
                     _cityCtrl.clear();
                   }),
                   child: const Text('Clear all'),
@@ -86,8 +135,6 @@ class _GameFilterSheetState extends State<GameFilterSheet> {
               ],
             ),
             const SizedBox(height: 20),
-
-            // ── Sport picker ────────────────────────────────────
             const Text('Sport', style: AppTextStyles.labelLarge),
             const SizedBox(height: 8),
             Wrap(
@@ -103,17 +150,30 @@ class _GameFilterSheetState extends State<GameFilterSheet> {
               ],
             ),
             const SizedBox(height: 20),
-
-            // ── City ────────────────────────────────────────────
-            BbTextField(
-              label: 'City',
-              hint: 'e.g. London',
-              controller: _cityCtrl,
-              prefixIcon: Icons.location_city_rounded,
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Near me', style: AppTextStyles.labelLarge),
+              subtitle: const Text(
+                'Show games closest to your current location',
+                style: AppTextStyles.bodySmall,
+              ),
+              value: _nearMe,
+              activeThumbColor: AppColors.primary,
+              onChanged: (value) => setState(() {
+                _nearMe = value;
+                if (value) _cityCtrl.clear();
+              }),
             ),
+            if (!_nearMe) ...[
+              const SizedBox(height: 8),
+              BbTextField(
+                label: 'City',
+                hint: 'e.g. London',
+                controller: _cityCtrl,
+                prefixIcon: Icons.location_city_rounded,
+              ),
+            ],
             const SizedBox(height: 20),
-
-            // ── Skill level ─────────────────────────────────────
             const Text('Required skill level', style: AppTextStyles.labelLarge),
             const SizedBox(height: 8),
             Wrap(
@@ -133,22 +193,9 @@ class _GameFilterSheetState extends State<GameFilterSheet> {
               }).toList(),
             ),
             const SizedBox(height: 28),
-
-            // ── Apply ───────────────────────────────────────────
             BbButton(
-              label: 'Apply Filters',
-              onPressed: () {
-                Navigator.pop(
-                  context,
-                  GameSearchParams(
-                    sport: _sport,
-                    city: _cityCtrl.text.trim().isEmpty
-                        ? null
-                        : _cityCtrl.text.trim(),
-                    skillLevel: _skillLevel,
-                  ),
-                );
-              },
+              label: _isResolvingLocation ? 'Getting location…' : 'Apply Filters',
+              onPressed: _isResolvingLocation ? null : _apply,
             ),
           ],
         ),

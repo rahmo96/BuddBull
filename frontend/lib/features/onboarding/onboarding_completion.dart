@@ -34,9 +34,13 @@ Future<void> submitOnboardingToBackend(
   }
 
   final interests = notifier.sportsInterestsPayload();
+  final location = notifier.locationPayload();
   final patch = <String, dynamic>{};
   if (interests.isNotEmpty) {
     patch['sportsInterests'] = interests;
+  }
+  if (location != null) {
+    patch['location'] = location;
   }
   if (savePresetAvatar &&
       !draft.usesCustomPhoto &&

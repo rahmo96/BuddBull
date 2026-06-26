@@ -3,6 +3,7 @@ import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
+import 'package:buddbull/shared/widgets/app_logo.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
@@ -153,17 +154,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onPressed: _submit,
                           isLoading: authState.isSubmitting,
                         ),
-
-                        const SizedBox(height: 20),
-                        _OrDivider(),
-                        const SizedBox(height: 20),
-
-                        // Google sign-in placeholder
-                        _SocialLoginButton(
-                          label: 'Continue with Google',
-                          icon: Icons.g_mobiledata_rounded,
-                          onTap: () {/* Phase 6 */},
-                        ),
                       ],
                     ),
                   ),
@@ -214,31 +204,14 @@ class _AuthHeader extends StatelessWidget {
           bottomRight: Radius.circular(32),
         ),
       ),
-      child: SafeArea(
+      child: const SafeArea(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.12),
-                      blurRadius: 20,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Text('🏆', style: TextStyle(fontSize: 38)),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
+              AppLogo(size: 72),
+              SizedBox(height: 12),
+              Text(
                 'BuddBull',
                 style: TextStyle(
                   fontFamily: 'Inter',
@@ -250,63 +223,6 @@ class _AuthHeader extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Divider with "or" ─────────────────────────────────────────────────────────
-class _OrDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Expanded(child: Divider()),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(
-            'or',
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),
-          ),
-        ),
-        const Expanded(child: Divider()),
-      ],
-    );
-  }
-}
-
-// ── Social login button ───────────────────────────────────────────────────────
-class _SocialLoginButton extends StatelessWidget {
-  const _SocialLoginButton({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        height: 52,
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.grey300),
-          borderRadius: BorderRadius.circular(14),
-          color: AppColors.surface,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 24, color: AppColors.textSecondary),
-            const SizedBox(width: 10),
-            Text(label, style: AppTextStyles.labelLarge),
-          ],
         ),
       ),
     );

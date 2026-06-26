@@ -4,6 +4,7 @@ import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/auth/presentation/widgets/password_strength_indicator.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
+import 'package:buddbull/shared/widgets/app_logo.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
@@ -285,7 +286,7 @@ class _RegisterHeader extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('🏆', style: TextStyle(fontSize: 28)),
+                AppLogo(size: 48, borderRadius: 14),
                 SizedBox(width: 10),
                 Text(
                   'BuddBull',

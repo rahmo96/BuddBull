@@ -1,4 +1,5 @@
 import 'package:buddbull/core/error/app_exception.dart';
+import 'package:buddbull/core/location/location_provider.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/games/data/game_repository.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
@@ -21,29 +22,43 @@ final calendarGamesProvider =
   return ref.watch(gameRepositoryProvider).getCalendar();
 });
 
-/// Public, open games the current viewer is not already part of, filtered
-/// to their home city when we know one. Powers the Home Screen's
-/// "Explore Near You" horizontal strip. We keep the city filter optional
-/// (and a generic top-N fallback) so users without a profile city still
-/// see something useful instead of an empty section.
+/// Public, open games near the viewer's current GPS position (or home city
+/// fallback). Powers the Home Screen's "Explore Near You" horizontal strip.
 final exploreGamesProvider =
     FutureProvider.autoDispose<List<GameModel>>((ref) async {
   final repo = ref.watch(gameRepositoryProvider);
   final user = ref.watch(currentUserProvider);
   final city = user?.location?.city;
+  final radiusKm = user?.location?.radiusKm ?? 10;
 
-  final params = GameSearchParams(
-    city: (city != null && city.isNotEmpty) ? city : null,
-    limit: 10,
-  );
+  final position =
+      await ref.watch(locationServiceProvider).getCurrentPosition();
 
-  final games = await repo.searchGames(params);
-
-  // Fallback: no nearby matches → drop the city filter so the strip
-  // doesn't read as broken for users with a quiet metro.
-  if (games.isEmpty && city != null && city.isNotEmpty) {
-    return repo.searchGames(const GameSearchParams(limit: 10));
+  GameSearchParams params;
+  if (position != null) {
+    params = GameSearchParams(
+      lat: position.latitude,
+      lng: position.longitude,
+      radiusKm: radiusKm,
+      sortBy: 'distance',
+      limit: 10,
+    );
+  } else if (city != null && city.isNotEmpty) {
+    params = GameSearchParams(city: city, limit: 10);
+  } else {
+    params = const GameSearchParams(limit: 10);
   }
+
+  var games = await repo.searchGames(params);
+
+  if (games.isEmpty && position != null && city != null && city.isNotEmpty) {
+    games = await repo.searchGames(GameSearchParams(city: city, limit: 10));
+  } else if (games.isEmpty &&
+      position == null &&
+      (city == null || city.isEmpty)) {
+    games = await repo.searchGames(const GameSearchParams(limit: 10));
+  }
+
   return games;
 });
 

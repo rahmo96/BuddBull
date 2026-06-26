@@ -140,7 +140,7 @@ class WinRateChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (sessions.isEmpty) {
-      return const _EmptyChart(title: 'Win rate trend');
+      return const _EmptyChart(title: 'Win rate trend', variant: _GhostVariant.line);
     }
 
     final spots = <FlSpot>[];
@@ -239,8 +239,9 @@ class WinRateChart extends StatelessWidget {
 }
 
 class _EmptyChart extends StatelessWidget {
-  const _EmptyChart({required this.title});
+  const _EmptyChart({required this.title, this.variant = _GhostVariant.bar});
   final String title;
+  final _GhostVariant variant;
 
   @override
   Widget build(BuildContext context) {
@@ -248,21 +249,110 @@ class _EmptyChart extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: AppTextStyles.titleSmall),
+        const SizedBox(height: 8),
+        Text(
+          'Your stats preview — log sessions to unlock',
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
         const SizedBox(height: 16),
-        Container(
-          height: 120,
-          decoration: BoxDecoration(
-            color: AppColors.grey100,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Center(
-            child: Text(
-              'Log some sessions to see your progress',
-              style: AppTextStyles.bodySmall,
-            ),
-          ),
+        SizedBox(
+          height: variant == _GhostVariant.bar ? 160 : 140,
+          child: variant == _GhostVariant.bar
+              ? const _GhostBarChart()
+              : const _GhostLineChart(),
         ),
       ],
     );
   }
+}
+
+enum _GhostVariant { bar, line }
+
+class _GhostBarChart extends StatelessWidget {
+  const _GhostBarChart();
+
+  @override
+  Widget build(BuildContext context) {
+    const heights = [0.45, 0.72, 0.55, 0.88, 0.62, 0.78, 0.5, 0.68];
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        for (final h in heights)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Container(
+                height: 120 * h,
+                decoration: BoxDecoration(
+                  color: AppColors.teal.withValues(alpha: 0.12),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(8),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _GhostLineChart extends StatelessWidget {
+  const _GhostLineChart();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _GhostLinePainter(),
+      child: const SizedBox.expand(),
+    );
+  }
+}
+
+class _GhostLinePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final fill = Paint()
+      ..color = AppColors.success.withValues(alpha: 0.08)
+      ..style = PaintingStyle.fill;
+    final stroke = Paint()
+      ..color = AppColors.success.withValues(alpha: 0.22)
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final points = [
+      Offset(size.width * 0.05, size.height * 0.72),
+      Offset(size.width * 0.22, size.height * 0.55),
+      Offset(size.width * 0.4, size.height * 0.62),
+      Offset(size.width * 0.58, size.height * 0.38),
+      Offset(size.width * 0.76, size.height * 0.48),
+      Offset(size.width * 0.95, size.height * 0.28),
+    ];
+
+    final path = Path()..moveTo(points.first.dx, points.first.dy);
+    for (var i = 1; i < points.length; i++) {
+      path.lineTo(points[i].dx, points[i].dy);
+    }
+
+    final area = Path.from(path)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    canvas.drawPath(area, fill);
+    canvas.drawPath(path, stroke);
+
+    for (final p in points) {
+      canvas.drawCircle(
+        p,
+        4,
+        Paint()..color = AppColors.success.withValues(alpha: 0.25),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

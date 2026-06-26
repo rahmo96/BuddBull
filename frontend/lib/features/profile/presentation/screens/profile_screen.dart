@@ -7,11 +7,14 @@ import 'package:buddbull/features/auth/data/models/user_model.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/chat/data/models/chat_model.dart';
 import 'package:buddbull/features/chat/providers/chat_provider.dart';
+import 'package:buddbull/features/home/home_scaffold.dart';
 import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
 import 'package:buddbull/features/profile/presentation/widgets/sport_chip.dart';
 import 'package:buddbull/features/profile/presentation/widgets/stats_card.dart';
 import 'package:buddbull/features/profile/providers/profile_provider.dart';
 import 'package:buddbull/features/rating/presentation/widgets/rating_stars.dart';
+import 'package:buddbull/features/reports/data/report_repository.dart';
+import 'package:buddbull/features/reports/presentation/widgets/report_flow.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:buddbull/shared/widgets/loading_overlay.dart';
 import 'package:flutter/material.dart';
@@ -186,7 +189,8 @@ class ProfileScreen extends ConsumerWidget {
                           value: user.stats!.gamesPlayed.toString(),
                           label: AppStrings.gamesPlayed,
                           icon: Icons.sports_soccer_rounded,
-                          color: AppColors.primary,
+                          accentColor: AppColors.metricGamesAccent,
+                          backgroundColor: AppColors.metricGamesBg,
                         ),
                       ),
                       Expanded(
@@ -195,7 +199,8 @@ class ProfileScreen extends ConsumerWidget {
                               user.stats!.averageRating.toStringAsFixed(1),
                           label: AppStrings.rating,
                           icon: Icons.star_rounded,
-                          color: AppColors.secondary,
+                          accentColor: AppColors.metricRatingAccent,
+                          backgroundColor: AppColors.metricRatingBg,
                         ),
                       ),
                       Expanded(
@@ -203,7 +208,8 @@ class ProfileScreen extends ConsumerWidget {
                           value: '${user.stats!.currentStreak}d',
                           label: AppStrings.streakDays,
                           icon: Icons.local_fire_department_rounded,
-                          color: AppColors.error,
+                          accentColor: AppColors.metricStreakAccent,
+                          backgroundColor: AppColors.metricStreakBg,
                         ),
                       ),
                     ],
@@ -287,7 +293,9 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            SliverToBoxAdapter(
+              child: SizedBox(height: HomeScaffold.navBottomInset(context)),
+            ),
           ],
         ),
       ),
@@ -412,7 +420,8 @@ class _PublicProfileView extends ConsumerWidget {
                           value: user.stats!.gamesPlayed.toString(),
                           label: AppStrings.gamesPlayed,
                           icon: Icons.sports_soccer_rounded,
-                          color: AppColors.primary,
+                          accentColor: AppColors.metricGamesAccent,
+                          backgroundColor: AppColors.metricGamesBg,
                         ),
                       ),
                       Expanded(
@@ -422,7 +431,8 @@ class _PublicProfileView extends ConsumerWidget {
                               ? '${AppStrings.rating} (${user.stats!.totalRatings})'
                               : AppStrings.rating,
                           icon: Icons.star_rounded,
-                          color: AppColors.secondary,
+                          accentColor: AppColors.metricRatingAccent,
+                          backgroundColor: AppColors.metricRatingBg,
                         ),
                       ),
                       Expanded(
@@ -430,7 +440,8 @@ class _PublicProfileView extends ConsumerWidget {
                           value: _winRate(user).toStringAsFixed(0),
                           label: 'Win Rate %',
                           icon: Icons.emoji_events_outlined,
-                          color: AppColors.success,
+                          accentColor: AppColors.success,
+                          backgroundColor: AppColors.successLight,
                         ),
                       ),
                     ],
@@ -519,7 +530,21 @@ class _PublicProfileView extends ConsumerWidget {
                   ),
                 ),
               ),
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  8,
+                  16,
+                  HomeScaffold.navBottomInset(context) + 16,
+                ),
+                child: ReportActionButton(
+                  targetType: ReportTargetType.user,
+                  targetId: user.id,
+                  targetLabel: '@${user.username}',
+                ),
+              ),
+            ),
           ],
         ),
       ),

@@ -64,6 +64,7 @@ const notificationPrefsSchema = new mongoose.Schema(
     groupMerges: { type: Boolean, default: true },
     broadcasts: { type: Boolean, default: true },
     recordsBroken: { type: Boolean, default: true },
+    retentionReminders: { type: Boolean, default: true },
   },
   { _id: false },
 );
@@ -191,6 +192,9 @@ const userSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
     isBanned: { type: Boolean, default: false },
     banReason: { type: String },
+    isRestricted: { type: Boolean, default: false },
+    restrictReason: { type: String },
+    restrictedAt: { type: Date, default: null },
 
     resetPasswordToken: { type: String, select: false },
     resetPasswordExpiry: { type: Date, select: false },
@@ -203,6 +207,10 @@ const userSchema = new mongoose.Schema(
       type: [{ token: String, platform: { type: String, enum: ['ios', 'android', 'web'] } }],
       select: false,
     },
+
+    // ── Activity tracking (retention notifications) ───────────
+    lastLoginAt: { type: Date, default: null, index: true },
+    lastRetentionNotifiedAt: { type: Date, default: null },
 
     // ── Password change tracking ─────────────────────────────
     // Set whenever the password is changed post-registration.
@@ -260,6 +268,8 @@ userSchema.index({
 });
 // Leaderboard / ranking queries
 userSchema.index({ 'stats.averageRating': -1, 'stats.gamesPlayed': -1 });
+// Retention sweep: active, non-banned users by last login
+userSchema.index({ isActive: 1, isBanned: 1, lastLoginAt: 1 });
 
 // ─────────────────────────────────────────────
 //  Instance Methods

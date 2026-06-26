@@ -24,18 +24,22 @@ class BbProfileAvatar extends StatelessWidget {
         ProfilePictureUtils.presetAvatarId(profilePicture ?? '');
     if (presetId != null) {
       final preset = OnboardingMockData.avatarById(presetId);
-      return CircleAvatar(
-        radius: radius,
-        backgroundColor: AppColors.grey200,
-        child: CircleAvatar(
-          radius: radius - 2,
-          backgroundColor: preset?.background ?? AppColors.grey100,
-          child: Text(
-            preset?.emoji ?? '•',
-            style: TextStyle(fontSize: radius * 0.95),
+      if (preset != null) {
+        return CircleAvatar(
+          radius: radius,
+          backgroundColor: AppColors.grey200,
+          child: ClipOval(
+            child: Image.asset(
+              preset.assetPath,
+              width: radius * 2,
+              height: radius * 2,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) =>
+                  _InitialsAvatar(initials: initials, radius: radius),
+            ),
           ),
-        ),
-      );
+        );
+      }
     }
 
     final diceBearUrl = ProfilePictureUtils.diceBearUrl(profilePicture);

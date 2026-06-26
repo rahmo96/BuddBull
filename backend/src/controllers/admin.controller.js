@@ -23,6 +23,15 @@ exports.banUser = catchAsync(async (req, res) => {
   });
 });
 
+exports.restrictUser = catchAsync(async (req, res) => {
+  const user = await adminService.restrictUser(req.params.userId, req.body);
+  res.status(200).json({
+    success: true,
+    message: `User has been ${user.isRestricted ? 'restricted' : 'unrestricted'}`,
+    data: { user },
+  });
+});
+
 exports.deleteUser = catchAsync(async (req, res) => {
   await adminService.adminDeleteUser(req.params.userId, req.user._id);
   res.status(200).json({ success: true, message: 'User account deleted' });

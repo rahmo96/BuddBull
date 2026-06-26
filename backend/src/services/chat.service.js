@@ -5,6 +5,7 @@ const Game = require('../models/Game.model');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
 const notificationService = require('./notification.service');
+const { assertNotRestricted } = require('../utils/userRestrictions');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const PARTICIPANT_FIELDS = 'firstName lastName username profilePicture';
@@ -201,6 +202,8 @@ const getMessages = async (chatId, userId, { page = 1, limit = 30, before } = {}
 
 // ── Send a message (HTTP fallback — real-time uses socket) ────────────────────
 const sendMessage = async (chatId, userId, { content, type = 'text', replyTo } = {}) => {
+  await assertNotRestricted(userId);
+
   const chat = await Chat.findOne({ _id: chatId, ...participantFilter(userId) });
   if (!chat) throw new AppError('Chat not found or access denied', 404);
 

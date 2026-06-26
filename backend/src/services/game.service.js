@@ -5,8 +5,14 @@ const Chat = require('../models/Chat.model');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
 const notificationInboxService = require('./notificationInbox.service');
+const scheduledNotificationService = require('./scheduledNotification.service');
 const chatPresenceService = require('./chatPresence.service');
 const userService = require('./user.service');
+const {
+  buildCaseInsensitiveRegex,
+  runWithTextOrRegexFallback,
+} = require('../utils/search.utils');
+const { assertNotRestricted } = require('../utils/userRestrictions');
 
 // ─────────────────────────────────────────────
 //  Helpers
@@ -191,7 +197,7 @@ const _dispatchers = {
     recipients: p.approvedPlayerIds ?? [],
     type: 'gameCompleted',
     title: 'Game Completed',
-    body: 'Tap to rate the players.',
+    body: 'Rate your teammates — tap to leave feedback.',
     data: { gameId: String(p.gameId) },
   }),
 };
@@ -335,6 +341,8 @@ const revokeGroupChatParticipant = async (game, userId, reason, detail) => {
  * @returns {Document} Populated game document
  */
 const createGame = async (organizerId, dto) => {
+  await assertNotRestricted(organizerId);
+
   const game = new Game({
     ...dto,
     organizer: organizerId,
@@ -357,6 +365,12 @@ const createGame = async (organizerId, dto) => {
   await User.findByIdAndUpdate(organizerId, { $inc: { 'stats.gamesOrganized': 1 } });
 
   logger.info(`Game created: ${game._id} by organizer ${organizerId}`);
+
+  try {
+    await scheduledNotificationService.schedulePreGameReminder(game);
+  } catch (err) {
+    logger.warn(`[game] Failed to schedule pre-game reminder for ${game._id}: ${err.message}`);
+  }
 
   return game.populate('organizer', 'username firstName lastName profilePicture');
 };
@@ -383,13 +397,9 @@ const getGame = async (gameId) => {
 // ─────────────────────────────────────────────
 
 /**
- * Full-featured game search with area-based geographic filtering.
- * Never filters by precise GPS; uses city + neighbourhood strings.
- *
- * @param {object} filters  Validated searchGamesSchema fields
- * @param {object|null} viewer  req.user (may be null for unauthenticated)
+ * Shared Mongo filter for game search (string + geo paths).
  */
-const searchGames = async (filters, viewer = null) => {
+const buildGameSearchFilter = (filters, viewer = null) => {
   const {
     sport,
     city,
@@ -399,16 +409,10 @@ const searchGames = async (filters, viewer = null) => {
     dateFrom,
     dateTo,
     isPrivate,
-    q,
-    page = 1,
-    limit = 20,
-    sortBy = 'scheduledAt',
-    sortOrder = 'asc',
   } = filters;
 
   const query = { deletedAt: null };
 
-  // Exclude private games from unauthenticated viewers
   if (!viewer || isPrivate === false) {
     query.isPrivate = false;
   } else if (isPrivate === true && viewer) {
@@ -416,9 +420,7 @@ const searchGames = async (filters, viewer = null) => {
   }
 
   if (status) query.status = status;
-
   if (sport) query.sport = sport.toLowerCase();
-
   if (city) query['location.city'] = new RegExp(city.trim(), 'i');
   if (neighborhood) query['location.neighborhood'] = new RegExp(neighborhood.trim(), 'i');
 
@@ -431,32 +433,87 @@ const searchGames = async (filters, viewer = null) => {
     if (dateFrom) query.scheduledAt.$gte = new Date(dateFrom);
     if (dateTo) query.scheduledAt.$lte = new Date(dateTo);
   } else if (status === 'open' || status === 'full') {
-    // Default: only future games when searching active matches
     query.scheduledAt = { $gt: new Date() };
   }
 
-  if (q) {
-    query.$text = { $search: q };
-  }
+  return query;
+};
 
-  const sortOptions = {};
-  if (q) {
-    sortOptions.score = { $meta: 'textScore' };
-  } else {
-    sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
-  }
+/**
+ * Proximity search via $geoNear on game venue coordinates.
+ */
+const searchGamesByGeo = async (filters, viewer = null) => {
+  const {
+    lat,
+    lng,
+    radiusKm = 10,
+    page = 1,
+    limit = 20,
+    sortBy = 'distance',
+    sortOrder = 'asc',
+  } = filters;
+
+  const query = buildGameSearchFilter(filters, viewer);
+  query['location.coordinates'] = { $exists: true, $ne: null };
 
   const skip = (Number(page) - 1) * Number(limit);
 
-  const [games, total] = await Promise.all([
-    Game.find(query)
-      .populate('organizer', 'username firstName lastName profilePicture stats.averageRating')
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(Number(limit))
-      .lean(),
-    Game.countDocuments(query),
+  const geoNearStage = {
+    $geoNear: {
+      near: { type: 'Point', coordinates: [Number(lng), Number(lat)] },
+      distanceField: 'distanceMeters',
+      maxDistance: Number(radiusKm) * 1000,
+      spherical: true,
+      query,
+    },
+  };
+
+  const pipeline = [
+    geoNearStage,
+    {
+      $addFields: {
+        distanceKm: { $round: [{ $divide: ['$distanceMeters', 1000] }, 2] },
+      },
+    },
+  ];
+
+  if (sortBy && sortBy !== 'distance') {
+    pipeline.push({ $sort: { [sortBy]: sortOrder === 'asc' ? 1 : -1 } });
+  }
+
+  pipeline.push(
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'organizer',
+        foreignField: '_id',
+        as: 'organizerArr',
+        pipeline: [
+          {
+            $project: {
+              username: 1,
+              firstName: 1,
+              lastName: 1,
+              profilePicture: 1,
+              'stats.averageRating': 1,
+            },
+          },
+        ],
+      },
+    },
+    { $unwind: { path: '$organizerArr', preserveNullAndEmptyArrays: true } },
+    { $addFields: { organizer: '$organizerArr' } },
+    { $project: { organizerArr: 0, distanceMeters: 0 } },
+    { $skip: skip },
+    { $limit: Number(limit) },
+  );
+
+  const [games, countResult] = await Promise.all([
+    Game.aggregate(pipeline),
+    Game.aggregate([geoNearStage, { $count: 'total' }]),
   ]);
+
+  const total = countResult[0]?.total ?? 0;
 
   return {
     games,
@@ -464,9 +521,87 @@ const searchGames = async (filters, viewer = null) => {
       total,
       page: Number(page),
       limit: Number(limit),
-      pages: Math.ceil(total / Number(limit)),
+      pages: Math.ceil(total / Number(limit)) || 0,
     },
   };
+};
+
+/**
+ * Full-featured game search with string-based or geospatial filtering.
+ *
+ * @param {object} filters  Validated searchGamesSchema fields
+ * @param {object|null} viewer  req.user (may be null for unauthenticated)
+ */
+const searchGames = async (filters, viewer = null) => {
+  const {
+    lat,
+    lng,
+    q,
+    page = 1,
+    limit = 20,
+    sortBy = 'scheduledAt',
+    sortOrder = 'asc',
+  } = filters;
+
+  if (lat != null && lng != null) {
+    return searchGamesByGeo(
+      { ...filters, sortBy: sortBy === 'scheduledAt' ? 'distance' : sortBy },
+      viewer,
+    );
+  }
+
+  const query = buildGameSearchFilter(filters, viewer);
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const runQuery = async (textClause, { useTextScore } = {}) => {
+    const merged = { ...query, ...textClause };
+    const sortOptions = useTextScore
+      ? { score: { $meta: 'textScore' } }
+      : { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+
+    const [games, total] = await Promise.all([
+      Game.find(merged)
+        .populate('organizer', 'username firstName lastName profilePicture stats.averageRating')
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(Number(limit))
+        .lean(),
+      Game.countDocuments(merged),
+    ]);
+
+    return {
+      games,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / Number(limit)),
+      },
+    };
+  };
+
+  if (!q) {
+    return runQuery({});
+  }
+
+  return runWithTextOrRegexFallback({
+    q,
+    applyText: (term) => ({ $text: { $search: term } }),
+    applyRegex: (term) => {
+      const regex = buildCaseInsensitiveRegex(term);
+      return {
+        $or: [
+          { title: regex },
+          { description: regex },
+          { sport: regex },
+          { 'location.city': regex },
+          { 'location.neighborhood': regex },
+          { tags: regex },
+        ],
+      };
+    },
+    runQuery,
+  });
 };
 
 // ─────────────────────────────────────────────
@@ -625,8 +760,24 @@ const updateGame = async (gameId, userId, userRole, updates) => {
     throw new AppError(`Cannot reduce max players below the current approved count (${approvedCount(game)}).`, 400);
   }
 
+  const previousScheduledAt = game.scheduledAt?.getTime?.() ?? null;
+
   Object.assign(game, updates);
   await game.save();
+
+  const scheduledAtChanged =
+    updates.scheduledAt &&
+    previousScheduledAt !== (game.scheduledAt?.getTime?.() ?? null);
+
+  if (scheduledAtChanged) {
+    try {
+      game.preGameReminderSentAt = null;
+      await game.save({ validateBeforeSave: false });
+      await scheduledNotificationService.schedulePreGameReminder(game);
+    } catch (err) {
+      logger.warn(`[game] Failed to reschedule pre-game reminder for ${gameId}: ${err.message}`);
+    }
+  }
 
   logger.info(`Game updated: ${gameId}`);
   return game;
@@ -650,6 +801,12 @@ const cancelGame = async (gameId, userId, userRole, reason) => {
   game.cancelledAt = new Date();
   game.cancelledBy = userId;
   await game.save();
+
+  try {
+    await scheduledNotificationService.cancelPreGameReminder(String(gameId));
+  } catch (err) {
+    logger.warn(`[game] Failed to cancel pre-game reminder for ${gameId}: ${err.message}`);
+  }
 
   // Notify all approved players
   const playerIds = game.players.filter((p) => p.status === 'approved').map((p) => p.user);
@@ -681,6 +838,8 @@ const cancelGame = async (gameId, userId, userRole, reason) => {
  *  4. No schedule conflict with any of the player's other approved games
  */
 const joinGame = async (gameId, userId, { acceptInvite = false } = {}) => {
+  await assertNotRestricted(userId);
+
   const game = await Game.findById(gameId).where({ deletedAt: null });
   if (!game) throw new AppError('Game not found.', 404);
 
@@ -1265,6 +1424,12 @@ const _finalizeGameCompletion = async (game, { result, source = 'manual' }) => {
 
   await notify('game:completed', { gameId, approvedPlayerIds });
   logger.info(`Game completed (${source}): ${gameId}`);
+
+  try {
+    await scheduledNotificationService.cancelPreGameReminder(String(gameId));
+  } catch (err) {
+    logger.warn(`[game] Failed to cancel pre-game reminder on complete for ${gameId}: ${err.message}`);
+  }
 
   return game;
 };

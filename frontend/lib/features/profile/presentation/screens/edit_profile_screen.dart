@@ -8,6 +8,7 @@ import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar
 import 'package:buddbull/features/profile/presentation/widgets/city_autocomplete_field.dart';
 import 'package:buddbull/features/profile/presentation/widgets/neighborhood_autocomplete_field.dart';
 import 'package:buddbull/features/profile/presentation/widgets/sport_chip.dart';
+import 'package:buddbull/features/profile/presentation/widgets/travel_radius_slider.dart';
 import 'package:buddbull/features/profile/providers/profile_provider.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
@@ -131,37 +132,34 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   title: Text('Choose preset avatar'),
                 ),
                 const SizedBox(height: 10),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 5,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                  ),
-                  itemCount: OnboardingMockData.avatars.length,
-                  itemBuilder: (_, i) {
-                    final option = OnboardingMockData.avatars[i];
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(14),
-                      onTap: () async {
-                        Navigator.pop(ctx);
-                        await _setPresetAvatar(option.id);
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: option.background,
+                SizedBox(
+                  height: MediaQuery.of(ctx).size.height * 0.45,
+                  child: GridView.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 5,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    itemCount: OnboardingMockData.avatars.length,
+                    itemBuilder: (_, i) {
+                      final option = OnboardingMockData.avatars[i];
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          await _setPresetAvatar(option.id);
+                        },
+                        child: ClipRRect(
                           borderRadius: BorderRadius.circular(14),
+                          child: Image.asset(
+                            option.assetPath,
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          option.emoji,
-                          style: const TextStyle(fontSize: 24),
-                        ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
@@ -338,7 +336,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       setState(() => _selectedNeighborhood = neighborhood),
                 ),
                 const SizedBox(height: 16),
-                _RadiusSlider(
+                TravelRadiusSlider(
                   value: _radiusKm,
                   onChanged: (v) => setState(() => _radiusKm = v),
                 ),
@@ -406,50 +404,7 @@ class _SectionHeader extends StatelessWidget {
 }
 
 // ── Radius slider ─────────────────────────────────────────────────────────────
-class _RadiusSlider extends StatelessWidget {
-  const _RadiusSlider({required this.value, required this.onChanged});
-  final int value;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(AppStrings.radiusLabel, style: AppTextStyles.labelLarge),
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                '$value km',
-                style: AppTextStyles.labelMedium.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        Slider(
-          value: value.toDouble(),
-          min: 1,
-          max: 100,
-          divisions: 99,
-          activeColor: AppColors.primary,
-          inactiveColor: AppColors.grey300,
-          onChanged: (v) => onChanged(v.round()),
-        ),
-      ],
-    );
-  }
-}
+// Moved to TravelRadiusSlider widget.
 
 // ── Add sport button ──────────────────────────────────────────────────────────
 class _AddSportButton extends StatelessWidget {

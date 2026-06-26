@@ -3,6 +3,7 @@ import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/chat/presentation/widgets/chat_tile.dart';
 import 'package:buddbull/features/chat/providers/chat_provider.dart';
+import 'package:buddbull/features/home/home_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -55,6 +56,7 @@ class ChatListScreen extends ConsumerWidget {
           return RefreshIndicator(
             onRefresh: () => ref.refresh(chatListProvider.future),
             child: ListView.separated(
+              padding: HomeScaffold.scrollPadding(context),
               itemCount: chats.length,
               separatorBuilder: (_, __) => const Divider(
                 height: 1,

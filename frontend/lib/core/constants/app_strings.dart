@@ -97,7 +97,16 @@ abstract class AppStrings {
   static const String onboardingSkillPerSport =
       'Your level in each sport';
   static const String onboardingNext = 'Next';
+  static const String onboardingBack = 'Back';
   static const String onboardingSkip = 'Skip';
+  static const String onboardingLocationTitle = 'Where do you live?';
+  static const String onboardingLocationSubtitle =
+      'We use your area to match you with nearby games. Pick your city to continue.';
+  static const String onboardingLocationCityHint = 'Start typing your city…';
+  static const String onboardingLocationNeighborhoodHint =
+      'Optional — neighbourhood or area';
+  static const String locationPermissionDenied =
+      'Location access is needed to find games near you. Enable it in settings or use city search.';
   static const String onboardingProfileTitle = 'Make it yours';
   static const String onboardingProfileSubtitle =
       'Upload a photo or pick a Buddy avatar. You can always update later.';

@@ -9,6 +9,10 @@ const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
 const { upload: uploadConfig } = require('../config/environment');
 const friendService = require('./friend.service');
+const {
+  buildCaseInsensitiveRegex,
+  runWithTextOrRegexFallback,
+} = require('../utils/search.utils');
 
 // ─────────────────────────────────────────────
 //  Profile retrieval
@@ -21,6 +25,16 @@ const friendService = require('./friend.service');
 const getMe = async (userId) => {
   const user = await User.findById(userId).active();
   if (!user) throw new AppError('User not found.', 404);
+
+  // Debounced last-login touch for retention notifications (max once per 5 min).
+  const now = Date.now();
+  const lastLoginMs = user.lastLoginAt ? user.lastLoginAt.getTime() : 0;
+  const LOGIN_TOUCH_DEBOUNCE_MS = 5 * 60 * 1000;
+  if (!lastLoginMs || now - lastLoginMs >= LOGIN_TOUCH_DEBOUNCE_MS) {
+    User.findByIdAndUpdate(userId, { $set: { lastLoginAt: new Date() } }).catch(() => {});
+    user.lastLoginAt = new Date();
+  }
+
   return user;
 };
 
@@ -245,51 +259,75 @@ const getFollowing = (userId, opts) => friendService.getFriends(userId, opts);
 const searchUsers = async (filters) => {
   const { q, sport, city, skillLevel, role, page = 1, limit = 20 } = filters;
 
-  const query = { isActive: true, isBanned: false, deletedAt: null };
-
-  if (q) {
-    query.$text = { $search: q };
-  }
+  const baseQuery = { isActive: true, isBanned: false, deletedAt: null };
 
   if (city) {
-    query['location.city'] = new RegExp(city, 'i');
+    baseQuery['location.city'] = new RegExp(city, 'i');
   }
 
   if (sport) {
-    query['sportsInterests.sport'] = sport.toLowerCase();
+    baseQuery['sportsInterests.sport'] = sport.toLowerCase();
   }
 
   if (skillLevel) {
-    query['sportsInterests.skillLevel'] = skillLevel;
+    baseQuery['sportsInterests.skillLevel'] = skillLevel;
   }
 
   if (role) {
-    query.role = role;
+    baseQuery.role = role;
   }
 
   const skip = (Number(page) - 1) * Number(limit);
 
-  const [users, total] = await Promise.all([
-    User.find(query)
-      .select(
-        'username firstName lastName profilePicture stats location.city location.neighborhood sportsInterests role',
-      )
-      .sort(q ? { score: { $meta: 'textScore' } } : { 'stats.averageRating': -1 })
-      .skip(skip)
-      .limit(Number(limit))
-      .lean(),
-    User.countDocuments(query),
-  ]);
+  const runQuery = async (query, { useTextScore } = {}) => {
+    const sort = useTextScore
+      ? { score: { $meta: 'textScore' } }
+      : { 'stats.averageRating': -1 };
 
-  return {
-    users,
-    pagination: {
-      total,
-      page: Number(page),
-      limit: Number(limit),
-      pages: Math.ceil(total / Number(limit)),
-    },
+    const [users, total] = await Promise.all([
+      User.find({ ...baseQuery, ...query })
+        .select(
+          'username firstName lastName profilePicture stats location.city location.neighborhood sportsInterests role',
+        )
+        .sort(sort)
+        .skip(skip)
+        .limit(Number(limit))
+        .lean(),
+      User.countDocuments({ ...baseQuery, ...query }),
+    ]);
+
+    return {
+      users,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / Number(limit)),
+      },
+    };
   };
+
+  if (!q) {
+    return runQuery({});
+  }
+
+  return runWithTextOrRegexFallback({
+    q,
+    applyText: (term) => ({ $text: { $search: term } }),
+    applyRegex: (term) => {
+      const regex = buildCaseInsensitiveRegex(term);
+      return {
+        $or: [
+          { username: regex },
+          { firstName: regex },
+          { lastName: regex },
+          { bio: regex },
+          { 'location.city': regex },
+        ],
+      };
+    },
+    runQuery,
+  });
 };
 
 // ─────────────────────────────────────────────

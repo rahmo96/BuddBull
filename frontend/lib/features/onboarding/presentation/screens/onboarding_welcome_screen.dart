@@ -37,7 +37,7 @@ class OnboardingWelcomeScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const OnboardingProgressHeader(step: 1, totalSteps: 2),
+                  const OnboardingProgressHeader(step: 1, totalSteps: 3),
                   Text(
                     AppStrings.onboardingWelcomeMessage,
                     style: AppTextStyles.headlineMedium.copyWith(
@@ -120,7 +120,7 @@ class OnboardingWelcomeScreen extends ConsumerWidget {
                         child: BbButton(
                           label: AppStrings.onboardingNext,
                           onPressed: () =>
-                              context.push(Routes.onboardingProfile),
+                              context.push(Routes.onboardingLocation),
                           height: 50,
                         ),
                       ),

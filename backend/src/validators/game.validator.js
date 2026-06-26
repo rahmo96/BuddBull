@@ -111,10 +111,26 @@ const searchGamesSchema = Joi.object({
     .when('dateFrom', { is: Joi.exist(), then: Joi.date().greater(Joi.ref('dateFrom')) }),
   isPrivate: Joi.boolean(),
   q: Joi.string().trim().max(100),
+  lat: Joi.number().min(-90).max(90),
+  lng: Joi.number().min(-180).max(180),
+  radiusKm: Joi.number().min(1).max(200).default(10),
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(50).default(20),
-  sortBy: Joi.string().valid('scheduledAt', 'createdAt', 'maxPlayers').default('scheduledAt'),
+  sortBy: Joi.string().valid('scheduledAt', 'createdAt', 'maxPlayers', 'distance').default('scheduledAt'),
   sortOrder: Joi.string().valid('asc', 'desc').default('asc'),
+}).custom((value, helpers) => {
+  const hasLat = value.lat !== undefined && value.lat !== null;
+  const hasLng = value.lng !== undefined && value.lng !== null;
+
+  if (hasLat !== hasLng) {
+    return helpers.message('lat and lng must be provided together.');
+  }
+
+  if (value.sortBy === 'distance' && (!hasLat || !hasLng)) {
+    return helpers.message('sortBy=distance requires lat and lng.');
+  }
+
+  return value;
 });
 
 const calendarSchema = Joi.object({

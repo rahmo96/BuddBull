@@ -1,4 +1,5 @@
 const Notification = require('../models/Notification.model');
+const User = require('../models/User.model');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
 const notificationService = require('./notification.service');
@@ -21,6 +22,33 @@ const notificationService = require('./notification.service');
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
+
+/** Maps inbox notification types to User.notificationPreferences keys. */
+const PREF_MAP = {
+  gameInvite: 'gameInvites',
+  gameReminder: 'gameReminders',
+  gameCompleted: 'gameStarting',
+  gameCancelled: 'gameCancelled',
+  gameMerged: 'groupMerges',
+  ratingReceived: 'ratingReceived',
+  retentionReminder: 'retentionReminders',
+  broadcast: 'broadcasts',
+};
+
+/**
+ * Returns false when the user has opted out of this notification category.
+ * Unknown types default to allowed (backward compatible).
+ */
+const _userAllowsNotification = async (userId, inboxType) => {
+  const prefKey = PREF_MAP[inboxType];
+  if (!prefKey) return true;
+
+  const user = await User.findById(userId).select('notificationPreferences').lean();
+  if (!user) return false;
+
+  const prefs = user.notificationPreferences || {};
+  return prefs[prefKey] !== false;
+};
 
 // ── Socket plumbing (DI) ─────────────────────────────────────────────────────
 
@@ -64,6 +92,12 @@ const _fcmNavTypeFromInbox = (type, data) => {
       return 'friend_request';
     case 'friendRequestAccepted':
       return 'friend_request_accepted';
+    case 'gameReminder':
+      return 'game_reminder';
+    case 'gameCompleted':
+      return 'game_completed';
+    case 'retentionReminder':
+      return 'retention_reminder';
     default:
       return 'inbox';
   }
@@ -193,6 +227,10 @@ const markAllAsRead = async (userId) => {
 const createForUser = async (recipientId, { type, title, body = '', data = {} } = {}) => {
   if (!recipientId) throw new AppError('recipientId is required', 400);
   if (!title) throw new AppError('title is required', 400);
+
+  const allowed = await _userAllowsNotification(recipientId, type);
+  if (!allowed) return null;
+
   const doc = await Notification.create({ recipient: recipientId, type, title, body, data });
   _emitNotificationNew(recipientId, _toPayload(doc));
   await _sendFcmForInboxDoc(recipientId, doc);
@@ -207,9 +245,20 @@ const createForUser = async (recipientId, { type, title, body = '', data = {} } 
  */
 const createForManyUsers = async (recipientIds = [], payload) => {
   if (!Array.isArray(recipientIds) || recipientIds.length === 0) return [];
-  const docs = recipientIds.map((id) => ({
+
+  const inboxType = payload?.type ?? 'system';
+  const allowedChecks = await Promise.all(
+    recipientIds.map(async (id) => ({
+      id,
+      allowed: await _userAllowsNotification(id, inboxType),
+    })),
+  );
+  const allowedIds = allowedChecks.filter((c) => c.allowed).map((c) => c.id);
+  if (allowedIds.length === 0) return [];
+
+  const docs = allowedIds.map((id) => ({
     recipient: id,
-    type: payload?.type ?? 'system',
+    type: inboxType,
     title: payload?.title ?? '',
     body: payload?.body ?? '',
     data: payload?.data ?? {},
@@ -231,4 +280,6 @@ module.exports = {
   markAllAsRead,
   createForUser,
   createForManyUsers,
+  PREF_MAP,
+  userAllowsNotification: _userAllowsNotification,
 };

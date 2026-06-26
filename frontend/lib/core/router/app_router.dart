@@ -1,9 +1,13 @@
 import 'package:buddbull/core/storage/shared_preferences_provider.dart';
 import 'package:buddbull/features/admin/presentation/screens/admin_dashboard_screen.dart';
+import 'package:buddbull/features/admin/presentation/screens/admin_games_screen.dart';
+import 'package:buddbull/features/admin/presentation/screens/admin_reports_screen.dart';
+import 'package:buddbull/features/admin/presentation/screens/admin_shell.dart';
+import 'package:buddbull/features/admin/presentation/screens/admin_sports_screen.dart';
+import 'package:buddbull/features/admin/presentation/screens/admin_users_screen.dart';
 import 'package:buddbull/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:buddbull/features/auth/presentation/screens/login_screen.dart';
 import 'package:buddbull/features/auth/presentation/screens/register_screen.dart';
-import 'package:buddbull/features/auth/presentation/screens/splash_screen.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/chat/presentation/screens/chat_list_screen.dart';
 import 'package:buddbull/features/chat/presentation/screens/chat_screen.dart';
@@ -16,6 +20,7 @@ import 'package:buddbull/features/home/home_scaffold.dart';
 import 'package:buddbull/features/home/presentation/home_screen.dart';
 import 'package:buddbull/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:buddbull/features/onboarding/data/onboarding_prefs.dart';
+import 'package:buddbull/features/onboarding/presentation/screens/onboarding_location_screen.dart';
 import 'package:buddbull/features/onboarding/presentation/screens/onboarding_profile_screen.dart';
 import 'package:buddbull/features/onboarding/presentation/screens/onboarding_welcome_screen.dart';
 import 'package:buddbull/features/onboarding/providers/onboarding_redirect_listen.dart';
@@ -24,6 +29,8 @@ import 'package:buddbull/features/performance/presentation/screens/performance_s
 import 'package:buddbull/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:buddbull/features/profile/presentation/screens/friends_list_screen.dart';
 import 'package:buddbull/features/profile/presentation/screens/profile_screen.dart';
+import 'package:buddbull/features/search/presentation/screens/global_search_screen.dart';
+import 'package:buddbull/features/search/presentation/widgets/search_transition.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -35,13 +42,13 @@ final GlobalKey<NavigatorState> rootNavigatorKey =
 
 // ── Route path constants ──────────────────────────────────────────────────────
 abstract class Routes {
-  static const String splash = '/';
   static const String login = '/login';
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
 
   /// Post-registration introduction (Riverpod onboarding draft persists here).
   static const String onboardingWelcome = '/onboarding/welcome';
+  static const String onboardingLocation = '/onboarding/location';
   static const String onboardingProfile = '/onboarding/profile';
 
   // Shell tabs
@@ -53,7 +60,12 @@ abstract class Routes {
   static const String chats = '/chats';
   static String chatRoom(String id) => '/chats/$id';
   static const String newChat = '/chats/new';
-  static const String adminDashboard = '/admin';
+  static const String admin = '/admin';
+  static const String adminDashboard = '/admin/dashboard';
+  static const String adminUsers = '/admin/users';
+  static const String adminReports = '/admin/reports';
+  static const String adminSports = '/admin/sports';
+  static const String adminGames = '/admin/games';
   static const String performance = '/performance';
   static const String createLog = '/performance/log/create';
   static const String profile = '/profile';
@@ -61,6 +73,7 @@ abstract class Routes {
   static const String editProfile = '/profile/edit';
   static String publicProfile(String id) => '/profile/$id';
   static const String notifications = '/notifications';
+  static const String search = '/search';
 
   Routes._();
 }
@@ -73,29 +86,27 @@ final routerProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: Routes.splash,
+    initialLocation: Routes.login,
     refreshListenable: Listenable.merge([authListenable, onboardingRefresh]),
     redirect: (BuildContext context, GoRouterState state) {
       final authStatus = ref.read(authProvider).status;
       final loc = state.matchedLocation;
 
-      // Splash is not "on auth" — we must leave it when we know auth state
       final isOnAuthPage = loc == Routes.login ||
           loc == Routes.register ||
           loc == Routes.forgotPassword;
-      final isOnSplash = loc == Routes.splash;
 
       final onboardingPending = ref
               .read(sharedPreferencesProvider)
               .getBool(OnboardingPrefs.pendingKey) ??
           false;
       final isOnOnboarding = loc == Routes.onboardingWelcome ||
+          loc == Routes.onboardingLocation ||
           loc == Routes.onboardingProfile;
 
       if (authStatus == AuthStatus.loading) return null;
 
-      if (authStatus == AuthStatus.unauthenticated &&
-          (!isOnAuthPage || isOnSplash)) {
+      if (authStatus == AuthStatus.unauthenticated && !isOnAuthPage) {
         return Routes.login;
       }
 
@@ -109,19 +120,24 @@ final routerProvider = Provider<GoRouter>((ref) {
         if (isOnOnboarding) {
           return Routes.home;
         }
-        if (isOnAuthPage || isOnSplash) {
+        if (isOnAuthPage) {
+          return Routes.home;
+        }
+
+        final user = ref.read(authProvider).user;
+        final isAdminRoute = loc.startsWith(Routes.admin);
+        if (isAdminRoute && user?.role != 'admin') {
           return Routes.home;
         }
       }
       return null;
     },
     routes: [
-      // ── Public / auth routes ──────────────────────────────
       GoRoute(
-        path: Routes.splash,
-        name: 'splash',
-        builder: (_, __) => const SplashScreen(),
+        path: '/',
+        redirect: (_, __) => Routes.login,
       ),
+      // ── Public / auth routes ──────────────────────────────
       GoRoute(
         path: Routes.login,
         name: 'login',
@@ -147,13 +163,19 @@ final routerProvider = Provider<GoRouter>((ref) {
             _slide(s, const OnboardingWelcomeScreen()),
       ),
       GoRoute(
+        path: Routes.onboardingLocation,
+        name: 'onboardingLocation',
+        pageBuilder: (_, s) =>
+            _slide(s, const OnboardingLocationScreen()),
+      ),
+      GoRoute(
         path: Routes.onboardingProfile,
         name: 'onboardingProfile',
         pageBuilder: (_, s) =>
             _slide(s, const OnboardingProfileScreen()),
       ),
 
-      // ── Shell (bottom nav) ────────────────────────────────
+      // ── Shell (floating top nav) ────────────────────────────────
       ShellRoute(
         builder: (context, state, child) =>
             HomeScaffold(child: child),
@@ -261,17 +283,55 @@ final routerProvider = Provider<GoRouter>((ref) {
           ChatScreen(chatId: s.pathParameters['id']!),
         ),
       ),
-      // ── Admin dashboard (admin role only) ─────────────────────
+      // ── Admin area (admin role only) ──────────────────────────
       GoRoute(
-        path: Routes.adminDashboard,
-        name: 'adminDashboard',
-        pageBuilder: (_, s) => _slide(s, const AdminDashboardScreen()),
+        path: Routes.admin,
+        redirect: (_, __) => Routes.adminDashboard,
+      ),
+      ShellRoute(
+        builder: (_, __, child) => AdminShell(child: child),
+        routes: [
+          GoRoute(
+            path: Routes.adminDashboard,
+            name: 'adminDashboard',
+            pageBuilder: (_, s) => _slide(s, const AdminDashboardScreen()),
+          ),
+          GoRoute(
+            path: Routes.adminUsers,
+            name: 'adminUsers',
+            pageBuilder: (_, s) => _slide(s, const AdminUsersScreen()),
+          ),
+          GoRoute(
+            path: Routes.adminReports,
+            name: 'adminReports',
+            pageBuilder: (_, s) => _slide(s, const AdminReportsScreen()),
+          ),
+          GoRoute(
+            path: Routes.adminSports,
+            name: 'adminSports',
+            pageBuilder: (_, s) => _slide(s, const AdminSportsScreen()),
+          ),
+          GoRoute(
+            path: Routes.adminGames,
+            name: 'adminGames',
+            pageBuilder: (_, s) => _slide(s, const AdminGamesScreen()),
+          ),
+        ],
       ),
       // ── Notifications inbox (full screen — hides bottom nav) ──
       GoRoute(
         path: Routes.notifications,
         name: 'notifications',
         pageBuilder: (_, s) => _slide(s, const NotificationsScreen()),
+      ),
+      GoRoute(
+        path: Routes.search,
+        name: 'search',
+        pageBuilder: (_, s) => _searchExpandFromBar(
+          s,
+          const GlobalSearchScreen(),
+          s.extra as Rect?,
+        ),
       ),
     ],
     errorBuilder: (context, state) =>
@@ -287,6 +347,26 @@ CustomTransitionPage<void> _fade(GoRouterState s, Widget child) =>
       transitionDuration: const Duration(milliseconds: 250),
       transitionsBuilder: (_, anim, __, child) =>
           FadeTransition(opacity: anim, child: child),
+    );
+
+CustomTransitionPage<void> _searchExpandFromBar(
+  GoRouterState s,
+  Widget child,
+  Rect? origin,
+) =>
+    CustomTransitionPage<void>(
+      key: s.pageKey,
+      opaque: false,
+      child: child,
+      transitionDuration: const Duration(milliseconds: 250),
+      reverseTransitionDuration: const Duration(milliseconds: 200),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return SearchExpandFromBarTransition(
+          animation: animation,
+          originRect: origin,
+          child: child,
+        );
+      },
     );
 
 CustomTransitionPage<void> _slide(GoRouterState s, Widget child) =>

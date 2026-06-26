@@ -6,6 +6,7 @@ import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/games/data/game_repository.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
+import 'package:buddbull/features/games/presentation/widgets/game_sport_wallpaper.dart';
 import 'package:buddbull/features/games/presentation/widgets/player_slot_row.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
 import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
@@ -14,6 +15,8 @@ import 'package:buddbull/features/rating/data/models/rating_model.dart';
 import 'package:buddbull/features/rating/presentation/widgets/rate_player_sheet.dart';
 import 'package:buddbull/features/rating/presentation/widgets/rating_stars.dart';
 import 'package:buddbull/features/rating/providers/rating_provider.dart';
+import 'package:buddbull/features/reports/data/report_repository.dart';
+import 'package:buddbull/features/reports/presentation/widgets/report_flow.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:buddbull/shared/widgets/loading_overlay.dart';
@@ -180,7 +183,7 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
             body: CustomScrollView(
               slivers: [
                 // ── Coloured header ──────────────────────────
-                _GameDetailAppBar(game: game),
+                _GameDetailAppBar(game: game, gameId: gameId),
 
                 SliverPadding(
                   padding: const EdgeInsets.all(16),
@@ -387,9 +390,10 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
 }
 
 // ── Coloured sliver app bar ───────────────────────────────────────────────────
-class _GameDetailAppBar extends StatelessWidget {
-  const _GameDetailAppBar({required this.game});
+class _GameDetailAppBar extends ConsumerWidget {
+  const _GameDetailAppBar({required this.game, required this.gameId});
   final GameModel game;
+  final String gameId;
 
   Color get _sportColor => switch (game.sport.toLowerCase()) {
         'football' || 'soccer' => AppColors.footballBadge,
@@ -400,7 +404,7 @@ class _GameDetailAppBar extends StatelessWidget {
       };
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SliverAppBar(
       expandedHeight: 200,
       pinned: true,
@@ -410,57 +414,72 @@ class _GameDetailAppBar extends StatelessWidget {
             color: Colors.white),
         onPressed: () => context.pop(),
       ),
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          color: _sportColor.withValues(alpha: 0.9),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 56, 20, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
+      actions: [
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert, color: Colors.white),
+          onSelected: (value) {
+            if (value == 'report') {
+              showReportFlow(
+                context,
+                ref,
+                targetType: ReportTargetType.game,
+                targetId: gameId,
+                targetLabel: game.title,
+              );
+            }
+          },
+          itemBuilder: (_) => const [
+            PopupMenuItem(
+              value: 'report',
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        _sportEmoji(game.sport),
-                        style: const TextStyle(fontSize: 32),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          game.title,
-                          style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    spacing: 8,
-                    children: [
-                      _HeaderBadge(
-                        label: game.sport,
-                        color: Colors.white24,
-                      ),
-                      _HeaderBadge(
-                        label: game.requiredSkillLevel[0]
-                                .toUpperCase() +
-                            game.requiredSkillLevel.substring(1),
-                        color: Colors.white24,
-                      ),
-                      _StatusBadge(status: game.status),
-                    ],
-                  ),
+                  Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 20),
+                  SizedBox(width: 8),
+                  Text('Report Game', style: TextStyle(color: AppColors.error)),
                 ],
               ),
+            ),
+          ],
+        ),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        background: GameSportWallpaper(
+          sport: game.sport,
+          expand: true,
+          padding: const EdgeInsets.fromLTRB(20, 56, 20, 16),
+          child: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  game.title,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  spacing: 8,
+                  children: [
+                    _HeaderBadge(
+                      label: game.sport,
+                      color: Colors.white24,
+                    ),
+                    _HeaderBadge(
+                      label: game.requiredSkillLevel[0].toUpperCase() +
+                          game.requiredSkillLevel.substring(1),
+                      color: Colors.white24,
+                    ),
+                    _StatusBadge(status: game.status),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
@@ -1285,20 +1304,6 @@ class _PendingRequestPanel extends StatelessWidget {
       ),
     );
   }
-}
-
-String _sportEmoji(String sport) {
-  return switch (sport.toLowerCase()) {
-    'football' || 'soccer' => '⚽',
-    'basketball' => '🏀',
-    'tennis' => '🎾',
-    'running' => '🏃',
-    'swimming' => '🏊',
-    'cycling' => '🚴',
-    'volleyball' => '🏐',
-    'cricket' => '🏏',
-    _ => '🏅',
-  };
 }
 
 Future<void> _showInviteFriendsSheet(

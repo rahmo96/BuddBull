@@ -1,14 +1,18 @@
+import 'package:buddbull/core/constants/app_assets.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/games/presentation/widgets/game_card.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
+import 'package:buddbull/features/home/home_scaffold.dart';
+import 'package:buddbull/features/home/presentation/widgets/collapsing_home_search.dart';
 import 'package:buddbull/features/notifications/providers/notification_provider.dart';
 import 'package:buddbull/features/performance/presentation/widgets/streak_banner.dart';
 import 'package:buddbull/features/performance/providers/performance_provider.dart';
 import 'package:buddbull/features/profile/presentation/widgets/stats_card.dart';
 import 'package:buddbull/features/rating/data/models/rating_model.dart';
 import 'package:buddbull/features/rating/providers/rating_provider.dart';
+import 'package:buddbull/features/search/presentation/widgets/search_transition.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -45,70 +49,22 @@ class HomeScreen extends ConsumerWidget {
           slivers: [
             // ── Gradient header ────────────────────────────
             SliverAppBar(
-              expandedHeight: 160,
+              expandedHeight: 220,
               floating: false,
               pinned: true,
-              backgroundColor: AppColors.primary,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.calendar_month_rounded,
-                      color: Colors.white),
-                  onPressed: () =>
-                      context.push('/games/calendar'),
-                  tooltip: 'My calendar',
-                ),
-                _NotificationBellAction(
+              backgroundColor: AppColors.background,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              automaticallyImplyLeading: false,
+              flexibleSpace: _HomeHeaderFlexibleSpace(
+                greeting: greeting,
+                firstName: user?.firstName,
+                notificationBell: _NotificationBellAction(
                   onTap: () => context.push('/notifications'),
                 ),
-              ],
-              flexibleSpace: FlexibleSpaceBar(
-                background: Container(
-                  decoration: const BoxDecoration(
-                    gradient: AppColors.brandGradient,
-                  ),
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                          20, 56, 20, 16),
-                      child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                        mainAxisAlignment:
-                            MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            '$greeting${user != null ? ', ${user.firstName}!' : '!'}',
-                            style: const TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 13,
-                              color: Colors.white70,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'BuddBull',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 28,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          Text(
-                            'Find your squad. Play your game.',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 13,
-                              color:
-                                  Colors.white.withValues(alpha: 0.75),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                onCalendarTap: () => context.push('/games/calendar'),
+                onSearchTap: (origin) => openGlobalSearch(context, origin: origin),
               ),
             ),
 
@@ -123,29 +79,29 @@ class HomeScreen extends ConsumerWidget {
                       children: [
                         Expanded(
                           child: StatsCard(
-                            value: user!.stats!.gamesPlayed
-                                .toString(),
+                            value: user!.stats!.gamesPlayed.toString(),
                             label: 'Games',
                             icon: Icons.sports_soccer_rounded,
-                            color: AppColors.primary,
+                            accentColor: AppColors.metricGamesAccent,
+                            backgroundColor: AppColors.metricGamesBg,
                           ),
                         ),
                         Expanded(
                           child: StatsCard(
-                            value: user.stats!.averageRating
-                                .toStringAsFixed(1),
+                            value: user.stats!.averageRating.toStringAsFixed(1),
                             label: 'Rating',
                             icon: Icons.star_rounded,
-                            color: AppColors.secondary,
+                            accentColor: AppColors.metricRatingAccent,
+                            backgroundColor: AppColors.metricRatingBg,
                           ),
                         ),
                         Expanded(
                           child: StatsCard(
-                            value:
-                                '${user.stats!.currentStreak}d',
+                            value: '${user.stats!.currentStreak}d',
                             label: 'Streak',
                             icon: Icons.local_fire_department_rounded,
-                            color: AppColors.error,
+                            accentColor: AppColors.metricStreakAccent,
+                            backgroundColor: AppColors.metricStreakBg,
                           ),
                         ),
                       ],
@@ -317,7 +273,7 @@ class HomeScreen extends ConsumerWidget {
                         },
                       ),
 
-                  const SizedBox(height: 100),
+                  SizedBox(height: HomeScaffold.navBottomInset(context)),
                 ]),
               ),
             ),
@@ -665,6 +621,176 @@ String _sportEmoji(String sport) {
     'cycling' => '🚴',
     _ => '🏅',
   };
+}
+
+// ── Collapsing home header (name moves into app bar on scroll) ────────────────
+class _HomeHeaderFlexibleSpace extends StatelessWidget {
+  const _HomeHeaderFlexibleSpace({
+    required this.greeting,
+    required this.onCalendarTap,
+    required this.onSearchTap,
+    required this.notificationBell,
+    this.firstName,
+  });
+
+  final String greeting;
+  final String? firstName;
+  final VoidCallback onCalendarTap;
+  final SearchBarTapCallback onSearchTap;
+  final Widget notificationBell;
+
+  @override
+  Widget build(BuildContext context) {
+    final settings =
+        context.dependOnInheritedWidgetOfExactType<FlexibleSpaceBarSettings>();
+    final expandRatio = settings == null
+        ? 1.0
+        : ((settings.currentExtent - settings.minExtent) /
+                (settings.maxExtent - settings.minExtent))
+            .clamp(0.0, 1.0);
+
+    final collapsedTitle = firstName ?? 'BuddBull';
+    final expandedTitle =
+        firstName != null ? '$greeting, $firstName!' : '$greeting!';
+    final t = Curves.easeOutCubic.transform(expandRatio.clamp(0.0, 1.0));
+    final showExpandedActions = t > 0.55;
+
+    final edgeInset = 4.0 * expandRatio;
+    final topInset = 4.0 * expandRatio;
+    final cornerRadius =
+        AppColors.radiusXl * expandRatio + AppColors.radiusMd * (1 - expandRatio);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(edgeInset, topInset, edgeInset, 0),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(cornerRadius),
+          boxShadow: expandRatio > 0.2
+              ? [
+                  BoxShadow(
+                    color: AppColors.slate.withValues(alpha: 0.18),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+              : null,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(cornerRadius),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.asset(
+                AppAssets.homeWallpaper,
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
+              ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppColors.slate.withValues(alpha: 0.35),
+                      AppColors.slate.withValues(alpha: 0.72),
+                    ],
+                  ),
+                ),
+              ),
+              SafeArea(
+                bottom: false,
+                child: Stack(
+                  children: [
+                    if (showExpandedActions)
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: HomeHeaderActions(
+                          onCalendarTap: onCalendarTap,
+                          notificationBell: notificationBell,
+                        ),
+                      ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        20,
+                        8,
+                        showExpandedActions ? 88 : 20,
+                        showExpandedActions ? 62 : 14,
+                      ),
+                      child: Stack(
+                        children: [
+                          Opacity(
+                            opacity: expandRatio,
+                            child: Align(
+                              alignment: Alignment.bottomLeft,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    expandedTitle,
+                                    style: const TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                      letterSpacing: -0.6,
+                                      height: 1.15,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Find your squad. Play your game.',
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 14,
+                                      color:
+                                          Colors.white.withValues(alpha: 0.82),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Opacity(
+                            opacity: 1 - expandRatio,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                collapsedTitle,
+                                style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    CollapsingHomeSearch(
+                      expandRatio: expandRatio,
+                      onTap: onSearchTap,
+                      collapsedTrailing: showExpandedActions
+                          ? null
+                          : HomeHeaderActions(
+                              onCalendarTap: onCalendarTap,
+                              notificationBell: notificationBell,
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 // ── Bell icon + unread badge ──────────────────────────────────────────────────

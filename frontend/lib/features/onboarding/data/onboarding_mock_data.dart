@@ -15,17 +15,15 @@ class OnboardingSportOption {
   final Color accent;
 }
 
-/// Placeholder “default avatars” (emoji on colored tiles — no image assets).
+/// Preset avatars bundled under [assets/avatars/].
 class OnboardingAvatarOption {
   const OnboardingAvatarOption({
     required this.id,
-    required this.emoji,
-    required this.background,
+    required this.assetPath,
   });
 
   final String id;
-  final String emoji;
-  final Color background;
+  final String assetPath;
 }
 
 abstract class OnboardingMockData {
@@ -63,7 +61,7 @@ abstract class OnboardingMockData {
       id: 'basketball',
       label: 'Basketball',
       emoji: '🏀',
-      accent: Color(0xFFFF6B35),
+      accent: Color(0xFF1E3A5F),
     ),
     OnboardingSportOption(
       id: 'tennis',
@@ -103,51 +101,11 @@ abstract class OnboardingMockData {
     ),
   ];
 
-  static const List<OnboardingAvatarOption> avatars = [
-    OnboardingAvatarOption(
-      id: 'av_bull',
-      emoji: '🐂',
-      background: Color(0xFFFFEDD5),
+  static final List<OnboardingAvatarOption> avatars = List.generate(
+    35,
+    (i) => OnboardingAvatarOption(
+      id: 'memo_${i + 1}',
+      assetPath: 'assets/avatars/memo_${i + 1}.png',
     ),
-    OnboardingAvatarOption(
-      id: 'av_fire',
-      emoji: '🔥',
-      background: Color(0xFFFEE2E2),
-    ),
-    OnboardingAvatarOption(
-      id: 'av_soccer',
-      emoji: '⚽',
-      background: Color(0xFFD1FAE5),
-    ),
-    OnboardingAvatarOption(
-      id: 'av_basket',
-      emoji: '🏀',
-      background: Color(0xFFFFEDD5),
-    ),
-    OnboardingAvatarOption(
-      id: 'av_trophy',
-      emoji: '🏆',
-      background: Color(0xFFFEF3C7),
-    ),
-    OnboardingAvatarOption(
-      id: 'av_medal',
-      emoji: '🏅',
-      background: Color(0xFFE0E7FF),
-    ),
-    OnboardingAvatarOption(
-      id: 'av_muscle',
-      emoji: '💪',
-      background: Color(0xFFEDE9FE),
-    ),
-    OnboardingAvatarOption(
-      id: 'av_runner',
-      emoji: '🏃',
-      background: Color(0xFFCCFBF1),
-    ),
-    OnboardingAvatarOption(
-      id: 'av_wave',
-      emoji: '👋',
-      background: Color(0xFFFCE7F3),
-    ),
-  ];
+  );
 }

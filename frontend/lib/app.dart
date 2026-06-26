@@ -18,8 +18,27 @@ class BuddBullApp extends ConsumerStatefulWidget {
   ConsumerState<BuddBullApp> createState() => _BuddBullAppState();
 }
 
-class _BuddBullAppState extends ConsumerState<BuddBullApp> {
+class _BuddBullAppState extends ConsumerState<BuddBullApp> with WidgetsBindingObserver {
   bool _scheduledPushBootstrap = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(ref.read(pushNotificationServiceProvider).recordActivityHeartbeat());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
