@@ -1,5 +1,7 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/date_format_utils.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/performance/data/models/performance_model.dart';
 import 'package:flutter/material.dart';
 
@@ -18,6 +20,7 @@ class LogCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -56,18 +59,21 @@ class LogCard extends StatelessWidget {
                               CrossAxisAlignment.start,
                           children: [
                             Text(
-                              log.sport,
+                              _sportDisplayName(context, log.sport),
                               style: AppTextStyles.titleSmall,
                             ),
                             Text(
-                              log.formattedDate,
+                              AppDateFormat.mediumDate(context, log.loggedAt),
                               style: AppTextStyles.bodySmall,
                             ),
                           ],
                         ),
                       ),
                       if (log.outcome != null)
-                        _OutcomeBadge(outcome: log.outcome!),
+                        _OutcomeBadge(
+                          outcome: log.outcome!,
+                          label: _outcomeBadgeLabel(context, log.outcome!),
+                        ),
                       if (onDelete != null) ...[
                         const SizedBox(width: 4),
                         IconButton(
@@ -92,12 +98,13 @@ class LogCard extends StatelessWidget {
                     children: [
                       _MetaChip(
                         icon: Icons.category_outlined,
-                        label: _logTypeLabel(log.logType),
+                        label: _logTypeLabel(context, log.logType),
                       ),
                       if (log.durationMinutes != null)
                         _MetaChip(
                           icon: Icons.timer_outlined,
-                          label: '${log.durationMinutes}min',
+                          label: l10n.activityDurationMinutes(
+                              log.durationMinutes!),
                         ),
                       if (log.selfRating != null)
                         _MetaChip(
@@ -107,13 +114,13 @@ class LogCard extends StatelessWidget {
                       if (log.mood != null)
                         _MetaChip(
                           icon: Icons.mood_rounded,
-                          label: log.mood!,
+                          label: _moodLabel(context, log.mood!),
                         ),
                       if (log.streakAtLog > 0)
                         _MetaChip(
                           icon: Icons
                               .local_fire_department_rounded,
-                          label: '${log.streakAtLog}d',
+                          label: l10n.streakDaysSuffix(log.streakAtLog),
                           color: AppColors.error,
                         ),
                     ],
@@ -139,7 +146,8 @@ class LogCard extends StatelessWidget {
                                   TextStyle(fontSize: 14)),
                           const SizedBox(width: 6),
                           Text(
-                            '${log.newPersonalBests.length} new personal best${log.newPersonalBests.length > 1 ? 's' : ''}!',
+                            l10n.newPersonalBestsCount(
+                                log.newPersonalBests.length),
                             style: AppTextStyles.labelMedium
                                 .copyWith(
                               color: AppColors.secondaryDark,
@@ -178,13 +186,54 @@ class LogCard extends StatelessWidget {
     if (log.logType == 'training') return AppColors.primary;
     return AppColors.secondary;
   }
+}
 
-  String _logTypeLabel(String type) => switch (type) {
-        'match' => 'Match',
-        'training' => 'Training',
-        'fitness' => 'Fitness',
-        _ => type,
-      };
+String _sportDisplayName(BuildContext context, String sport) {
+  final l10n = context.l10n;
+  final key = sport[0].toUpperCase() + sport.substring(1).toLowerCase();
+  return switch (key) {
+    'Football' => l10n.sportFootball,
+    'Basketball' => l10n.sportBasketball,
+    'Tennis' => l10n.sportTennis,
+    'Running' => l10n.sportRunning,
+    'Swimming' => l10n.sportSwimming,
+    'Cycling' => l10n.sportCycling,
+    'Volleyball' => l10n.sportVolleyball,
+    'Cricket' => l10n.sportCricket,
+    _ => sport,
+  };
+}
+
+String _logTypeLabel(BuildContext context, String type) {
+  final l10n = context.l10n;
+  return switch (type) {
+    'match' => l10n.logTypeMatch,
+    'training' => l10n.logTypeTraining,
+    'fitness' => l10n.logTypeFitness,
+    _ => type,
+  };
+}
+
+String _outcomeBadgeLabel(BuildContext context, String outcome) {
+  final l10n = context.l10n;
+  return switch (outcome) {
+    'win' => l10n.outcomeWinBadge,
+    'loss' => l10n.outcomeLossBadge,
+    'draw' => l10n.outcomeDrawBadge,
+    _ => outcome,
+  };
+}
+
+String _moodLabel(BuildContext context, String mood) {
+  final l10n = context.l10n;
+  return switch (mood) {
+    'excellent' => l10n.moodExcellent,
+    'good' => l10n.moodGood,
+    'neutral' => l10n.moodNeutral,
+    'bad' => l10n.moodBad,
+    'terrible' => l10n.moodTerrible,
+    _ => mood,
+  };
 }
 
 class _SportEmoji extends StatelessWidget {
@@ -219,16 +268,17 @@ class _SportEmoji extends StatelessWidget {
 }
 
 class _OutcomeBadge extends StatelessWidget {
-  const _OutcomeBadge({required this.outcome});
+  const _OutcomeBadge({required this.outcome, required this.label});
   final String outcome;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    final (color, emoji) = switch (outcome) {
-      'win' => (AppColors.success, '🏆 Win'),
-      'loss' => (AppColors.error, '❌ Loss'),
-      'draw' => (AppColors.warning, '🤝 Draw'),
-      _ => (AppColors.grey500, outcome),
+    final color = switch (outcome) {
+      'win' => AppColors.success,
+      'loss' => AppColors.error,
+      'draw' => AppColors.warning,
+      _ => AppColors.grey500,
     };
 
     return Container(
@@ -240,7 +290,7 @@ class _OutcomeBadge extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Text(
-        emoji,
+        label,
         style: AppTextStyles.labelSmall.copyWith(
           color: color,
           fontWeight: FontWeight.w700,

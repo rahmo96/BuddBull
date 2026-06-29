@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/core/services/socket_service.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
@@ -65,8 +66,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ref.invalidate(gameDetailProvider(gid));
           }
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('You are no longer a participant in this chat.'),
+            SnackBar(
+              content: Text(context.l10n.notParticipantInChat),
             ),
           );
           context.go(Routes.games);
@@ -153,6 +154,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final chatAsync = ref.watch(chatDetailProvider(widget.chatId));
     final messagesState = ref.watch(messagesProvider(widget.chatId));
     final typingState = ref.watch(typingProvider(widget.chatId));
@@ -162,8 +164,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: chatAsync.when(
-        loading: () => AppBar(title: const Text('Loading...')),
-        error: (_, __) => AppBar(title: const Text('Chat')),
+        loading: () => AppBar(title: Text(l10n.loading)),
+        error: (_, __) => AppBar(title: Text(l10n.chatTitle)),
         data: (chat) => _buildAppBar(chat, currentUserId),
       ),
       body: Column(
@@ -227,7 +229,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               child: Row(
                 children: [
                   Text(
-                    '${typingState.typingUsernames.join(', ')} ${typingState.typingUsernames.length == 1 ? 'is' : 'are'} typing...',
+                    typingState.typingUsernames.length == 1
+                        ? l10n.chatTypingSingle(typingState.typingUsernames.join(', '))
+                        : l10n.chatTypingMultiple(typingState.typingUsernames.join(', ')),
                     style: AppTextStyles.caption.copyWith(
                       color: AppColors.textSecondary,
                       fontStyle: FontStyle.italic,
@@ -248,9 +252,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   PreferredSizeWidget _buildAppBar(ChatModel chat, String currentUserId) {
+    final l10n = context.l10n;
     final title = chat.chatTitle(currentUserId);
     final participantCount = chat.participants.length;
-    final subtitle = chat.type == 'group' ? '$participantCount members' : null;
+    final subtitle = chat.type == 'group' ? l10n.chatMembersCount(participantCount) : null;
 
     return AppBar(
       backgroundColor: AppColors.background,
@@ -275,6 +280,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildReplyPreview() {
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: const BoxDecoration(
@@ -291,7 +297,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Replying to ${_replyingTo!.senderName}',
+                  l10n.replyingToName(_replyingTo!.senderName),
                   style: AppTextStyles.caption.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,
@@ -316,6 +322,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildInputBar() {
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
       decoration: const BoxDecoration(
@@ -342,7 +349,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   textCapitalization: TextCapitalization.sentences,
                   onChanged: (_) => _handleTyping(),
                   decoration: InputDecoration(
-                    hintText: 'Type a message...',
+                    hintText: l10n.typeMessageHint,
                     hintStyle: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     border: InputBorder.none,

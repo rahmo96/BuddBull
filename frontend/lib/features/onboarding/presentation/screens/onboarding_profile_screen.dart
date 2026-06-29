@@ -1,8 +1,8 @@
 import 'dart:io' show File;
 
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/onboarding/data/onboarding_mock_data.dart';
 import 'package:buddbull/features/onboarding/onboarding_completion.dart';
@@ -78,6 +78,7 @@ class _OnboardingProfileScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final draft = ref.watch(onboardingDraftProvider);
     final width = MediaQuery.sizeOf(context).width;
 
@@ -128,7 +129,7 @@ class _OnboardingProfileScreenState
                 children: [
                   const OnboardingProgressHeader(step: 3, totalSteps: 3),
                   Text(
-                    AppStrings.onboardingProfileTitle,
+                    l10n.onboardingProfileTitle,
                     style: AppTextStyles.headlineMedium.copyWith(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w800,
@@ -136,7 +137,7 @@ class _OnboardingProfileScreenState
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    AppStrings.onboardingProfileSubtitle,
+                    l10n.onboardingProfileSubtitle,
                     style: AppTextStyles.bodyLarge.copyWith(
                       color: AppColors.textSecondary,
                       height: 1.45,
@@ -169,7 +170,7 @@ class _OnboardingProfileScreenState
                   ),
                   const SizedBox(height: 24),
                   BbButton(
-                    label: AppStrings.onboardingUploadPhoto,
+                    label: l10n.onboardingUploadPhoto,
                     variant: BbButtonVariant.outlined,
                     icon: Icons.photo_library_rounded,
                     height: 50,
@@ -178,7 +179,7 @@ class _OnboardingProfileScreenState
                   ),
                   const SizedBox(height: 28),
                   Text(
-                    AppStrings.onboardingOrPickAvatar,
+                    l10n.onboardingOrPickAvatar,
                     style: AppTextStyles.titleSmall.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -214,7 +215,7 @@ class _OnboardingProfileScreenState
                     children: [
                       Expanded(
                         child: BbButton(
-                          label: AppStrings.onboardingSkip,
+                          label: l10n.onboardingSkip,
                           onPressed: () => _skipToHome(context),
                           variant: BbButtonVariant.outlined,
                           height: 50,
@@ -224,7 +225,7 @@ class _OnboardingProfileScreenState
                       Expanded(
                         flex: 2,
                         child: BbButton(
-                          label: AppStrings.onboardingFinish,
+                          label: l10n.onboardingFinish,
                           onPressed: () => _finish(context),
                           height: 50,
                           isLoading: _busy,

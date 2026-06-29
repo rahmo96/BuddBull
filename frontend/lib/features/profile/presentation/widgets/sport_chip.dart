@@ -1,6 +1,7 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/constants/skill_level_labels.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/auth/data/models/user_model.dart';
 import 'package:flutter/material.dart';
 
@@ -34,14 +35,14 @@ class SportChip extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                interest.sport,
+                _sportDisplayName(context, interest.sport),
                 style: AppTextStyles.labelMedium.copyWith(
                   color: color,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               Text(
-                skillLevelDisplayName(interest.skillLevel),
+                skillLevelDisplayName(context, interest.skillLevel),
                 style: AppTextStyles.labelSmall.copyWith(color: color),
               ),
             ],
@@ -81,4 +82,22 @@ class SportChip extends StatelessWidget {
       _ => '🏅',
     };
   }
+}
+
+String _sportDisplayName(BuildContext context, String sport) {
+  final l10n = context.l10n;
+  final key = sport.isEmpty
+      ? sport
+      : sport[0].toUpperCase() + sport.substring(1).toLowerCase();
+  return switch (key) {
+    'Football' => l10n.sportFootball,
+    'Basketball' => l10n.sportBasketball,
+    'Tennis' => l10n.sportTennis,
+    'Running' => l10n.sportRunning,
+    'Swimming' => l10n.sportSwimming,
+    'Cycling' => l10n.sportCycling,
+    'Volleyball' => l10n.sportVolleyball,
+    'Cricket' => l10n.sportCricket,
+    _ => sport,
+  };
 }

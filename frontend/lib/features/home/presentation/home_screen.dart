@@ -1,6 +1,8 @@
 import 'package:buddbull/core/constants/app_assets.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/date_format_utils.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/games/presentation/widgets/game_card.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
@@ -26,13 +28,14 @@ class HomeScreen extends ConsumerWidget {
     final user = ref.watch(authProvider).user;
     final pendingAsync = ref.watch(pendingRatingsProvider);
     final statsAsync = ref.watch(performanceStatsProvider);
+    final l10n = context.l10n;
 
     final hour = DateTime.now().hour;
     final greeting = hour < 12
-        ? 'Good morning'
+        ? l10n.greetingGoodMorning
         : hour < 17
-            ? 'Good afternoon'
-            : 'Good evening';
+            ? l10n.greetingGoodAfternoon
+            : l10n.greetingGoodEvening;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -80,7 +83,7 @@ class HomeScreen extends ConsumerWidget {
                         Expanded(
                           child: StatsCard(
                             value: user!.stats!.gamesPlayed.toString(),
-                            label: 'Games',
+                            label: l10n.statGames,
                             icon: Icons.sports_soccer_rounded,
                             accentColor: AppColors.metricGamesAccent,
                             backgroundColor: AppColors.metricGamesBg,
@@ -89,7 +92,7 @@ class HomeScreen extends ConsumerWidget {
                         Expanded(
                           child: StatsCard(
                             value: user.stats!.averageRating.toStringAsFixed(1),
-                            label: 'Rating',
+                            label: l10n.statRating,
                             icon: Icons.star_rounded,
                             accentColor: AppColors.metricRatingAccent,
                             backgroundColor: AppColors.metricRatingBg,
@@ -97,8 +100,8 @@ class HomeScreen extends ConsumerWidget {
                         ),
                         Expanded(
                           child: StatsCard(
-                            value: '${user.stats!.currentStreak}d',
-                            label: 'Streak',
+                            value: l10n.streakDaysSuffix(user.stats!.currentStreak),
+                            label: l10n.statStreak,
                             icon: Icons.local_fire_department_rounded,
                             accentColor: AppColors.metricStreakAccent,
                             backgroundColor: AppColors.metricStreakBg,
@@ -125,8 +128,8 @@ class HomeScreen extends ConsumerWidget {
 
                   // ── My Upcoming Games ─────────────────────
                   _SectionHeader(
-                    title: 'My Upcoming Games',
-                    actionLabel: 'See all',
+                    title: l10n.sectionMyUpcomingGames,
+                    actionLabel: l10n.actionSeeAll,
                     onAction: () => context.go('/games'),
                   ),
                   const SizedBox(height: 10),
@@ -139,8 +142,8 @@ class HomeScreen extends ConsumerWidget {
 
                   // ── Explore Near You ──────────────────────
                   _SectionHeader(
-                    title: 'Explore Near You',
-                    actionLabel: 'Browse all',
+                    title: l10n.sectionExploreNearYou,
+                    actionLabel: l10n.actionBrowseAll,
                     onAction: () => context.go('/games'),
                   ),
                   const SizedBox(height: 10),
@@ -152,7 +155,7 @@ class HomeScreen extends ConsumerWidget {
                   const SizedBox(height: 20),
 
                   // ── Quick actions ─────────────────────────
-                  const _SectionHeader(title: 'Quick Actions'),
+                  _SectionHeader(title: l10n.sectionQuickActions),
                   const SizedBox(height: 10),
                   Row(
                     spacing: 10,
@@ -160,7 +163,7 @@ class HomeScreen extends ConsumerWidget {
                       Expanded(
                         child: _QuickActionCard(
                           icon: Icons.search_rounded,
-                          label: 'Find a Game',
+                          label: l10n.quickActionFindGame,
                           color: AppColors.primary,
                           onTap: () => context.go('/games'),
                         ),
@@ -168,7 +171,7 @@ class HomeScreen extends ConsumerWidget {
                       Expanded(
                         child: _QuickActionCard(
                           icon: Icons.add_rounded,
-                          label: 'Log Session',
+                          label: l10n.quickActionLogSession,
                           color: AppColors.success,
                           onTap: () => context
                               .push('/performance/log/create'),
@@ -177,7 +180,7 @@ class HomeScreen extends ConsumerWidget {
                       Expanded(
                         child: _QuickActionCard(
                           icon: Icons.sports_score_rounded,
-                          label: 'Create Game',
+                          label: l10n.quickActionCreateGame,
                           color: AppColors.secondary,
                           onTap: () => context.push('/games/create'),
                         ),
@@ -191,8 +194,8 @@ class HomeScreen extends ConsumerWidget {
 
                   // ── Recent activity ───────────────────────
                   _SectionHeader(
-                    title: 'Recent Activity',
-                    actionLabel: 'See all',
+                    title: l10n.sectionRecentActivity,
+                    actionLabel: l10n.actionSeeAll,
                     onAction: () => context.go('/performance'),
                   ),
                   const SizedBox(height: 10),
@@ -204,8 +207,8 @@ class HomeScreen extends ConsumerWidget {
                           if (logs.isEmpty) {
                             return _EmptySection(
                               emoji: '📊',
-                              message: 'No recent sessions',
-                              actionLabel: 'Log a session',
+                              message: l10n.emptyNoRecentSessions,
+                              actionLabel: l10n.actionLogSession,
                               onAction: () => context.push(
                                   '/performance/log/create'),
                             );
@@ -253,7 +256,7 @@ class HomeScreen extends ConsumerWidget {
                                                       .titleSmall,
                                                 ),
                                                 Text(
-                                                  log.formattedDate,
+                                                  AppDateFormat.mediumDate(context, log.loggedAt),
                                                   style: AppTextStyles
                                                       .bodySmall,
                                                 ),
@@ -303,13 +306,14 @@ class _UpcomingMineStrip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final myGamesAsync = ref.watch(myGamesProvider);
     return myGamesAsync.when(
       loading: _UpcomingShimmer.new,
       error: (_, __) => _EmptySection(
         emoji: '📅',
-        message: 'No upcoming games',
-        actionLabel: 'Browse games',
+        message: l10n.emptyNoUpcomingGames,
+        actionLabel: l10n.actionBrowseGames,
         onAction: onSeeAll,
       ),
       data: (games) {
@@ -334,8 +338,8 @@ class _UpcomingMineStrip extends ConsumerWidget {
         if (shortlist.isEmpty) {
           return _EmptySection(
             emoji: '📅',
-            message: 'No upcoming games',
-            actionLabel: 'Browse games',
+            message: l10n.emptyNoUpcomingGames,
+            actionLabel: l10n.actionBrowseGames,
             onAction: onSeeAll,
           );
         }
@@ -382,13 +386,14 @@ class _ExploreStrip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final exploreAsync = ref.watch(exploreGamesProvider);
     return exploreAsync.when(
       loading: _UpcomingShimmer.new,
       error: (_, __) => _EmptySection(
         emoji: '🔍',
-        message: "Couldn't load nearby games",
-        actionLabel: 'Browse all',
+        message: l10n.emptyCouldntLoadNearbyGames,
+        actionLabel: l10n.actionBrowseAll,
         onAction: onBrowse,
       ),
       data: (games) {
@@ -408,8 +413,8 @@ class _ExploreStrip extends ConsumerWidget {
         if (filtered.isEmpty) {
           return _EmptySection(
             emoji: '🔍',
-            message: 'Nothing nearby right now',
-            actionLabel: 'Browse all',
+            message: l10n.emptyNothingNearby,
+            actionLabel: l10n.actionBrowseAll,
             onAction: onBrowse,
           );
         }
@@ -641,6 +646,7 @@ class _HomeHeaderFlexibleSpace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final settings =
         context.dependOnInheritedWidgetOfExactType<FlexibleSpaceBarSettings>();
     final expandRatio = settings == null
@@ -649,9 +655,10 @@ class _HomeHeaderFlexibleSpace extends StatelessWidget {
                 (settings.maxExtent - settings.minExtent))
             .clamp(0.0, 1.0);
 
-    final collapsedTitle = firstName ?? 'BuddBull';
-    final expandedTitle =
-        firstName != null ? '$greeting, $firstName!' : '$greeting!';
+    final collapsedTitle = firstName ?? l10n.homeCollapsedTitleFallback;
+    final expandedTitle = firstName != null
+        ? l10n.greetingWithName(greeting, firstName!)
+        : l10n.greetingNoName(greeting);
     final t = Curves.easeOutCubic.transform(expandRatio.clamp(0.0, 1.0));
     final showExpandedActions = t > 0.55;
 
@@ -740,7 +747,7 @@ class _HomeHeaderFlexibleSpace extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
-                                    'Find your squad. Play your game.',
+                                    l10n.appTagline,
                                     style: TextStyle(
                                       fontFamily: 'Inter',
                                       fontSize: 14,
@@ -807,7 +814,7 @@ class _NotificationBellAction extends ConsumerWidget {
     final unread = ref.watch(unreadNotificationCountProvider);
     return IconButton(
       onPressed: onTap,
-      tooltip: 'Notifications',
+      tooltip: context.l10n.tooltipNotifications,
       icon: Badge.count(
         count: unread,
         isLabelVisible: unread > 0,

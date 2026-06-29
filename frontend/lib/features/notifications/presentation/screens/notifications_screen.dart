@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/notifications/data/notification_model.dart';
 import 'package:buddbull/features/notifications/providers/notification_provider.dart';
@@ -34,13 +35,14 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final state = ref.watch(notificationsProvider);
     final notifier = ref.read(notificationsProvider.notifier);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(l10n.notificationsTitle),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0.5,
@@ -53,7 +55,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             TextButton(
               onPressed: state.isMutating ? null : notifier.markAllAsRead,
               child: Text(
-                'Mark all read',
+                l10n.markAllRead,
                 style: TextStyle(
                   color: state.isMutating
                       ? AppColors.textDisabled
@@ -152,6 +154,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   Future<void> _handleTap(BuildContext context, NotificationModel n) async {
+    final l10n = context.l10n;
     final notifier = ref.read(notificationsProvider.notifier);
 
     // ── Smart Sync ───────────────────────────────────────────────────────
@@ -174,8 +177,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         if (n.isUnread) unawaited(notifier.markAsRead(n.id));
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("You've already rated the players for this game."),
+            SnackBar(
+              content: Text(l10n.snackAlreadyRatedPlayers),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -198,6 +201,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     required String notificationId,
     required String decision,
   }) async {
+    final l10n = context.l10n;
     final ok = await ref
         .read(notificationsProvider.notifier)
         .handleFriendRequest(notificationId, decision);
@@ -207,8 +211,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         SnackBar(
           content: Text(
             decision == 'accept'
-                ? 'Friend request accepted'
-                : 'Friend request declined',
+                ? l10n.snackFriendRequestAccepted
+                : l10n.snackFriendRequestDeclined,
           ),
           behavior: SnackBarBehavior.floating,
         ),
@@ -217,7 +221,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       final err = ref.read(notificationsProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(err ?? 'Could not update friend request'),
+          content: Text(err ?? l10n.snackCouldNotUpdateFriendRequest),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -229,6 +233,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     required String notificationId,
     required String decision,
   }) async {
+    final l10n = context.l10n;
     final ok = await ref
         .read(notificationsProvider.notifier)
         .handleGameInvite(notificationId, decision);
@@ -239,16 +244,16 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       messenger.showSnackBar(SnackBar(
         content: Text(
           decision == 'accept'
-              ? 'You joined the game.'
-              : 'Invite declined.',
+              ? l10n.snackJoinedGame
+              : l10n.snackInviteDeclined,
         ),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ));
     } else {
-      final err = ref.read(notificationsProvider).error ?? 'Action failed.';
+      final err = ref.read(notificationsProvider).error ?? l10n.snackActionFailed;
       final message = err.contains('no longer valid')
-          ? 'This invitation is no longer valid.'
+          ? l10n.snackInvitationNoLongerValid
           : err;
       messenger.showSnackBar(SnackBar(
         content: Text(message),
@@ -263,6 +268,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     required String notificationId,
     required String decision,
   }) async {
+    final l10n = context.l10n;
     final notifier = ref.read(notificationsProvider.notifier);
     final ok = await notifier.handleJoinRequest(notificationId, decision);
     if (!context.mounted) return;
@@ -271,13 +277,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     if (ok) {
       messenger.showSnackBar(SnackBar(
         content: Text(decision == 'approve'
-            ? 'Player approved.'
-            : 'Join request rejected.'),
+            ? l10n.snackPlayerApproved
+            : l10n.snackJoinRequestRejected),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ));
     } else {
-      final err = ref.read(notificationsProvider).error ?? 'Action failed.';
+      final err = ref.read(notificationsProvider).error ?? l10n.snackActionFailed;
       messenger.showSnackBar(SnackBar(
         content: Text(err),
         behavior: SnackBarBehavior.floating,
@@ -342,6 +348,7 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final isUnread = notification.isUnread;
     return Material(
       color: isUnread ? AppColors.infoLight.withValues(alpha: 0.35) : AppColors.surface,
@@ -375,7 +382,7 @@ class _NotificationTile extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              _relativeTime(notification.createdAt),
+                              _relativeTime(context, notification.createdAt),
                               style: AppTextStyles.bodySmall.copyWith(
                                 color: AppColors.textSecondary,
                                 fontSize: 11,
@@ -418,6 +425,8 @@ class _NotificationTile extends StatelessWidget {
                     isMutating: isMutating,
                     onApprove: onApproveJoinRequest!,
                     onReject: onRejectJoinRequest!,
+                    approveLabel: l10n.tooltipApprove,
+                    rejectLabel: l10n.buttonReject,
                   ),
                 ),
               ],
@@ -429,8 +438,8 @@ class _NotificationTile extends StatelessWidget {
                     isMutating: isMutating,
                     onApprove: onAcceptFriendRequest!,
                     onReject: onDeclineFriendRequest!,
-                    approveLabel: 'Accept',
-                    rejectLabel: 'Decline',
+                    approveLabel: l10n.buttonAccept,
+                    rejectLabel: l10n.buttonDecline,
                   ),
                 ),
               ],
@@ -442,8 +451,8 @@ class _NotificationTile extends StatelessWidget {
                     isMutating: isMutating,
                     onApprove: onAcceptGameInvite!,
                     onReject: onDeclineGameInvite!,
-                    approveLabel: 'Accept',
-                    rejectLabel: 'Decline',
+                    approveLabel: l10n.buttonAccept,
+                    rejectLabel: l10n.buttonDecline,
                   ),
                 ),
               ],
@@ -460,8 +469,8 @@ class _JoinRequestQuickActions extends StatelessWidget {
     required this.isMutating,
     required this.onApprove,
     required this.onReject,
-    this.approveLabel = 'Approve',
-    this.rejectLabel = 'Reject',
+    required this.approveLabel,
+    required this.rejectLabel,
   });
 
   final bool isMutating;
@@ -571,6 +580,7 @@ class _EmptyInbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -590,13 +600,13 @@ class _EmptyInbox extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              "You're all caught up",
+            Text(
+              l10n.emptyNotificationsTitle,
               style: AppTextStyles.headlineSmall,
             ),
             const SizedBox(height: 8),
             Text(
-              "We'll let you know when something new happens.",
+              l10n.emptyNotificationsBody,
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -610,11 +620,12 @@ class _EmptyInbox extends StatelessWidget {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-String _relativeTime(DateTime t) {
+String _relativeTime(BuildContext context, DateTime t) {
+  final l10n = context.l10n;
   final diff = DateTime.now().difference(t);
-  if (diff.inSeconds < 60) return 'now';
-  if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-  if (diff.inHours < 24) return '${diff.inHours}h';
-  if (diff.inDays < 7) return '${diff.inDays}d';
-  return '${diff.inDays ~/ 7}w';
+  if (diff.inSeconds < 60) return l10n.relativeTimeNow;
+  if (diff.inMinutes < 60) return l10n.relativeTimeMinutes(diff.inMinutes);
+  if (diff.inHours < 24) return l10n.relativeTimeHours(diff.inHours);
+  if (diff.inDays < 7) return l10n.relativeTimeDays(diff.inDays);
+  return l10n.relativeTimeWeeks(diff.inDays ~/ 7);
 }

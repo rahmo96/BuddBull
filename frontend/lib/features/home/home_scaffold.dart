@@ -1,8 +1,8 @@
 import 'dart:ui';
 
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/core/services/socket_service.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/chat/providers/chat_provider.dart';
@@ -53,42 +53,45 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
     super.dispose();
   }
 
-  static const _tabs = [
-    _TabItem(
-      label: AppStrings.navHome,
-      icon: Icons.home_outlined,
-      selectedIcon: Icons.home_rounded,
-      route: '/home',
-    ),
-    _TabItem(
-      label: AppStrings.navGames,
-      icon: Icons.sports_outlined,
-      selectedIcon: Icons.sports_rounded,
-      route: '/games',
-    ),
-    _TabItem(
-      label: AppStrings.navChat,
-      icon: Icons.chat_bubble_outline_rounded,
-      selectedIcon: Icons.chat_bubble_rounded,
-      route: '/chats',
-    ),
-    _TabItem(
-      label: AppStrings.navPerformance,
-      icon: Icons.bar_chart_outlined,
-      selectedIcon: Icons.bar_chart_rounded,
-      route: '/performance',
-    ),
-    _TabItem(
-      label: AppStrings.navProfile,
-      icon: Icons.person_outline_rounded,
-      selectedIcon: Icons.person_rounded,
-      route: '/profile',
-    ),
-  ];
+  static List<_TabItem> _tabs(BuildContext context) {
+    final l10n = context.l10n;
+    return [
+      _TabItem(
+        label: l10n.navHome,
+        icon: Icons.home_outlined,
+        selectedIcon: Icons.home_rounded,
+        route: '/home',
+      ),
+      _TabItem(
+        label: l10n.navGames,
+        icon: Icons.sports_outlined,
+        selectedIcon: Icons.sports_rounded,
+        route: '/games',
+      ),
+      _TabItem(
+        label: l10n.navChat,
+        icon: Icons.chat_bubble_outline_rounded,
+        selectedIcon: Icons.chat_bubble_rounded,
+        route: '/chats',
+      ),
+      _TabItem(
+        label: l10n.navPerformance,
+        icon: Icons.bar_chart_outlined,
+        selectedIcon: Icons.bar_chart_rounded,
+        route: '/performance',
+      ),
+      _TabItem(
+        label: l10n.navProfile,
+        icon: Icons.person_outline_rounded,
+        selectedIcon: Icons.person_rounded,
+        route: '/profile',
+      ),
+    ];
+  }
 
-  int _selectedIndex(BuildContext context) {
+  int _selectedIndex(BuildContext context, List<_TabItem> tabs) {
     final location = GoRouterState.of(context).matchedLocation;
-    final idx = _tabs.indexWhere((t) => location.startsWith(t.route));
+    final idx = tabs.indexWhere((t) => location.startsWith(t.route));
     return idx < 0 ? 0 : idx;
   }
 
@@ -103,7 +106,8 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
       }
     });
 
-    final selectedIndex = _selectedIndex(context);
+    final tabs = _tabs(context);
+    final selectedIndex = _selectedIndex(context, tabs);
     final showFab = ref.watch(authProvider).status == AuthStatus.authenticated;
 
     return Scaffold(
@@ -118,9 +122,9 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
             right: 0,
             bottom: 0,
             child: _DynamicIslandNavBar(
-              tabs: _tabs,
+              tabs: tabs,
               selectedIndex: selectedIndex,
-              onTap: (i) => context.go(_tabs[i].route),
+              onTap: (i) => context.go(tabs[i].route),
             ),
           ),
         ],

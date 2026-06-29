@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/chat/data/models/chat_model.dart';
 import 'package:flutter/material.dart';
 
@@ -18,6 +19,7 @@ class PinnedMessageBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -25,8 +27,8 @@ class PinnedMessageBanner extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: AppColors.primary.withValues(alpha: 0.08),
-          border: const Border(
-            left: BorderSide(color: AppColors.primary, width: 3),
+          border: const BorderDirectional(
+            start: BorderSide(color: AppColors.primary, width: 3),
           ),
         ),
         child: Row(
@@ -39,7 +41,7 @@ class PinnedMessageBanner extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Pinned message',
+                    l10n.pinnedMessageLabel,
                     style: AppTextStyles.caption.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,

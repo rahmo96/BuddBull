@@ -2,23 +2,14 @@ import 'package:buddbull/features/home/presentation/widgets/collapsing_home_sear
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-void main() {
-  Widget wrap(Widget child) {
-    return MaterialApp(
-      home: Scaffold(
-        body: SizedBox(
-          width: 400,
-          height: 220,
-          child: child,
-        ),
-      ),
-    );
-  }
+import '../../helpers/l10n_test_helpers.dart';
 
+void main() {
   group('CollapsingHomeSearch', () {
     testWidgets('shows hint text when fully expanded', (tester) async {
+      final l10n = enL10n();
       await tester.pumpWidget(
-        wrap(
+        wrapWithL10n(
           CollapsingHomeSearch(
             expandRatio: 1.0,
             onTap: (_) {},
@@ -26,13 +17,13 @@ void main() {
         ),
       );
 
-      expect(find.text('Search games, players…'), findsOneWidget);
+      expect(find.text(l10n.searchGamesPlayersHint), findsOneWidget);
       expect(find.byIcon(Icons.search_rounded), findsOneWidget);
     });
 
     testWidgets('hides hint text when fully collapsed', (tester) async {
       await tester.pumpWidget(
-        wrap(
+        wrapWithL10n(
           CollapsingHomeSearch(
             expandRatio: 0.0,
             onTap: (_) {},
@@ -40,14 +31,14 @@ void main() {
         ),
       );
 
-      expect(find.text('Search games, players…'), findsNothing);
+      expect(find.text(enL10n().searchGamesPlayersHint), findsNothing);
       expect(find.byIcon(Icons.search_rounded), findsOneWidget);
     });
 
     testWidgets('invokes onTap when pressed', (tester) async {
       var tapped = false;
       await tester.pumpWidget(
-        wrap(
+        wrapWithL10n(
           CollapsingHomeSearch(
             expandRatio: 1.0,
             onTap: (_) => tapped = true,

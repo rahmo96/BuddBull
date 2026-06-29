@@ -37,9 +37,11 @@ class SubmitReportNotifier extends StateNotifier<SubmitReportState> {
       if (mounted) state = const SubmitReportState();
       return null;
     } catch (e) {
-      final message = e is AppException ? e.message : e.toString();
+      final message = e is AppException
+          ? (e.serverMessage ?? '')
+          : e.toString();
       if (mounted) state = SubmitReportState(error: message);
-      return message;
+      return message.isEmpty ? '__localize__' : message;
     }
   }
 }

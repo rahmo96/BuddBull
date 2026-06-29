@@ -1,3 +1,4 @@
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/core/storage/shared_preferences_provider.dart';
 import 'package:buddbull/features/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'package:buddbull/features/admin/presentation/screens/admin_games_screen.dart';
@@ -399,7 +400,7 @@ class _ErrorPage extends StatelessWidget {
           children: [
             const Text('🔍', style: TextStyle(fontSize: 48)),
             const SizedBox(height: 16),
-            const Text('Page not found'),
+            Text(context.l10n.pageNotFound),
             if (error != null)
               Text(error.toString(),
                   style: const TextStyle(fontSize: 12)),

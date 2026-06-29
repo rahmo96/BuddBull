@@ -1,6 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/onboarding/presentation/widgets/onboarding_progress_header.dart';
 import 'package:buddbull/features/onboarding/providers/onboarding_draft_provider.dart';
@@ -18,6 +18,7 @@ class OnboardingLocationScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final draft = ref.watch(onboardingDraftProvider);
     final width = MediaQuery.sizeOf(context).width;
     final canContinue = draft.hasRequiredLocation;
@@ -42,7 +43,7 @@ class OnboardingLocationScreen extends ConsumerWidget {
                 children: [
                   const OnboardingProgressHeader(step: 2, totalSteps: 3),
                   Text(
-                    AppStrings.onboardingLocationTitle,
+                    l10n.onboardingLocationTitle,
                     style: AppTextStyles.headlineMedium.copyWith(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w800,
@@ -51,7 +52,7 @@ class OnboardingLocationScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    AppStrings.onboardingLocationSubtitle,
+                    l10n.onboardingLocationSubtitle,
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.textSecondary,
                       height: 1.4,
@@ -60,8 +61,8 @@ class OnboardingLocationScreen extends ConsumerWidget {
                   const SizedBox(height: 28),
                   CityAutocompleteField(
                     selectedCity: draft.city,
-                    label: AppStrings.cityLabel,
-                    hint: AppStrings.onboardingLocationCityHint,
+                    label: l10n.cityLabel,
+                    hint: l10n.onboardingLocationCityHint,
                     onCitySelected: (city) => ref
                         .read(onboardingDraftProvider.notifier)
                         .setCity(city),
@@ -71,8 +72,8 @@ class OnboardingLocationScreen extends ConsumerWidget {
                     key: ValueKey(draft.city ?? ''),
                     selectedCity: draft.city,
                     selectedNeighborhood: draft.neighborhood,
-                    label: AppStrings.neighborhoodLabel,
-                    hint: AppStrings.onboardingLocationNeighborhoodHint,
+                    label: l10n.neighborhoodLabel,
+                    hint: l10n.onboardingLocationNeighborhoodHint,
                     onNeighborhoodSelected: (neighborhood) => ref
                         .read(onboardingDraftProvider.notifier)
                         .setNeighborhood(neighborhood),
@@ -89,7 +90,7 @@ class OnboardingLocationScreen extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: BbButton(
-                          label: AppStrings.onboardingBack,
+                          label: l10n.onboardingBack,
                           onPressed: () => context.pop(),
                           variant: BbButtonVariant.outlined,
                           height: 50,
@@ -99,7 +100,7 @@ class OnboardingLocationScreen extends ConsumerWidget {
                       Expanded(
                         flex: 2,
                         child: BbButton(
-                          label: AppStrings.onboardingNext,
+                          label: l10n.onboardingNext,
                           onPressed: canContinue
                               ? () => context.push(Routes.onboardingProfile)
                               : null,

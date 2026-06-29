@@ -1,6 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
@@ -36,6 +36,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final authState = ref.watch(authProvider);
 
     ref.listen(authProvider, (prev, next) {
@@ -85,11 +86,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               const SizedBox(height: 24),
 
               // ── Title ──────────────────────────────────────────
-              const Text(AppStrings.resetPassword,
-                  style: AppTextStyles.headlineMedium),
+              Text(l10n.resetPassword, style: AppTextStyles.headlineMedium),
               const SizedBox(height: 8),
               Text(
-                AppStrings.forgotSubtitle,
+                l10n.forgotSubtitle,
                 style: AppTextStyles.bodyMedium.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -100,8 +100,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               Form(
                 key: _formKey,
                 child: BbTextField(
-                  label: AppStrings.emailLabel,
-                  hint: AppStrings.emailHint,
+                  label: l10n.emailLabel,
+                  hint: l10n.emailHint,
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icons.email_outlined,
@@ -109,11 +109,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   onSubmitted: (_) => _submit(),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) {
-                      return AppStrings.fieldRequired;
+                      return l10n.fieldRequired;
                     }
                     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$')
                         .hasMatch(v.trim())) {
-                      return AppStrings.invalidEmail;
+                      return l10n.invalidEmail;
                     }
                     return null;
                   },
@@ -123,7 +123,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
               // ── Submit ─────────────────────────────────────────
               BbButton(
-                label: AppStrings.sendResetLink,
+                label: l10n.sendResetLink,
                 onPressed: _submit,
                 isLoading: authState.isSubmitting,
               ),
@@ -131,7 +131,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
               // ── Back ───────────────────────────────────────────
               BbButton(
-                label: AppStrings.backToLogin,
+                label: l10n.backToLogin,
                 onPressed: () => context.pop(),
                 variant: BbButtonVariant.ghost,
               ),

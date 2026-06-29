@@ -1,3 +1,4 @@
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/services/settings_service.dart';
 import 'package:flutter/material.dart';
 
@@ -40,10 +41,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _setNotifications(bool value) async {
     await _settingsService.setNotificationsEnabled(value);
     if (mounted) {
+      final l10n = context.l10n;
       setState(() => _notificationsEnabled = value);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(value ? 'Notifications enabled' : 'Notifications disabled'),
+          content: Text(value ? l10n.notificationsEnabled : l10n.notificationsDisabled),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -53,10 +55,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _setDarkMode(bool value) async {
     await _settingsService.setDarkMode(value);
     if (mounted) {
+      final l10n = context.l10n;
       setState(() => _darkMode = value);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(value ? 'Dark mode on' : 'Dark mode off'),
+          content: Text(value ? l10n.darkModeEnabled : l10n.darkModeDisabled),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -66,10 +69,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _setActivityReminders(bool value) async {
     await _settingsService.setActivityRemindersEnabled(value);
     if (mounted) {
+      final l10n = context.l10n;
       setState(() => _activityReminders = value);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(value ? 'Activity reminders on' : 'Activity reminders off'),
+          content: Text(value ? l10n.remindersEnabled : l10n.remindersDisabled),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -78,22 +82,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Settings')),
+        appBar: AppBar(title: Text(l10n.settingsTitle)),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: ListView(
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
             child: Text(
-              'Notifications',
-              style: TextStyle(
+              l10n.sectionNotifications,
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey,
@@ -102,24 +108,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           SwitchListTile(
             secondary: const Icon(Icons.notifications_outlined),
-            title: const Text('Push Notifications'),
-            subtitle: const Text('Receive notifications about activities'),
+            title: Text(l10n.pushNotifications),
+            subtitle: Text(l10n.pushNotificationsSubtitle),
             value: _notificationsEnabled,
             onChanged: _setNotifications,
           ),
           SwitchListTile(
             secondary: const Icon(Icons.alarm_outlined),
-            title: const Text('Activity Reminders'),
-            subtitle: const Text('Remind me before scheduled activities'),
+            title: Text(l10n.activityReminders),
+            subtitle: Text(l10n.activityRemindersSubtitle),
             value: _activityReminders,
             onChanged: _setActivityReminders,
           ),
           const Divider(height: 24),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: Text(
-              'Appearance',
-              style: TextStyle(
+              l10n.sectionAppearance,
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey,
@@ -128,27 +134,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           SwitchListTile(
             secondary: const Icon(Icons.dark_mode_outlined),
-            title: const Text('Dark Mode'),
-            subtitle: const Text('Use dark theme'),
+            title: Text(l10n.darkMode),
+            subtitle: Text(l10n.darkModeSubtitle),
             value: _darkMode,
             onChanged: _setDarkMode,
           ),
           const Divider(height: 24),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: Text(
-              'About',
-              style: TextStyle(
+              l10n.sectionAbout,
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey,
               ),
             ),
           ),
-          const ListTile(
-            leading: Icon(Icons.info_outline),
-            title: Text('App Version'),
-            subtitle: Text('1.0.0'),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: Text(l10n.appVersion),
+            subtitle: const Text('1.0.0'),
           ),
         ],
       ),

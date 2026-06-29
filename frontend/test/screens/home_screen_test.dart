@@ -14,6 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../helpers/l10n_test_helpers.dart';
 import '../helpers/test_bootstrap.dart';
 
 void main() {
@@ -49,9 +50,7 @@ void main() {
           // live stream so it operates exclusively in HTTP mode.
           notificationLiveStreamProvider.overrideWithValue(null),
         ],
-        child: const MaterialApp(
-          home: HomeScreen(),
-        ),
+        child: wrapWithL10n(const HomeScreen()),
       ),
     );
     await tester.pump();

@@ -1,6 +1,7 @@
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/constants/skill_level_labels.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/core/location/location_provider.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
@@ -60,7 +61,7 @@ class _GameFilterSheetState extends ConsumerState<GameFilterSheet> {
 
       if (position == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(AppStrings.locationPermissionDenied)),
+          SnackBar(content: Text(context.l10n.locationPermissionDenied)),
         );
         return;
       }
@@ -95,6 +96,7 @@ class _GameFilterSheetState extends ConsumerState<GameFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return SafeArea(
       top: false,
       child: Padding(
@@ -122,7 +124,7 @@ class _GameFilterSheetState extends ConsumerState<GameFilterSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Filter Games', style: AppTextStyles.headlineSmall),
+                Text(l10n.filterGames, style: AppTextStyles.headlineSmall),
                 TextButton(
                   onPressed: () => setState(() {
                     _sport = null;
@@ -130,19 +132,19 @@ class _GameFilterSheetState extends ConsumerState<GameFilterSheet> {
                     _nearMe = false;
                     _cityCtrl.clear();
                   }),
-                  child: const Text('Clear all'),
+                  child: Text(l10n.clearAll),
                 ),
               ],
             ),
             const SizedBox(height: 20),
-            const Text('Sport', style: AppTextStyles.labelLarge),
+            Text(l10n.sport, style: AppTextStyles.labelLarge),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
                 ..._sports.map((s) => _FilterChip(
-                      label: s,
+                      label: _sportDisplayName(context, s),
                       selected: _sport == s,
                       onTap: () =>
                           setState(() => _sport = _sport == s ? null : s),
@@ -152,7 +154,7 @@ class _GameFilterSheetState extends ConsumerState<GameFilterSheet> {
             const SizedBox(height: 20),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Near me', style: AppTextStyles.labelLarge),
+              title: Text(l10n.nearMe, style: AppTextStyles.labelLarge),
               subtitle: const Text(
                 'Show games closest to your current location',
                 style: AppTextStyles.bodySmall,
@@ -167,14 +169,14 @@ class _GameFilterSheetState extends ConsumerState<GameFilterSheet> {
             if (!_nearMe) ...[
               const SizedBox(height: 8),
               BbTextField(
-                label: 'City',
+                label: l10n.cityLabel,
                 hint: 'e.g. London',
                 controller: _cityCtrl,
                 prefixIcon: Icons.location_city_rounded,
               ),
             ],
             const SizedBox(height: 20),
-            const Text('Required skill level', style: AppTextStyles.labelLarge),
+            Text(l10n.requiredSkillLevel, style: AppTextStyles.labelLarge),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -182,7 +184,7 @@ class _GameFilterSheetState extends ConsumerState<GameFilterSheet> {
               children: _skillLevels.map((l) {
                 final label = l == 'any'
                     ? 'Any level'
-                    : l[0].toUpperCase() + l.substring(1);
+                    : skillLevelDisplayName(context, l);
                 return _FilterChip(
                   label: label,
                   selected: (_skillLevel == null && l == 'any') ||
@@ -202,6 +204,21 @@ class _GameFilterSheetState extends ConsumerState<GameFilterSheet> {
       ),
     );
   }
+}
+
+String _sportDisplayName(BuildContext context, String sport) {
+  final l10n = context.l10n;
+  return switch (sport) {
+    'Football' => l10n.sportFootball,
+    'Basketball' => l10n.sportBasketball,
+    'Tennis' => l10n.sportTennis,
+    'Running' => l10n.sportRunning,
+    'Swimming' => l10n.sportSwimming,
+    'Cycling' => l10n.sportCycling,
+    'Volleyball' => l10n.sportVolleyball,
+    'Cricket' => l10n.sportCricket,
+    _ => sport,
+  };
 }
 
 class _FilterChip extends StatelessWidget {

@@ -1,5 +1,7 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
+import 'package:buddbull/l10n/app_localizations.dart';
 import 'package:buddbull/features/admin/data/admin_repository.dart';
 import 'package:buddbull/features/admin/presentation/widgets/admin_user_search_section.dart';
 import 'package:buddbull/features/admin/presentation/widgets/stat_card.dart';
@@ -30,6 +32,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final dashboardAsync = ref.watch(adminDashboardProvider(_period));
 
     return dashboardAsync.when(
@@ -38,10 +41,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('Failed to load dashboard', style: AppTextStyles.bodyMedium),
+            Text(l10n.failedToLoadDashboard, style: AppTextStyles.bodyMedium),
             TextButton(
               onPressed: () => ref.invalidate(adminDashboardProvider(_period)),
-              child: const Text('Retry'),
+              child: Text(l10n.retry),
             ),
           ],
         ),
@@ -57,16 +60,19 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 PopupMenuButton<String>(
                   initialValue: _period,
                   onSelected: (v) => setState(() => _period = v),
-                  itemBuilder: (_) => const [
-                    PopupMenuItem(value: '7d', child: Text('Last 7 days')),
-                    PopupMenuItem(value: '30d', child: Text('Last 30 days')),
-                    PopupMenuItem(value: '90d', child: Text('Last 90 days')),
+                  itemBuilder: (_) => [
+                    PopupMenuItem(value: '7d', child: Text(l10n.periodLast7Days)),
+                    PopupMenuItem(value: '30d', child: Text(l10n.periodLast30Days)),
+                    PopupMenuItem(value: '90d', child: Text(l10n.periodLast90Days)),
                   ],
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Row(
                       children: [
-                        Text(_period, style: AppTextStyles.bodySmall.copyWith(color: AppColors.primary)),
+                        Text(
+                          _periodLabel(l10n, _period),
+                          style: AppTextStyles.bodySmall.copyWith(color: AppColors.primary),
+                        ),
                         const Icon(Icons.arrow_drop_down, color: AppColors.primary),
                       ],
                     ),
@@ -79,35 +85,35 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               ],
             ),
           // ── User stats ──────────────────────────────────────────
-          Text('Users', style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary)),
+          Text(l10n.sectionUsers, style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary)),
           const SizedBox(height: 10),
           AdminStatsGrid(
             children: [
-              AdminStatCard(label: 'Total Users', value: '${stats.users.total}', icon: Icons.people),
+              AdminStatCard(label: l10n.statTotalUsers, value: '${stats.users.total}', icon: Icons.people),
               AdminStatCard(
-                label: 'Active (30d)',
+                label: l10n.statActive30d,
                 value: '${stats.users.active}',
                 icon: Icons.trending_up,
                 color: AppColors.success,
               ),
               AdminStatCard(
-                label: 'New (period)',
+                label: l10n.statNewPeriod,
                 value: '+${stats.users.newUsers}',
                 icon: Icons.person_add_alt_1,
                 color: const Color(0xFF8B5CF6),
               ),
               AdminStatCard(
-                label: 'Banned',
+                label: l10n.statBanned,
                 value: '${stats.users.banned}',
                 icon: Icons.block,
                 color: Colors.red,
               ),
               AdminStatCard(
-                label: 'Churn Rate',
+                label: l10n.statChurnRate,
                 value: stats.users.churnRate,
                 icon: Icons.trending_down,
                 color: Colors.orange,
-                subtitle: '${stats.users.churned} users',
+                subtitle: l10n.statChurnedUsersSubtitle(stats.users.churned),
               ),
             ],
           ),
@@ -123,44 +129,44 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
           // ── Registration chart ──────────────────────────────────
           if (stats.dailyRegistrations.isNotEmpty) ...[
-            Text('Registrations', style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary)),
+            Text(l10n.sectionRegistrations, style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary)),
             const SizedBox(height: 10),
             _RegistrationChart(data: stats.dailyRegistrations),
             const SizedBox(height: 24),
           ],
 
           // ── Game stats ──────────────────────────────────────────
-          Text('Games', style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary)),
+          Text(l10n.sectionGames, style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary)),
           const SizedBox(height: 10),
           AdminStatsGrid(
             children: [
-              AdminStatCard(label: 'Total Games', value: '${stats.games.total}', icon: Icons.sports),
+              AdminStatCard(label: l10n.statTotalGames, value: '${stats.games.total}', icon: Icons.sports),
               AdminStatCard(
-                label: 'Active',
+                label: l10n.statActive,
                 value: '${stats.games.active}',
                 icon: Icons.play_circle_outline,
                 color: AppColors.success,
               ),
               AdminStatCard(
-                label: 'Completed',
+                label: l10n.statCompleted,
                 value: '${stats.games.completed}',
                 icon: Icons.check_circle_outline,
                 color: AppColors.primary,
               ),
               AdminStatCard(
-                label: 'Cancelled',
+                label: l10n.statCancelled,
                 value: '${stats.games.cancelled}',
                 icon: Icons.cancel_outlined,
                 color: Colors.red,
               ),
               AdminStatCard(
-                label: 'Ongoing',
+                label: l10n.statOngoing,
                 value: '${stats.games.inProgress}',
                 icon: Icons.timelapse,
                 color: AppColors.info,
               ),
               AdminStatCard(
-                label: 'Scheduled',
+                label: l10n.statScheduled,
                 value: '${stats.games.scheduled}',
                 icon: Icons.schedule,
                 color: AppColors.warning,
@@ -171,12 +177,12 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           const SizedBox(height: 24),
 
           // ── Performance logs ─────────────────────────────────────
-          Text('Performance', style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary)),
+          Text(l10n.sectionPerformance, style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary)),
           const SizedBox(height: 10),
           AdminStatsGrid(
             children: [
               AdminStatCard(
-                label: 'Total Logs',
+                label: l10n.statTotalLogs,
                 value: '${stats.totalLogs}',
                 icon: Icons.analytics_outlined,
                 color: AppColors.info,
@@ -188,7 +194,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
           // ── Sport breakdown ─────────────────────────────────────
           if (stats.sportBreakdown.isNotEmpty) ...[
-            Text('Top Sports', style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary)),
+            Text(l10n.sectionTopSports, style: AppTextStyles.labelLarge.copyWith(color: AppColors.textSecondary)),
             const SizedBox(height: 10),
             ...stats.sportBreakdown.take(5).map(
                   (s) => _SportRow(
@@ -227,15 +233,21 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         _broadcastTitleCtrl.clear();
         _broadcastBodyCtrl.clear();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Broadcast sent!'), backgroundColor: AppColors.success),
+          SnackBar(content: Text(context.l10n.snackBroadcastSent), backgroundColor: AppColors.success),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Broadcast failed'), backgroundColor: Colors.red),
+          SnackBar(content: Text(context.l10n.snackBroadcastFailed), backgroundColor: Colors.red),
         );
       }
     }
   }
+
+  String _periodLabel(AppLocalizations l10n, String period) => switch (period) {
+        '7d' => l10n.periodLast7Days,
+        '90d' => l10n.periodLast90Days,
+        _ => l10n.periodLast30Days,
+      };
 }
 
 // ── Registration sparkline chart ──────────────────────────────────────────────
@@ -336,6 +348,7 @@ class _BroadcastPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final broadcastState = ref.watch(broadcastProvider);
 
     return Container(
@@ -352,15 +365,18 @@ class _BroadcastPanel extends ConsumerWidget {
             children: [
               const Icon(Icons.campaign_outlined, color: AppColors.primary, size: 20),
               const SizedBox(width: 8),
-              Text('Global Broadcast', style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                l10n.globalBroadcast,
+                style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+              ),
             ],
           ),
           const SizedBox(height: 12),
           TextField(
             controller: titleCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Title',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.broadcastTitleLabel,
+              border: const OutlineInputBorder(),
               isDense: true,
             ),
           ),
@@ -368,15 +384,15 @@ class _BroadcastPanel extends ConsumerWidget {
           TextField(
             controller: bodyCtrl,
             maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Message body',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.broadcastMessageBodyLabel,
+              border: const OutlineInputBorder(),
               isDense: true,
             ),
           ),
           const SizedBox(height: 12),
           BbButton(
-            label: 'Send to All Users',
+            label: l10n.sendToAllUsers,
             isLoading: broadcastState.isLoading,
             onPressed: onSend,
           ),

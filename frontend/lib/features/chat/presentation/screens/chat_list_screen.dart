@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/chat/presentation/widgets/chat_tile.dart';
 import 'package:buddbull/features/chat/providers/chat_provider.dart';
@@ -14,6 +15,7 @@ class ChatListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final chatListAsync = ref.watch(chatListProvider);
     final authState = ref.watch(authProvider);
     final currentUserId = authState.user?.id ?? '';
@@ -23,11 +25,11 @@ class ChatListScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Messages', style: AppTextStyles.titleLarge),
+        title: Text(l10n.messagesTitle, style: AppTextStyles.titleLarge),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
-            tooltip: 'New message',
+            tooltip: l10n.tooltipNewMessage,
             onPressed: () => context.push('/chats/new'),
           ),
         ],
@@ -40,11 +42,11 @@ class ChatListScreen extends ConsumerWidget {
             children: [
               const Icon(Icons.chat_bubble_outline, size: 64, color: AppColors.textSecondary),
               const SizedBox(height: 12),
-              const Text('Failed to load chats', style: AppTextStyles.bodyMedium),
+              Text(l10n.failedToLoadChats, style: AppTextStyles.bodyMedium),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => ref.invalidate(chatListProvider),
-                child: const Text('Retry'),
+                child: Text(l10n.retry),
               ),
             ],
           ),
@@ -79,6 +81,7 @@ class ChatListScreen extends ConsumerWidget {
   }
 
   Widget _emptyState(BuildContext context) {
+    final l10n = context.l10n;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -96,12 +99,12 @@ class ChatListScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              'No conversations yet',
+              l10n.emptyNoConversations,
               style: AppTextStyles.titleLarge.copyWith(color: AppColors.textPrimary),
             ),
             const SizedBox(height: 8),
             Text(
-              'Start a conversation by tapping the edit icon above or opening a game and tapping Chat.',
+              l10n.emptyConversationsHint,
               style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),

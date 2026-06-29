@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -39,9 +40,9 @@ class CollapsingHomeSearch extends StatelessWidget {
 
     if (isExpandedLayout) {
       return Align(
-        alignment: Alignment.bottomLeft,
+        alignment: AlignmentDirectional.bottomStart,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+          padding: const EdgeInsetsDirectional.fromSTEB(20, 0, 20, 12),
           child: _SearchGlassPill(
             width: barWidth,
             height: barHeight,
@@ -54,11 +55,11 @@ class CollapsingHomeSearch extends StatelessWidget {
     }
 
     return Align(
-      alignment: Alignment.topRight,
+      alignment: AlignmentDirectional.topEnd,
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.only(top: 4, right: 4),
+          padding: const EdgeInsetsDirectional.only(top: 4, end: 4),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -99,8 +100,6 @@ class _SearchGlassPill extends StatefulWidget {
 
 class _SearchGlassPillState extends State<_SearchGlassPill>
     with SingleTickerProviderStateMixin {
-  static const _hint = 'Search games, players…';
-
   late final AnimationController _pressCtrl;
   late final Animation<double> _scale;
   final _boundsKey = GlobalKey();
@@ -139,6 +138,7 @@ class _SearchGlassPillState extends State<_SearchGlassPill>
 
   @override
   Widget build(BuildContext context) {
+    final hint = context.l10n.searchGamesPlayersHint;
     return ScaleTransition(
       scale: _scale,
       child: Material(
@@ -185,7 +185,7 @@ class _SearchGlassPillState extends State<_SearchGlassPill>
                         child: Opacity(
                           opacity: widget.hintOpacity,
                           child: Text(
-                            _hint,
+                            hint,
                             style: AppTextStyles.bodyMedium.copyWith(
                               color: Colors.white.withValues(alpha: 0.9),
                               fontWeight: FontWeight.w500,
@@ -227,7 +227,7 @@ class HomeHeaderActions extends StatelessWidget {
         IconButton(
           icon: const Icon(Icons.calendar_month_rounded, color: Colors.white),
           onPressed: onCalendarTap,
-          tooltip: 'My calendar',
+          tooltip: context.l10n.tooltipMyCalendar,
         ),
         notificationBell,
       ],

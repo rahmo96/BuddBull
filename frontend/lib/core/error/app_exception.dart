@@ -1,67 +1,68 @@
-import 'package:buddbull/core/constants/app_strings.dart';
-
 /// Typed, user-facing exceptions that the UI can display cleanly.
 class AppException implements Exception {
   const AppException({
-    required this.message,
     required this.type,
+    this.serverMessage,
     this.statusCode,
   });
 
-  final String message;
   final AppExceptionType type;
+  final String? serverMessage;
   final int? statusCode;
 
   // ── Named constructors ────────────────────────────────────────
   const AppException.network()
-      : message = AppStrings.networkError,
-        type = AppExceptionType.network,
+      : type = AppExceptionType.network,
+        serverMessage = null,
         statusCode = null;
 
   const AppException.unauthorised([String? msg])
-      : message = msg ?? AppStrings.sessionExpired,
-        type = AppExceptionType.unauthorised,
+      : type = AppExceptionType.unauthorised,
+        serverMessage = msg,
         statusCode = 401;
 
   const AppException.forbidden([String? msg])
-      : message = msg ?? AppStrings.unauthorised,
-        type = AppExceptionType.forbidden,
+      : type = AppExceptionType.forbidden,
+        serverMessage = msg,
         statusCode = 403;
 
   const AppException.notFound([String? msg])
-      : message = msg ?? 'Resource not found.',
-        type = AppExceptionType.notFound,
+      : type = AppExceptionType.notFound,
+        serverMessage = msg,
         statusCode = 404;
 
   const AppException.conflict([String? msg])
-      : message = msg ?? 'A conflict occurred.',
-        type = AppExceptionType.conflict,
+      : type = AppExceptionType.conflict,
+        serverMessage = msg,
         statusCode = 409;
 
   const AppException.badRequest([String? msg])
-      : message = msg ?? 'Invalid request.',
-        type = AppExceptionType.badRequest,
+      : type = AppExceptionType.badRequest,
+        serverMessage = msg,
         statusCode = 400;
 
   const AppException.validation([String? msg])
-      : message = msg ?? 'Validation failed.',
-        type = AppExceptionType.validation,
+      : type = AppExceptionType.validation,
+        serverMessage = msg,
         statusCode = 422;
 
   const AppException.rateLimited()
-      : message = 'Too many requests. Please slow down.',
-        type = AppExceptionType.rateLimited,
+      : type = AppExceptionType.rateLimited,
+        serverMessage = null,
         statusCode = 429;
 
   const AppException.server([String? msg])
-      : message = msg ?? AppStrings.serverError,
-        type = AppExceptionType.server,
+      : type = AppExceptionType.server,
+        serverMessage = msg,
         statusCode = 500;
 
   const AppException.unknown([String? msg])
-      : message = msg ?? AppStrings.genericError,
-        type = AppExceptionType.unknown,
+      : type = AppExceptionType.unknown,
+        serverMessage = msg,
         statusCode = null;
+
+  /// Legacy accessor — prefer [AppExceptionL10n.localizedMessage].
+  String get message => serverMessage ?? type.name;
 
   // ── Helpers ───────────────────────────────────────────────────
   bool get isAuthError =>

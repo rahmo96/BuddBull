@@ -1,5 +1,7 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/date_format_utils.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/performance/providers/performance_provider.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
@@ -8,8 +10,6 @@ import 'package:buddbull/shared/widgets/loading_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
-
 const _sports = [
   'Football', 'Basketball', 'Tennis', 'Running',
   'Swimming', 'Cycling', 'Volleyball', 'Cricket',
@@ -109,22 +109,20 @@ class _CreateLogScreenState
       if (logState.hasPersonalBests) {
         _showPersonalBestDialog();
       } else {
-        showSuccessSnackBar(context, 'Session logged! 💪');
+        showSuccessSnackBar(context, context.l10n.sessionLoggedSuccess);
         context.pop();
       }
     }
   }
 
   void _showPersonalBestDialog() {
+    final l10n = context.l10n;
     showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        title: const Text('🏅 New Personal Best!'),
-        content: const Text(
-          'You beat your previous record! '
-          'Keep it up! 🎉',
-        ),
+        title: Text(l10n.newPersonalBestTitle),
+        content: Text(l10n.newPersonalBestBody),
         actions: [
           FilledButton(
             onPressed: () {
@@ -133,7 +131,7 @@ class _CreateLogScreenState
             },
             style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primary),
-            child: const Text('Awesome!'),
+            child: Text(l10n.awesome),
           ),
         ],
       ),
@@ -142,6 +140,7 @@ class _CreateLogScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final state = ref.watch(createLogProvider);
 
     ref.listen(createLogProvider, (prev, next) {
@@ -155,7 +154,7 @@ class _CreateLogScreenState
       isLoading: state.isSubmitting,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(title: const Text('Log a Session')),
+        appBar: AppBar(title: Text(l10n.logSessionTitle)),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Form(
@@ -164,7 +163,7 @@ class _CreateLogScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ── Sport ─────────────────────────────────────
-                const _SectionLabel(label: 'Sport *'),
+                _SectionLabel(label: l10n.sportRequired),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -172,7 +171,7 @@ class _CreateLogScreenState
                   children: _sports
                       .map(
                         (s) => _PickerChip(
-                          label: s,
+                          label: _sportDisplayName(context, s),
                           selected: _sport == s,
                           onTap: () =>
                               setState(() => _sport = s),
@@ -183,7 +182,7 @@ class _CreateLogScreenState
                 const SizedBox(height: 20),
 
                 // ── Log type ───────────────────────────────────
-                const _SectionLabel(label: 'Session type *'),
+                _SectionLabel(label: l10n.sessionType),
                 const SizedBox(height: 8),
                 Row(
                   spacing: 10,
@@ -196,7 +195,7 @@ class _CreateLogScreenState
                     return Expanded(
                       child: _TypeCard(
                         icon: icons[t]!,
-                        label: t[0].toUpperCase() + t.substring(1),
+                        label: _logTypeLabel(context, t),
                         selected: _logType == t,
                         onTap: () => setState(() {
                           _logType = t;
@@ -209,7 +208,7 @@ class _CreateLogScreenState
                 const SizedBox(height: 20),
 
                 // ── Date ───────────────────────────────────────
-                const _SectionLabel(label: 'Date'),
+                _SectionLabel(label: l10n.infoLabelDate),
                 const SizedBox(height: 8),
                 GestureDetector(
                   onTap: _pickDate,
@@ -227,8 +226,7 @@ class _CreateLogScreenState
                             size: 18, color: AppColors.primary),
                         const SizedBox(width: 10),
                         Text(
-                          DateFormat('EEE, d MMM y')
-                              .format(_loggedAt),
+                          AppDateFormat.mediumDate(context, _loggedAt),
                           style: AppTextStyles.bodyMedium,
                         ),
                       ],
@@ -239,7 +237,7 @@ class _CreateLogScreenState
 
                 // ── Outcome (match only) ───────────────────────
                 if (_logType == 'match') ...[
-                  const _SectionLabel(label: 'Outcome'),
+                  _SectionLabel(label: l10n.outcome),
                   const SizedBox(height: 8),
                   Row(
                     spacing: 10,
@@ -278,8 +276,7 @@ class _CreateLogScreenState
                                         fontSize: 22)),
                                 const SizedBox(height: 4),
                                 Text(
-                                  o[0].toUpperCase() +
-                                      o.substring(1),
+                                  _outcomeLabel(context, o),
                                   style: AppTextStyles.labelMedium
                                       .copyWith(
                                     color: _outcome == o
@@ -299,8 +296,9 @@ class _CreateLogScreenState
 
                 // ── Duration ───────────────────────────────────
                 _SectionLabel(
-                    label:
-                        'Duration${_durationMinutes != null ? ': ${_durationMinutes}min' : ''}'),
+                    label: _durationMinutes != null
+                        ? l10n.durationWithMinutes(_durationMinutes!)
+                        : l10n.infoLabelDuration),
                 Slider(
                   value:
                       (_durationMinutes ?? 60).toDouble(),
@@ -309,7 +307,7 @@ class _CreateLogScreenState
                   divisions: 47,
                   activeColor: AppColors.primary,
                   inactiveColor: AppColors.grey300,
-                  label: '$_durationMinutes min',
+                  label: l10n.sliderMinutesLabel(_durationMinutes ?? 60),
                   onChanged: (v) => setState(
                       () => _durationMinutes = v.round()),
                 ),
@@ -317,7 +315,7 @@ class _CreateLogScreenState
 
                 // ── Self rating ────────────────────────────────
                 _SectionLabel(
-                    label: 'How did you perform? $_selfRating/5'),
+                    label: l10n.howDidYouPerform(_selfRating)),
                 Slider(
                   value: _selfRating.toDouble(),
                   min: 1,
@@ -332,7 +330,7 @@ class _CreateLogScreenState
                 const SizedBox(height: 20),
 
                 // ── Mood ───────────────────────────────────────
-                const _SectionLabel(label: 'How did you feel?'),
+                _SectionLabel(label: l10n.howDidYouFeel),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment:
@@ -365,9 +363,11 @@ class _CreateLogScreenState
                                 style: const TextStyle(
                                     fontSize: 22)),
                             const SizedBox(height: 2),
-                            Text(m,
-                                style: AppTextStyles
-                                    .labelSmall),
+                            Text(
+                              _moodLabel(context, m),
+                              style: AppTextStyles
+                                  .labelSmall,
+                            ),
                           ],
                         ),
                       ),
@@ -378,8 +378,8 @@ class _CreateLogScreenState
 
                 // ── Notes ──────────────────────────────────────
                 BbTextField(
-                  label: 'Notes',
-                  hint: 'What went well? What to improve?',
+                  label: l10n.notes,
+                  hint: l10n.notesHint,
                   controller: _notesCtrl,
                   maxLines: 3,
                   minLines: 2,
@@ -402,9 +402,9 @@ class _CreateLogScreenState
                           size: 18,
                           color: AppColors.textSecondary),
                       const SizedBox(width: 10),
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Make this log public',
+                          l10n.makeLogPublic,
                           style: AppTextStyles.bodyMedium,
                         ),
                       ),
@@ -420,7 +420,7 @@ class _CreateLogScreenState
                 const SizedBox(height: 32),
 
                 BbButton(
-                  label: 'Save Session 💪',
+                  label: l10n.saveSession,
                   onPressed: _submit,
                   isLoading: state.isSubmitting,
                 ),
@@ -438,6 +438,53 @@ class _CreateLogScreenState
     if (rating >= 3) return AppColors.primary;
     return AppColors.error;
   }
+}
+
+String _sportDisplayName(BuildContext context, String sport) {
+  final l10n = context.l10n;
+  return switch (sport) {
+    'Football' => l10n.sportFootball,
+    'Basketball' => l10n.sportBasketball,
+    'Tennis' => l10n.sportTennis,
+    'Running' => l10n.sportRunning,
+    'Swimming' => l10n.sportSwimming,
+    'Cycling' => l10n.sportCycling,
+    'Volleyball' => l10n.sportVolleyball,
+    'Cricket' => l10n.sportCricket,
+    _ => sport,
+  };
+}
+
+String _logTypeLabel(BuildContext context, String type) {
+  final l10n = context.l10n;
+  return switch (type) {
+    'match' => l10n.logTypeMatch,
+    'training' => l10n.logTypeTraining,
+    'fitness' => l10n.logTypeFitness,
+    _ => type,
+  };
+}
+
+String _outcomeLabel(BuildContext context, String outcome) {
+  final l10n = context.l10n;
+  return switch (outcome) {
+    'win' => l10n.outcomeWin,
+    'loss' => l10n.outcomeLoss,
+    'draw' => l10n.outcomeDraw,
+    _ => outcome,
+  };
+}
+
+String _moodLabel(BuildContext context, String mood) {
+  final l10n = context.l10n;
+  return switch (mood) {
+    'great' => l10n.moodGreat,
+    'good' => l10n.moodGood,
+    'ok' => l10n.moodOk,
+    'tired' => l10n.moodTired,
+    'injured' => l10n.moodInjured,
+    _ => mood,
+  };
 }
 
 class _SectionLabel extends StatelessWidget {

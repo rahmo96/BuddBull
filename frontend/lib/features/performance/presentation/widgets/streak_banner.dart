@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:flutter/material.dart';
 
 /// Gamified streak tracker with linear progress and warming-up state.
@@ -17,6 +18,7 @@ class StreakBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final isActive = currentStreak > 0;
     final isWarmingUp = !isActive;
     final progress = (currentStreak / weeklyGoal).clamp(0.0, 1.0);
@@ -52,7 +54,7 @@ class StreakBanner extends StatelessWidget {
                             ),
                           ),
                         Text(
-                          isWarmingUp ? 'Warming up' : 'Active streak',
+                          isWarmingUp ? l10n.warmingUp : l10n.activeStreak,
                           style: AppTextStyles.labelMedium.copyWith(
                             color: isActive
                                 ? Colors.white.withValues(alpha: 0.9)
@@ -82,7 +84,9 @@ class StreakBanner extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.only(left: 6, bottom: 6),
                           child: Text(
-                            currentStreak == 1 ? 'day' : 'days',
+                            currentStreak == 1
+                                ? l10n.daySingular
+                                : l10n.daysPlural,
                             style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 15,
@@ -102,7 +106,7 @@ class StreakBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'Personal best',
+                    l10n.personalBest,
                     style: AppTextStyles.labelSmall.copyWith(
                       color: isActive
                           ? Colors.white.withValues(alpha: 0.75)
@@ -111,7 +115,7 @@ class StreakBanner extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '$longestStreak d',
+                    l10n.streakDaysSuffix(longestStreak),
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 18,
@@ -140,8 +144,8 @@ class StreakBanner extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             isWarmingUp
-                ? 'Log a session today to start your streak'
-                : '$currentStreak of $goalLabel-day goal · Keep it going!',
+                ? l10n.logSessionStartStreak
+                : l10n.streakGoalProgress(currentStreak, goalLabel),
             style: AppTextStyles.bodySmall.copyWith(
               color: isActive
                   ? Colors.white.withValues(alpha: 0.8)

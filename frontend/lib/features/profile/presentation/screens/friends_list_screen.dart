@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/auth/data/models/user_model.dart';
 import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
@@ -22,22 +23,21 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
   String? _unfriendingId;
 
   Future<void> _confirmUnfriend(UserModel friend) async {
+    final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Unfriend?'),
-        content: Text(
-          'Remove ${friend.fullName} from your friends? You can send a new request later.',
-        ),
+        title: Text(l10n.dialogUnfriendTitle),
+        content: Text(l10n.dialogUnfriendBody(friend.fullName)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Unfriend'),
+            child: Text(l10n.buttonUnfriend),
           ),
         ],
       ),
@@ -51,7 +51,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
       await ref.read(profileProvider.notifier).refresh();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Removed ${friend.fullName} from friends')),
+        SnackBar(content: Text(l10n.snackRemovedFromFriends(friend.fullName))),
       );
     } catch (e) {
       if (!mounted) return;
@@ -65,12 +65,13 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final friendsAsync = ref.watch(friendsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Friends'),
+        title: Text(l10n.friendsTitle),
         backgroundColor: AppColors.surface,
       ),
       body: friendsAsync.when(
@@ -85,7 +86,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(32),
                 child: Text(
-                  'No friends yet.\nVisit someone\'s profile and tap Add Friend.',
+                  l10n.emptyNoFriendsYet,
                   textAlign: TextAlign.center,
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.textSecondary,
@@ -135,7 +136,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : Text(
-                            'Unfriend',
+                            l10n.buttonUnfriend,
                             style: AppTextStyles.labelMedium.copyWith(
                               color: AppColors.error,
                             ),

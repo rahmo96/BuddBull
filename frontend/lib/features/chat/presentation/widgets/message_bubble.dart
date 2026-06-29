@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/chat/data/models/chat_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +10,7 @@ import 'package:intl/intl.dart';
 class MessageBubble extends StatelessWidget {
   final MessageModel message;
   final bool isMe;
-  final bool showSenderName; // true in group chats
+  final bool showSenderName;
   final bool showAvatar;
   final String? currentUserId;
   final VoidCallback? onReply;
@@ -30,36 +31,33 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (message.isDeleted) return _deletedBubble();
+    if (message.isDeleted) return _deletedBubble(context);
 
     return GestureDetector(
       onLongPress: () => _showOptions(context),
       child: Padding(
-        padding: EdgeInsets.only(
-          left: isMe ? 48 : 8,
-          right: isMe ? 8 : 48,
+        padding: EdgeInsetsDirectional.only(
+          start: isMe ? 48 : 8,
+          end: isMe ? 8 : 48,
           bottom: 4,
         ),
         child: Row(
           mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            // ── Other-user avatar ─────────────────────────────────
             if (!isMe && showAvatar) ...[
               _buildAvatar(),
               const SizedBox(width: 6),
             ] else if (!isMe) ...[
               const SizedBox(width: 36),
             ],
-
-            // ── Bubble ────────────────────────────────────────────
             Flexible(
               child: Column(
                 crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                 children: [
                   if (!isMe && showSenderName)
                     Padding(
-                      padding: const EdgeInsets.only(left: 4, bottom: 2),
+                      padding: const EdgeInsetsDirectional.only(start: 4, bottom: 2),
                       child: Text(
                         message.senderName,
                         style: AppTextStyles.caption.copyWith(
@@ -71,7 +69,7 @@ class MessageBubble extends StatelessWidget {
                   if (message.replyTo != null) _buildReplyPreview(),
                   _buildBody(),
                   Padding(
-                    padding: const EdgeInsets.only(top: 2, left: 4, right: 4),
+                    padding: const EdgeInsetsDirectional.only(top: 2, start: 4, end: 4),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -101,7 +99,7 @@ class MessageBubble extends StatelessWidget {
                         if (message.isEdited) ...[
                           const SizedBox(width: 4),
                           Text(
-                            '• edited',
+                            context.l10n.messageEdited,
                             style: AppTextStyles.caption.copyWith(
                               color: AppColors.textSecondary,
                               fontSize: 10,
@@ -155,7 +153,9 @@ class MessageBubble extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
-        border: const Border(left: BorderSide(color: AppColors.primary, width: 3)),
+        border: const BorderDirectional(
+          start: BorderSide(color: AppColors.primary, width: 3),
+        ),
       ),
       child: Text(
         reply.content,
@@ -171,11 +171,11 @@ class MessageBubble extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: isMe ? AppColors.primary : AppColors.surface,
-        borderRadius: BorderRadius.only(
-          topLeft: const Radius.circular(16),
-          topRight: const Radius.circular(16),
-          bottomLeft: Radius.circular(isMe ? 16 : 4),
-          bottomRight: Radius.circular(isMe ? 4 : 16),
+        borderRadius: BorderRadiusDirectional.only(
+          topStart: const Radius.circular(16),
+          topEnd: const Radius.circular(16),
+          bottomStart: Radius.circular(isMe ? 16 : 4),
+          bottomEnd: Radius.circular(isMe ? 4 : 16),
         ),
         boxShadow: [
           BoxShadow(
@@ -194,7 +194,8 @@ class MessageBubble extends StatelessWidget {
     );
   }
 
-  Widget _deletedBubble() {
+  Widget _deletedBubble(BuildContext context) {
+    final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
@@ -213,7 +214,7 @@ class MessageBubble extends StatelessWidget {
                 const Icon(Icons.not_interested, size: 12, color: AppColors.textSecondary),
                 const SizedBox(width: 4),
                 Text(
-                  'Message deleted',
+                  l10n.messageDeleted,
                   style: AppTextStyles.caption.copyWith(
                     color: AppColors.textSecondary,
                     fontStyle: FontStyle.italic,
@@ -228,12 +229,12 @@ class MessageBubble extends StatelessWidget {
   }
 
   bool _isSeenBySomeoneElse(String currentUserId) {
-    // "Seen" means at least one other user has a read receipt.
     final readBy = message.readBy;
     return readBy.isNotEmpty && readBy.any((id) => id != currentUserId);
   }
 
   void _showOptions(BuildContext context) {
+    final l10n = context.l10n;
     showModalBottomSheet(
       context: context,
       builder: (ctx) => SafeArea(
@@ -243,7 +244,7 @@ class MessageBubble extends StatelessWidget {
             if (onReply != null)
               ListTile(
                 leading: const Icon(Icons.reply),
-                title: const Text('Reply'),
+                title: Text(l10n.messageActionReply),
                 onTap: () {
                   Navigator.pop(ctx);
                   onReply!();
@@ -251,7 +252,7 @@ class MessageBubble extends StatelessWidget {
               ),
             ListTile(
               leading: const Icon(Icons.copy),
-              title: const Text('Copy text'),
+              title: Text(l10n.messageActionCopyText),
               onTap: () {
                 Clipboard.setData(ClipboardData(text: message.content));
                 Navigator.pop(ctx);
@@ -260,7 +261,7 @@ class MessageBubble extends StatelessWidget {
             if (onPin != null)
               ListTile(
                 leading: Icon(message.isPinned ? Icons.push_pin_outlined : Icons.push_pin),
-                title: Text(message.isPinned ? 'Unpin' : 'Pin message'),
+                title: Text(message.isPinned ? l10n.messageActionUnpin : l10n.messageActionPin),
                 onTap: () {
                   Navigator.pop(ctx);
                   onPin!();
@@ -269,7 +270,7 @@ class MessageBubble extends StatelessWidget {
             if (isMe && onDelete != null)
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.red),
-                title: const Text('Delete', style: TextStyle(color: Colors.red)),
+                title: Text(l10n.messageActionDelete, style: const TextStyle(color: Colors.red)),
                 onTap: () {
                   Navigator.pop(ctx);
                   onDelete!();

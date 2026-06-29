@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/admin/providers/admin_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,11 +10,12 @@ class AdminSportsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final sportsAsync = ref.watch(adminSportsProvider);
 
     return sportsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Failed to load sports: $e')),
+      error: (e, _) => Center(child: Text(l10n.failedToLoadSports('$e'))),
       data: (sports) {
         return Column(
           children: [
@@ -22,12 +24,12 @@ class AdminSportsScreen extends ConsumerWidget {
               child: FilledButton.icon(
                 onPressed: () => _showSportForm(context, ref),
                 icon: const Icon(Icons.add),
-                label: const Text('Add Sport'),
+                label: Text(l10n.dialogAddSportTitle),
               ),
             ),
             Expanded(
               child: sports.isEmpty
-                  ? const Center(child: Text('No sports yet'))
+                  ? Center(child: Text(l10n.adminNoSportsYet))
                   : RefreshIndicator(
                       onRefresh: () => ref.refresh(adminSportsProvider.future),
                       child: ListView.separated(
@@ -50,7 +52,7 @@ class AdminSportsScreen extends ConsumerWidget {
                             ),
                             title: Text(sport['name']?.toString() ?? ''),
                             subtitle: Text(
-                              isActive ? 'Active' : 'Inactive',
+                              isActive ? l10n.adminSportActive : l10n.adminSportInactive,
                               style: AppTextStyles.caption,
                             ),
                             trailing: PopupMenuButton<String>(
@@ -64,11 +66,11 @@ class AdminSportsScreen extends ConsumerWidget {
                                   ref.invalidate(adminSportsProvider);
                                 }
                               },
-                              itemBuilder: (_) => const [
-                                PopupMenuItem(value: 'edit', child: Text('Edit')),
+                              itemBuilder: (_) => [
+                                PopupMenuItem(value: 'edit', child: Text(l10n.adminEdit)),
                                 PopupMenuItem(
                                   value: 'delete',
-                                  child: Text('Deactivate'),
+                                  child: Text(l10n.adminDeactivateSport),
                                 ),
                               ],
                             ),
@@ -88,6 +90,7 @@ class AdminSportsScreen extends ConsumerWidget {
     WidgetRef ref, {
     Map<String, dynamic>? sport,
   }) async {
+    final l10n = context.l10n;
     final nameCtrl = TextEditingController(text: sport?['name']?.toString() ?? '');
     final iconCtrl = TextEditingController(text: sport?['icon']?.toString() ?? '🏅');
     final descCtrl =
@@ -96,21 +99,27 @@ class AdminSportsScreen extends ConsumerWidget {
     final saved = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(sport == null ? 'Add Sport' : 'Edit Sport'),
+        title: Text(sport == null ? l10n.dialogAddSportTitle : l10n.adminEditSport),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name')),
-            TextField(controller: iconCtrl, decoration: const InputDecoration(labelText: 'Icon')),
+            TextField(
+              controller: nameCtrl,
+              decoration: InputDecoration(labelText: l10n.fieldNameLabel),
+            ),
+            TextField(
+              controller: iconCtrl,
+              decoration: InputDecoration(labelText: l10n.fieldIconLabel),
+            ),
             TextField(
               controller: descCtrl,
-              decoration: const InputDecoration(labelText: 'Description'),
+              decoration: InputDecoration(labelText: l10n.descriptionLabel),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.save)),
         ],
       ),
     );

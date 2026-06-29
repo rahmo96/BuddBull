@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/constants/skill_level_labels.dart';
+import 'package:buddbull/core/locale/date_format_utils.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/games/data/game_repository.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
@@ -12,8 +15,6 @@ import 'package:buddbull/shared/widgets/loading_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
-
 const _sports = [
   'Football', 'Basketball', 'Tennis', 'Running',
   'Swimming', 'Cycling', 'Volleyball', 'Cricket',
@@ -105,6 +106,7 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
   }
 
   Future<void> _selectSuggestion(AddressSuggestion suggestion) async {
+    final l10n = context.l10n;
     FocusScope.of(context).unfocus();
     setState(() {
       _isResolvingPlace = true;
@@ -124,7 +126,7 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _locationError = 'Could not verify this address. Please choose another one.';
+        _locationError = l10n.addressVerificationFailed;
       });
       showErrorSnackBar(context, e.toString());
     } finally {
@@ -169,9 +171,10 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
   }
 
   Future<void> _submit() async {
+    final l10n = context.l10n;
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_selectedLocation == null) {
-      setState(() => _locationError = 'Please select a valid address from suggestions.');
+      setState(() => _locationError = l10n.pleaseSelectValidAddress);
       return;
     }
 
@@ -220,13 +223,24 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
         .read(createGameProvider.notifier)
         .createGame(payload);
     if (ok && mounted) {
-      showSuccessSnackBar(context, 'Game created! 🎉');
+      showSuccessSnackBar(context, l10n.gameCreatedSuccess);
       context.pop();
     }
   }
 
+  String _durationLabel(BuildContext context) {
+    final l10n = context.l10n;
+    final hours = _durationMinutes ~/ 60;
+    final minutes = _durationMinutes % 60;
+    if (hours > 0) {
+      return l10n.durationHours(hours, minutes);
+    }
+    return l10n.durationMinutesOnly(_durationMinutes);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final state = ref.watch(createGameProvider);
 
     ref.listen(createGameProvider, (prev, next) {
@@ -240,7 +254,7 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
       isLoading: state.isSubmitting,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(title: const Text('Create Game')),
+        appBar: AppBar(title: Text(l10n.createGameTitle)),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Form(
@@ -249,7 +263,7 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ── Sport picker ─────────────────────────────
-                const _SectionLabel(label: 'Sport *'),
+                _SectionLabel(label: l10n.sportRequired),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -274,7 +288,7 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
                           ),
                         ),
                         child: Text(
-                          s,
+                          _sportDisplayName(context, s),
                           style: AppTextStyles.labelMedium.copyWith(
                             color: selected
                                 ? Colors.white
@@ -289,20 +303,20 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
 
                 // ── Title ────────────────────────────────────
                 BbTextField(
-                  label: 'Game title *',
-                  hint: 'e.g. Sunday 5-a-side',
+                  label: l10n.gameTitleLabel,
+                  hint: l10n.gameTitleHint,
                   controller: _titleCtrl,
                   prefixIcon: Icons.sports_score_rounded,
                   validator: (v) => (v?.trim().isEmpty ?? true)
-                      ? 'Title is required'
+                      ? l10n.gameTitleRequired
                       : null,
                 ),
                 const SizedBox(height: 16),
 
                 // ── Description ──────────────────────────────
                 BbTextField(
-                  label: 'Description',
-                  hint: 'Optional details, rules, what to bring…',
+                  label: l10n.descriptionLabel,
+                  hint: l10n.gameDescriptionHint,
                   controller: _descCtrl,
                   maxLines: 3,
                   minLines: 2,
@@ -310,7 +324,7 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
                 const SizedBox(height: 20),
 
                 // ── Date & time ──────────────────────────────
-                const _SectionLabel(label: 'Date & Time *'),
+                _SectionLabel(label: l10n.dateAndTime),
                 const SizedBox(height: 8),
                 Row(
                   spacing: 10,
@@ -318,7 +332,7 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
                     Expanded(
                       child: _TappableField(
                         icon: Icons.calendar_today_rounded,
-                        label: DateFormat('EEE, d MMM y').format(_date),
+                        label: AppDateFormat.mediumDate(context, _date),
                         onTap: _pickDate,
                       ),
                     ),
@@ -334,9 +348,7 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
                 const SizedBox(height: 20),
 
                 // ── Duration slider ──────────────────────────
-                _SectionLabel(
-                    label: 'Duration: ${_durationMinutes ~/ 60}h '
-                        '${(_durationMinutes % 60).toString().padLeft(2, '0')}m'),
+                _SectionLabel(label: _durationLabel(context)),
                 Slider(
                   value: _durationMinutes.toDouble(),
                   min: 30,
@@ -344,23 +356,23 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
                   divisions: 7,
                   activeColor: AppColors.primary,
                   inactiveColor: AppColors.grey300,
-                  label: '${_durationMinutes}min',
+                  label: l10n.durationMinutesOnly(_durationMinutes),
                   onChanged: (v) =>
                       setState(() => _durationMinutes = v.round()),
                 ),
                 const SizedBox(height: 16),
 
                 // ── Location ─────────────────────────────────
-                const _SectionLabel(label: 'Location *'),
+                _SectionLabel(label: l10n.locationRequired),
                 const SizedBox(height: 8),
                 BbTextField(
-                  label: 'Address *',
-                  hint: 'Start typing an address...',
+                  label: l10n.addressLabel,
+                  hint: l10n.addressHint,
                   controller: _addressCtrl,
                   prefixIcon: Icons.location_on_rounded,
                   onChanged: _onAddressChanged,
                   validator: (v) => _selectedLocation == null
-                      ? 'Select a valid address from suggestions'
+                      ? l10n.addressSelectFromSuggestions
                       : null,
                 ),
                 if (_locationError != null) ...[
@@ -407,24 +419,24 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
                 ],
                 const SizedBox(height: 12),
                 BbTextField(
-                  label: 'Neighbourhood',
-                  hint: 'e.g. Shoreditch',
+                  label: l10n.neighborhoodLabel,
+                  hint: l10n.neighborhoodHint,
                   controller: _neighborhoodCtrl,
                   prefixIcon: Icons.map_rounded,
                   readOnly: true,
                 ),
                 const SizedBox(height: 12),
                 BbTextField(
-                  label: 'Venue name',
-                  hint: 'e.g. Hackney Marshes',
+                  label: l10n.venueNameLabel,
+                  hint: l10n.venueNameHint,
                   controller: _venueCtrl,
                   prefixIcon: Icons.stadium_rounded,
                   readOnly: true,
                 ),
                 const SizedBox(height: 12),
                 BbTextField(
-                  label: 'City *',
-                  hint: 'e.g. London',
+                  label: l10n.cityRequiredLabel,
+                  hint: l10n.cityHint,
                   controller: _cityCtrl,
                   prefixIcon: Icons.location_city_rounded,
                   readOnly: true,
@@ -432,8 +444,7 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
                 const SizedBox(height: 20),
 
                 // ── Max players ──────────────────────────────
-                _SectionLabel(
-                    label: 'Max players: $_maxPlayers'),
+                _SectionLabel(label: l10n.maxPlayersLabel(_maxPlayers)),
                 Slider(
                   value: _maxPlayers.toDouble(),
                   min: 2,
@@ -448,7 +459,7 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
                 const SizedBox(height: 20),
 
                 // ── Privacy toggle ───────────────────────────
-                const _SectionLabel(label: 'Visibility'),
+                _SectionLabel(label: l10n.visibility),
                 const SizedBox(height: 8),
                 Container(
                   decoration: BoxDecoration(
@@ -462,7 +473,7 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
                     activeThumbColor: AppColors.primary,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14),
                     title: Text(
-                      'Private Game (Requires Approval)',
+                      l10n.privateGameTitle,
                       style: AppTextStyles.bodyMedium.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -471,8 +482,8 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         _isPrivate
-                            ? 'Hidden from public search. Every join request will require your approval.'
-                            : 'Public — anyone can find and join this game.',
+                            ? l10n.privateGameSubtitleOn
+                            : l10n.privateGameSubtitleOff,
                         style: AppTextStyles.bodySmall.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -491,7 +502,7 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
                 const SizedBox(height: 20),
 
                 // ── Skill level ──────────────────────────────
-                const _SectionLabel(label: 'Required skill level'),
+                _SectionLabel(label: l10n.requiredSkillLevel),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -499,8 +510,8 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
                   children: _skillLevels.map((l) {
                     final selected = _skillLevel == l;
                     final label = l == 'any'
-                        ? 'Any level'
-                        : l[0].toUpperCase() + l.substring(1);
+                        ? l10n.anySkillLevel
+                        : skillLevelDisplayName(context, l);
                     return GestureDetector(
                       onTap: () => setState(() => _skillLevel = l),
                       child: AnimatedContainer(
@@ -533,7 +544,7 @@ class _CreateGameScreenState extends ConsumerState<CreateGameScreen> {
                 const SizedBox(height: 32),
 
                 BbButton(
-                  label: 'Create Game 🎮',
+                  label: l10n.createGameButton,
                   onPressed: _submit,
                   isLoading: state.isSubmitting,
                 ),
@@ -591,4 +602,19 @@ class _TappableField extends StatelessWidget {
       ),
     );
   }
+}
+
+String _sportDisplayName(BuildContext context, String sport) {
+  final l10n = context.l10n;
+  return switch (sport) {
+    'Football' => l10n.sportFootball,
+    'Basketball' => l10n.sportBasketball,
+    'Tennis' => l10n.sportTennis,
+    'Running' => l10n.sportRunning,
+    'Swimming' => l10n.sportSwimming,
+    'Cycling' => l10n.sportCycling,
+    'Volleyball' => l10n.sportVolleyball,
+    'Cricket' => l10n.sportCricket,
+    _ => sport,
+  };
 }

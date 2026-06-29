@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/performance/data/models/performance_model.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -9,14 +10,15 @@ class ProgressChart extends StatelessWidget {
   const ProgressChart({
     super.key,
     required this.sessions,
-    this.title = 'Sessions per week',
   });
 
   final List<WeeklySession> sessions;
-  final String title;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final title = l10n.sessionsPerWeek;
+
     if (sessions.isEmpty) {
       return _EmptyChart(title: title);
     }
@@ -111,13 +113,16 @@ class ProgressChart extends StatelessWidget {
               barTouchData: BarTouchData(
                 touchTooltipData: BarTouchTooltipData(
                   getTooltipColor: (_) => AppColors.grey900,
-                  getTooltipItem: (group, _, rod, __) =>
-                      BarTooltipItem(
-                    '${rod.toY.toInt()} sessions\n'
-                    '${sessions[group.x].totalMinutes} min',
-                    AppTextStyles.labelSmall.copyWith(
-                        color: Colors.white),
-                  ),
+                  getTooltipItem: (group, _, rod, __) {
+                    final count = rod.toY.toInt();
+                    final minutes = sessions[group.x].totalMinutes;
+                    return BarTooltipItem(
+                      '${l10n.chartSessionCount(count)}\n'
+                      '${l10n.activityDurationMinutes(minutes)}',
+                      AppTextStyles.labelSmall.copyWith(
+                          color: Colors.white),
+                    );
+                  },
                 ),
               ),
             ),
@@ -139,8 +144,13 @@ class WinRateChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     if (sessions.isEmpty) {
-      return const _EmptyChart(title: 'Win rate trend', variant: _GhostVariant.line);
+      return _EmptyChart(
+        title: l10n.winRateTrend,
+        variant: _GhostVariant.line,
+      );
     }
 
     final spots = <FlSpot>[];
@@ -155,7 +165,7 @@ class WinRateChart extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Win rate trend', style: AppTextStyles.titleSmall),
+        Text(l10n.winRateTrend, style: AppTextStyles.titleSmall),
         const SizedBox(height: 16),
         SizedBox(
           height: 140,
@@ -245,13 +255,14 @@ class _EmptyChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: AppTextStyles.titleSmall),
         const SizedBox(height: 8),
         Text(
-          'Your stats preview — log sessions to unlock',
+          l10n.statsPreviewUnlock,
           style: AppTextStyles.bodySmall.copyWith(
             color: AppColors.textSecondary,
           ),

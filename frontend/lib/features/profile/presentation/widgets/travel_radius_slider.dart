@@ -1,6 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:flutter/material.dart';
 
 /// Slider for how far the user is willing to travel for games.
@@ -22,7 +22,7 @@ class TravelRadiusSlider extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(AppStrings.radiusLabel, style: AppTextStyles.labelLarge),
+            Text(context.l10n.radiusLabel, style: AppTextStyles.labelLarge),
             Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -31,7 +31,7 @@ class TravelRadiusSlider extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                '$value km',
+                context.l10n.locationRadiusKm(value),
                 style: AppTextStyles.labelMedium.copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w600,

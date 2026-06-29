@@ -1,7 +1,9 @@
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/error/app_exception.dart';
+import 'package:buddbull/core/error/app_exception_l10n.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
+import 'package:buddbull/core/locale/locale_provider.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/auth/data/models/user_model.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
@@ -62,18 +64,18 @@ class ProfileScreen extends ConsumerWidget {
                   IconButton(
                     icon: const Icon(Icons.admin_panel_settings_outlined, color: Colors.white),
                     onPressed: () => context.push(Routes.adminDashboard),
-                    tooltip: 'Admin Dashboard',
+                    tooltip: context.l10n.tooltipAdminDashboard,
                   ),
                 IconButton(
                   icon: const Icon(Icons.edit_outlined, color: Colors.white),
                   onPressed: () => context.push(Routes.editProfile),
-                  tooltip: 'Edit profile',
+                  tooltip: context.l10n.tooltipEditProfile,
                 ),
                 IconButton(
                   icon:
                       const Icon(Icons.logout_rounded, color: Colors.white),
                   onPressed: () => _confirmLogout(context, ref),
-                  tooltip: 'Sign out',
+                  tooltip: context.l10n.tooltipSignOut,
                 ),
               ],
               flexibleSpace: FlexibleSpaceBar(
@@ -153,15 +155,13 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                       ),
                       title: Text(
-                        AppStrings.friends,
+                        context.l10n.friends,
                         style: AppTextStyles.bodyMedium.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       subtitle: Text(
-                        user.friendsCount == 1
-                            ? '1 mutual connection'
-                            : '${user.friendsCount} mutual connections',
+                        context.l10n.mutualConnections(user.friendsCount),
                         style: AppTextStyles.bodySmall.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -187,7 +187,7 @@ class ProfileScreen extends ConsumerWidget {
                       Expanded(
                         child: StatsCard(
                           value: user.stats!.gamesPlayed.toString(),
-                          label: AppStrings.gamesPlayed,
+                          label: context.l10n.gamesPlayed,
                           icon: Icons.sports_soccer_rounded,
                           accentColor: AppColors.metricGamesAccent,
                           backgroundColor: AppColors.metricGamesBg,
@@ -197,7 +197,7 @@ class ProfileScreen extends ConsumerWidget {
                         child: StatsCard(
                           value:
                               user.stats!.averageRating.toStringAsFixed(1),
-                          label: AppStrings.rating,
+                          label: context.l10n.rating,
                           icon: Icons.star_rounded,
                           accentColor: AppColors.metricRatingAccent,
                           backgroundColor: AppColors.metricRatingBg,
@@ -205,8 +205,9 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                       Expanded(
                         child: StatsCard(
-                          value: '${user.stats!.currentStreak}d',
-                          label: AppStrings.streakDays,
+                          value: context.l10n.streakDaysSuffix(
+                              user.stats!.currentStreak),
+                          label: context.l10n.streakDays,
                           icon: Icons.local_fire_department_rounded,
                           accentColor: AppColors.metricStreakAccent,
                           backgroundColor: AppColors.metricStreakBg,
@@ -221,7 +222,7 @@ class ProfileScreen extends ConsumerWidget {
             if (user.bio != null && user.bio!.isNotEmpty)
               SliverToBoxAdapter(
                 child: _SectionCard(
-                  title: 'About',
+                  title: context.l10n.sectionAbout,
                   child: Text(
                     user.bio!,
                     style: AppTextStyles.bodyMedium,
@@ -233,7 +234,7 @@ class ProfileScreen extends ConsumerWidget {
             if (user.location?.city != null)
               SliverToBoxAdapter(
                 child: _SectionCard(
-                  title: 'Location',
+                  title: context.l10n.sectionLocation,
                   child: Row(
                     children: [
                       const Icon(Icons.location_on_rounded,
@@ -257,7 +258,8 @@ class ProfileScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          '${user.location?.radiusKm ?? 10} km radius',
+                          context.l10n.locationRadiusKm(
+                              user.location?.radiusKm ?? 10),
                           style: AppTextStyles.labelSmall.copyWith(
                             color: AppColors.info,
                           ),
@@ -272,7 +274,7 @@ class ProfileScreen extends ConsumerWidget {
             if (user.sportsInterests.isNotEmpty)
               SliverToBoxAdapter(
                 child: _SectionCard(
-                  title: AppStrings.sportsInterests,
+                  title: context.l10n.sportsInterests,
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -286,12 +288,27 @@ class ProfileScreen extends ConsumerWidget {
             if (user.performanceSummary?.recentActivity.isNotEmpty ?? false)
               SliverToBoxAdapter(
                 child: _SectionCard(
-                  title: 'Recent Activity',
+                  title: context.l10n.sectionRecentActivity,
                   child: _ActivityFeed(
                     items: user.performanceSummary!.recentActivity,
                   ),
                 ),
               ),
+
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 18, 16, 9),
+                child: _ProfileLanguagePill(
+                  isHebrew: ref.watch(localeProvider).languageCode == 'he',
+                  onSelectEnglish: () => ref
+                      .read(localeProvider.notifier)
+                      .setLocale(const Locale('en')),
+                  onSelectHebrew: () => ref
+                      .read(localeProvider.notifier)
+                      .setLocale(const Locale('he')),
+                ),
+              ),
+            ),
 
             SliverToBoxAdapter(
               child: SizedBox(height: HomeScaffold.navBottomInset(context)),
@@ -303,15 +320,16 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   void _confirmLogout(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Sign out?'),
-        content: const Text('You will need to sign in again.'),
+        title: Text(l10n.dialogSignOutTitle),
+        content: Text(l10n.dialogSignOutBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () {
@@ -319,7 +337,7 @@ class ProfileScreen extends ConsumerWidget {
               ref.read(authProvider.notifier).logout();
             },
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Sign out'),
+            child: Text(l10n.signOut),
           ),
         ],
       ),
@@ -344,7 +362,9 @@ class _PublicProfileView extends ConsumerWidget {
         appBar: AppBar(),
         body: ErrorView(message: e.toString()),
       ),
-      data: (user) => Scaffold(
+      data: (user) {
+        final l10n = context.l10n;
+        return Scaffold(
         backgroundColor: AppColors.background,
         body: CustomScrollView(
           slivers: [
@@ -418,7 +438,7 @@ class _PublicProfileView extends ConsumerWidget {
                       Expanded(
                         child: StatsCard(
                           value: user.stats!.gamesPlayed.toString(),
-                          label: AppStrings.gamesPlayed,
+                          label: context.l10n.gamesPlayed,
                           icon: Icons.sports_soccer_rounded,
                           accentColor: AppColors.metricGamesAccent,
                           backgroundColor: AppColors.metricGamesBg,
@@ -428,8 +448,8 @@ class _PublicProfileView extends ConsumerWidget {
                         child: StatsCard(
                           value: user.stats!.averageRating.toStringAsFixed(1),
                           label: user.stats!.totalRatings > 0
-                              ? '${AppStrings.rating} (${user.stats!.totalRatings})'
-                              : AppStrings.rating,
+                              ? '${l10n.rating} (${user.stats!.totalRatings})'
+                              : l10n.rating,
                           icon: Icons.star_rounded,
                           accentColor: AppColors.metricRatingAccent,
                           backgroundColor: AppColors.metricRatingBg,
@@ -438,7 +458,7 @@ class _PublicProfileView extends ConsumerWidget {
                       Expanded(
                         child: StatsCard(
                           value: _winRate(user).toStringAsFixed(0),
-                          label: 'Win Rate %',
+                          label: l10n.winRatePercent,
                           icon: Icons.emoji_events_outlined,
                           accentColor: AppColors.success,
                           backgroundColor: AppColors.successLight,
@@ -453,7 +473,13 @@ class _PublicProfileView extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                   child: Text(
-                    'Community average ${user.stats!.averageRating.toStringAsFixed(1)} from ${user.stats!.totalRatings} peer ${user.stats!.totalRatings == 1 ? 'rating' : 'ratings'}',
+                    l10n.communityAverageRating(
+                      user.stats!.averageRating.toStringAsFixed(1),
+                      user.stats!.totalRatings,
+                      user.stats!.totalRatings == 1
+                          ? l10n.ratingSingular
+                          : l10n.ratingsPlural,
+                    ),
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -464,14 +490,14 @@ class _PublicProfileView extends ConsumerWidget {
             if (user.bio != null)
               SliverToBoxAdapter(
                 child: _SectionCard(
-                  title: 'About',
+                  title: context.l10n.sectionAbout,
                   child: Text(user.bio!, style: AppTextStyles.bodyMedium),
                 ),
               ),
             if (user.sportsInterests.isNotEmpty)
               SliverToBoxAdapter(
                 child: _SectionCard(
-                  title: 'Sports',
+                  title: l10n.sectionSports,
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -484,26 +510,26 @@ class _PublicProfileView extends ConsumerWidget {
             if (user.performanceSummary != null)
               SliverToBoxAdapter(
                 child: _SectionCard(
-                  title: 'Ratings Summary',
+                  title: l10n.sectionRatingsSummary,
                   child: Row(
                     children: [
                       Expanded(
                         child: _Metric(
-                          label: 'Overall',
+                          label: l10n.metricOverall,
                           value: user.performanceSummary!.ratings.avgComposite
                               .toStringAsFixed(1),
                         ),
                       ),
                       Expanded(
                         child: _Metric(
-                          label: 'Reliability',
+                          label: l10n.metricReliability,
                           value: user.performanceSummary!.ratings.avgReliability
                               .toStringAsFixed(1),
                         ),
                       ),
                       Expanded(
                         child: _Metric(
-                          label: 'Behavior',
+                          label: l10n.metricBehavior,
                           value: user.performanceSummary!.ratings.avgBehavior
                               .toStringAsFixed(1),
                         ),
@@ -515,7 +541,7 @@ class _PublicProfileView extends ConsumerWidget {
             if (user.performanceSummary?.recentActivity.isNotEmpty ?? false)
               SliverToBoxAdapter(
                 child: _SectionCard(
-                  title: 'Recent Activity',
+                  title: context.l10n.sectionRecentActivity,
                   child: _ActivityFeed(
                     items: user.performanceSummary!.recentActivity,
                   ),
@@ -524,7 +550,7 @@ class _PublicProfileView extends ConsumerWidget {
             if (user.performanceSummary?.upcomingGames.isNotEmpty ?? false)
               SliverToBoxAdapter(
                 child: _SectionCard(
-                  title: 'Upcoming Games',
+                  title: l10n.sectionUpcomingGames,
                   child: _UpcomingGamesList(
                     games: user.performanceSummary!.upcomingGames,
                   ),
@@ -547,7 +573,8 @@ class _PublicProfileView extends ConsumerWidget {
             ),
           ],
         ),
-      ),
+      );
+      },
     );
   }
 }
@@ -594,7 +621,7 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
   }
 
   String _errorMessage(Object e) {
-    if (e is AppException) return e.message;
+    if (e is AppException) return e.localizedMessage(context);
     final raw = e.toString();
     final match = RegExp(r'\): (.+)$').firstMatch(raw);
     return match?.group(1) ?? raw;
@@ -607,7 +634,7 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
       await ref.read(profileProvider.notifier).sendFriendRequest(widget.userId);
       if (!mounted) return;
       setState(() => _status = 'pending_sent');
-      _snack('Friend request sent');
+      _snack(context.l10n.snackFriendRequestSent);
     } catch (e) {
       _snack(_errorMessage(e));
     } finally {
@@ -630,7 +657,7 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
         if (count != null) _friendsCount = count;
       });
       ref.invalidate(publicProfileProvider(widget.userId));
-      _snack('You are now friends');
+      _snack(context.l10n.snackNowFriends);
     } catch (e) {
       _snack(_errorMessage(e));
     } finally {
@@ -648,7 +675,7 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
       if (!mounted) return;
       setState(() => _status = 'none');
       ref.invalidate(publicProfileProvider(widget.userId));
-      _snack('Friend request declined');
+      _snack(context.l10n.snackFriendRequestDeclined);
     } catch (e) {
       _snack(_errorMessage(e));
     } finally {
@@ -659,11 +686,11 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
   Future<void> _openMessage() async {
     final me = ref.read(currentUserProvider);
     if (me == null) {
-      _snack('Please sign in to send a message.');
+      _snack(context.l10n.snackSignInToMessage);
       return;
     }
     if (me.id == widget.userId) {
-      _snack('You cannot message yourself.');
+      _snack(context.l10n.snackCannotMessageSelf);
       return;
     }
     if (_messageLoading) return;
@@ -692,6 +719,7 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
   }
 
   Widget _primaryFriendButton() {
+    final l10n = context.l10n;
     if (_actionLoading) {
       return const Center(
         child: SizedBox(
@@ -713,7 +741,7 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.chat_bubble_outline, size: 18),
-          label: const Text('Message'),
+          label: Text(l10n.buttonMessage),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.primary,
             side: const BorderSide(color: AppColors.primary),
@@ -724,7 +752,7 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
         return OutlinedButton.icon(
           onPressed: null,
           icon: const Icon(Icons.hourglass_top_rounded, size: 18),
-          label: const Text('Request sent'),
+          label: Text(l10n.buttonRequestSent),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.textSecondary,
             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -737,7 +765,7 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
               child: FilledButton.icon(
                 onPressed: _acceptRequest,
                 icon: const Icon(Icons.check_rounded, size: 18),
-                label: const Text('Accept'),
+                label: Text(l10n.buttonAccept),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.success,
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -749,7 +777,7 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
               child: OutlinedButton.icon(
                 onPressed: _declineRequest,
                 icon: const Icon(Icons.close_rounded, size: 18),
-                label: const Text('Decline'),
+                label: Text(l10n.buttonDecline),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -761,7 +789,7 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
         return OutlinedButton.icon(
           onPressed: _sendFriendRequest,
           icon: const Icon(Icons.person_add_outlined, size: 18),
-          label: const Text('Add Friend'),
+          label: Text(l10n.buttonAddFriend),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.primary,
             side: const BorderSide(color: AppColors.primary),
@@ -793,7 +821,7 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
               size: 20,
             ),
             title: Text(
-              '$_friendsCount ${AppStrings.friends}',
+              '$_friendsCount ${context.l10n.friends}',
               style: AppTextStyles.bodySmall.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -874,7 +902,8 @@ class _ActivityFeed extends StatelessWidget {
           subtitle: Text(
             [
               if (item.matchOutcome != null) item.matchOutcome,
-              if (item.durationMinutes != null) '${item.durationMinutes} min',
+              if (item.durationMinutes != null)
+                context.l10n.activityDurationMinutes(item.durationMinutes!),
               if (loggedAt != null)
                 '${loggedAt.day}/${loggedAt.month}/${loggedAt.year}',
             ].whereType<String>().join(' • '),
@@ -934,7 +963,7 @@ class _HeaderRatingRow extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.only(top: 6),
         child: Text(
-          'No ratings yet',
+          context.l10n.noRatingsYet,
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 12,
@@ -964,6 +993,99 @@ class _HeaderRatingRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Pill-shaped EN | HEB language toggle for the own-profile screen.
+class _ProfileLanguagePill extends StatelessWidget {
+  const _ProfileLanguagePill({
+    required this.isHebrew,
+    required this.onSelectEnglish,
+    required this.onSelectHebrew,
+  });
+
+  final bool isHebrew;
+  final VoidCallback onSelectEnglish;
+  final VoidCallback onSelectHebrew;
+
+  static const _pillHeight = 22.0;
+  static const _pillMaxWidth = 90.0;
+
+  @override
+  Widget build(BuildContext context) {
+    // Keep EN on the left and HEB on the right regardless of app direction.
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: _pillMaxWidth),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: AppColors.grey100,
+              borderRadius: BorderRadius.circular(_pillHeight / 2),
+              border: Border.all(color: AppColors.grey200),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(_pillHeight / 2),
+              child: SizedBox(
+                height: _pillHeight,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _PillSegment(
+                        label: 'EN',
+                        selected: !isHebrew,
+                        onTap: onSelectEnglish,
+                      ),
+                    ),
+                    Expanded(
+                      child: _PillSegment(
+                        label: 'HEB',
+                        selected: isHebrew,
+                        onTap: onSelectHebrew,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PillSegment extends StatelessWidget {
+  const _PillSegment({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? AppColors.primary : Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Center(
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 200),
+            style: AppTextStyles.labelLarge.copyWith(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w600,
+              color: selected ? Colors.white : AppColors.textSecondary,
+            ),
+            child: Text(label),
+          ),
+        ),
       ),
     );
   }

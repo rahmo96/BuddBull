@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/games/presentation/widgets/game_card.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
@@ -32,18 +33,19 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final gamesAsync = ref.watch(calendarGamesProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('My Calendar'),
+        title: Text(l10n.myCalendar),
         actions: [
           IconButton(
             icon: const Icon(Icons.today_rounded),
             onPressed: () =>
                 setState(() => _focusedDay = DateTime.now()),
-            tooltip: 'Today',
+            tooltip: l10n.today,
           ),
         ],
       ),
@@ -170,8 +172,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   children: [
                     Text(
                       selectedGames.isEmpty
-                          ? 'No games'
-                          : '${selectedGames.length} game${selectedGames.length > 1 ? 's' : ''}',
+                          ? l10n.calendarNoGames
+                          : l10n.calendarGamesCount(
+                              selectedGames.length),
                       style: AppTextStyles.titleSmall
                           .copyWith(
                               color: AppColors.textSecondary),
@@ -192,7 +195,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               // ── Games for selected day ─────────────────────
               Expanded(
                 child: selectedGames.isEmpty
-                    ? _EmptyDay()
+                    ? const _EmptyDay()
                     : ListView.separated(
                         padding: const EdgeInsets.fromLTRB(
                             16, 0, 16, 100),
@@ -218,6 +221,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 }
 
 class _EmptyDay extends StatelessWidget {
+  const _EmptyDay();
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -227,7 +232,7 @@ class _EmptyDay extends StatelessWidget {
           const Text('📅', style: TextStyle(fontSize: 48)),
           const SizedBox(height: 12),
           Text(
-            'No games on this day',
+            context.l10n.noGamesOnDay,
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.textSecondary,
             ),

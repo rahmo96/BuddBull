@@ -1,11 +1,13 @@
 import 'dart:async';
 
-import 'package:buddbull/core/constants/app_strings.dart';
+import 'package:buddbull/core/locale/locale_provider.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/core/services/push_notification_service.dart';
 import 'package:buddbull/core/theme/app_theme.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
+import 'package:buddbull/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Root application widget.
@@ -58,11 +60,20 @@ class _BuddBullAppState extends ConsumerState<BuddBullApp> with WidgetsBindingOb
     });
 
     final router = ref.watch(routerProvider);
+    final locale = ref.watch(localeProvider);
 
     return MaterialApp.router(
-      title: AppStrings.appName,
+      title: 'BuddBull',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      locale: locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       routerConfig: router,
       builder: (context, child) {
         // Enforce minimum text scale factor to prevent layout breakage

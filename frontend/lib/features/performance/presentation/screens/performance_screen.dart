@@ -1,6 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/home/home_scaffold.dart';
 import 'package:buddbull/features/performance/presentation/widgets/activity_heatmap.dart';
 import 'package:buddbull/features/performance/presentation/widgets/log_card.dart';
@@ -40,12 +40,13 @@ class _PerformanceScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxScrolled) => [
           SliverAppBar(
-            title: const Text(AppStrings.navPerformance),
+            title: Text(l10n.navPerformance),
             floating: true,
             pinned: true,
             actions: [
@@ -53,7 +54,7 @@ class _PerformanceScreenState
                 icon: const Icon(Icons.add_circle_outline_rounded),
                 onPressed: () =>
                     context.push('/performance/log/create'),
-                tooltip: 'Log a session',
+                tooltip: l10n.tooltipLogSession,
               ),
             ],
             bottom: TabBar(
@@ -71,10 +72,10 @@ class _PerformanceScreenState
               unselectedLabelStyle: AppTextStyles.labelLarge.copyWith(
                 fontWeight: FontWeight.w500,
               ),
-              tabs: const [
-                Tab(text: 'Overview'),
-                Tab(text: 'Logs'),
-                Tab(text: 'Stats'),
+              tabs: [
+                Tab(text: l10n.overviewTab),
+                Tab(text: l10n.logsTab),
+                Tab(text: l10n.statsTab),
               ],
             ),
           ),
@@ -98,6 +99,7 @@ class _OverviewTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final statsAsync = ref.watch(performanceStatsProvider);
 
     return statsAsync.when(
@@ -139,7 +141,7 @@ class _OverviewTab extends ConsumerWidget {
                     child: _SummaryTile(
                       icon: Icons.sports_rounded,
                       value: '${stats.totalSessions}',
-                      label: 'Total sessions',
+                      label: l10n.totalSessions,
                       color: AppColors.primary,
                     ),
                   ),
@@ -147,7 +149,7 @@ class _OverviewTab extends ConsumerWidget {
                     child: _SummaryTile(
                       icon: Icons.timer_outlined,
                       value: _formatMinutes(stats.totalMinutes),
-                      label: 'Total time',
+                      label: l10n.totalTime,
                       color: AppColors.info,
                     ),
                   ),
@@ -203,6 +205,7 @@ class _LogsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final logsAsync = ref.watch(performanceLogsProvider);
     final deleteState = ref.watch(deleteLogProvider);
 
@@ -231,7 +234,7 @@ class _LogsTab extends ConsumerWidget {
                   const Text('📊',
                       style: TextStyle(fontSize: 52)),
                   const SizedBox(height: 16),
-                  const Text('No sessions yet',
+                  Text(l10n.noSessionsYet,
                       style: AppTextStyles.headlineSmall),
                   const SizedBox(height: 8),
                   Text(
@@ -246,7 +249,7 @@ class _LogsTab extends ConsumerWidget {
                         .push('/performance/log/create'),
                     icon: const Icon(Icons.add_rounded,
                         size: 18),
-                    label: const Text('Log a session'),
+                    label: Text(l10n.actionLogSession),
                     style: FilledButton.styleFrom(
                         backgroundColor: AppColors.primary),
                   ),
@@ -294,6 +297,7 @@ class _StatsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final statsAsync = ref.watch(performanceStatsProvider);
 
     return statsAsync.when(
@@ -312,7 +316,7 @@ class _StatsTab extends ConsumerWidget {
           children: [
             // ── Personal bests ────────────────────────────
             if (stats.personalBests.isNotEmpty) ...[
-              const Text('Personal Bests',
+              Text(l10n.personalBests,
                   style: AppTextStyles.titleMedium),
               const SizedBox(height: 12),
               ...stats.personalBests.map(
@@ -323,7 +327,7 @@ class _StatsTab extends ConsumerWidget {
 
             // ── Sport breakdown ───────────────────────────
             if (stats.sportBreakdown.isNotEmpty) ...[
-              const Text('By sport', style: AppTextStyles.titleMedium),
+              Text(l10n.bySport, style: AppTextStyles.titleMedium),
               const SizedBox(height: 12),
               _Card(
                 child: _SportBreakdown(
@@ -430,6 +434,7 @@ class _SportBreakdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final total =
         breakdown.values.fold(0, (a, b) => a + b);
     final sorted = breakdown.entries.toList()
@@ -438,7 +443,7 @@ class _SportBreakdown extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('By sport', style: AppTextStyles.titleSmall),
+        Text(l10n.bySport, style: AppTextStyles.titleSmall),
         const SizedBox(height: 12),
         ...sorted.map((entry) {
           final fraction = total > 0 ? entry.value / total : 0.0;

@@ -1,0 +1,988 @@
+{
+  "@@locale": "he",
+  "appName": "BuddBull",
+  "appTagline": "מצא את הקבוצה שלך. שחק את המשחק שלך.",
+  "welcomeBack": "ברוך שובך!",
+  "loginSubtitle": "היכנס לחשבון BuddBull שלך",
+  "emailLabel": "כתובת אימייל",
+  "emailHint": "you@example.com",
+  "passwordLabel": "סיסמה",
+  "passwordHint": "הסיסמה שלך",
+  "forgotPassword": "שכחת סיסמה?",
+  "loginButton": "התחבר",
+  "noAccount": "אין לך חשבון?",
+  "signUpLink": "הירשם",
+  "createAccount": "צור חשבון",
+  "registerSubtitle": "הצטרף ל-BuddBull — בחינם!",
+  "firstNameLabel": "שם פרטי",
+  "firstNameHint": "אלכס",
+  "lastNameLabel": "שם משפחה",
+  "lastNameHint": "ריברה",
+  "usernameLabel": "שם משתמש",
+  "usernameHint": "@username",
+  "confirmPasswordLabel": "אימות סיסמה",
+  "confirmPasswordHint": "חזור על הסיסמה",
+  "roleLabel": "אני רוצה…",
+  "rolePlayer": "להצטרף למשחקים כשחקן",
+  "roleOrganizer": "לארגן ולהוביל משחקים",
+  "termsAgreement": "אני מסכים ל",
+  "termsOfService": "תנאי השירות",
+  "andText": " ול",
+  "privacyPolicy": "מדיניות הפרטיות",
+  "registerButton": "צור חשבון",
+  "haveAccount": "כבר יש לך חשבון?",
+  "signInLink": "התחבר",
+  "resetPassword": "איפוס סיסמה",
+  "forgotSubtitle": "הזן את האימייל שלך ונשלח לך קישור לאיפוס.",
+  "sendResetLink": "שלח קישור איפוס",
+  "backToLogin": "חזרה להתחברות",
+  "resetEmailSent": "אימייל איפוס נשלח! בדוק את תיבת הדואר.",
+  "myProfile": "הפרופיל שלי",
+  "editProfile": "עריכת פרופיל",
+  "bioLabel": "ביוגרפיה",
+  "bioHint": "ספר לנו קצת על עצמך…",
+  "cityLabel": "עיר",
+  "neighborhoodLabel": "שכונה",
+  "radiusLabel": "רדיוס חיפוש (ק\"מ)",
+  "sportsInterests": "ספורט ורמות מיומנות",
+  "addSport": "+ הוסף ספורט",
+  "saveChanges": "שמור שינויים",
+  "changePhoto": "שנה תמונה",
+  "friends": "חברים",
+  "gamesPlayed": "משחקים",
+  "rating": "דירוג",
+  "streakDays": "רצף",
+  "beginner": "מתחיל",
+  "amateur": "חובבן",
+  "intermediate": "בינוני",
+  "advanced": "מתקדם",
+  "professional": "מקצועי",
+  "loading": "טוען…",
+  "retry": "נסה שוב",
+  "cancel": "ביטול",
+  "save": "שמור",
+  "delete": "מחק",
+  "confirm": "אישור",
+  "yes": "כן",
+  "no": "לא",
+  "close": "סגור",
+  "fieldRequired": "שדה זה נדרש.",
+  "invalidEmail": "הזן כתובת אימייל תקינה.",
+  "passwordTooShort": "הסיסמה חייבת להכיל לפחות 8 תווים.",
+  "passwordsNoMatch": "הסיסמאות אינן תואמות.",
+  "usernameTooShort": "שם המשתמש חייב להכיל לפחות 3 תווים.",
+  "acceptTerms": "עליך לאשר את תנאי השירות.",
+  "onboardingWelcomeMessage": "ברוך הבא ל-BuddBull! בוא נכיר אותך טוב יותר.",
+  "onboardingSportsSection": "מהם הספורט האהובים עליך? הקש לבחירה — אפשר לשנות בכל עת.",
+  "onboardingSkillPerSport": "הרמה שלך בכל ספורט",
+  "onboardingNext": "הבא",
+  "onboardingBack": "חזרה",
+  "onboardingSkip": "דלג",
+  "onboardingLocationTitle": "איפה אתה גר?",
+  "onboardingLocationSubtitle": "אנחנו משתמשים באזור שלך כדי להתאים משחקים קרובים. בחר עיר להמשך.",
+  "onboardingLocationCityHint": "התחל להקליד את העיר…",
+  "onboardingLocationNeighborhoodHint": "אופציונלי — שכונה או אזור",
+  "locationPermissionDenied": "נדרשת גישה למיקום כדי למצוא משחקים קרובים. אפשר להפעיל בהגדרות או לחפש לפי עיר.",
+  "onboardingProfileTitle": "הפוך אותו לשלך",
+  "onboardingProfileSubtitle": "העלה תמונה או בחר אווטאר Buddy. תמיד אפשר לעדכן מאוחר יותר.",
+  "onboardingUploadPhoto": "העלה מהמכשיר",
+  "onboardingOrPickAvatar": "או בחר אווטאר התחלתי",
+  "onboardingFinish": "בוא נתחיל",
+  "genericError": "משהו השתבש. נסה שוב.",
+  "networkError": "אין חיבור לאינטרנט. בדוק את הרשת.",
+  "serverError": "שגיאת שרת. נסה שוב מאוחר יותר.",
+  "sessionExpired": "פג תוקף ההתחברות. התחבר שוב.",
+  "unauthorised": "אין לך הרשאה לפעולה זו.",
+  "resourceNotFound": "המשאב לא נמצא.",
+  "conflictError": "אירעה התנגשות.",
+  "badRequestError": "בקשה לא תקינה.",
+  "validationError": "אימות נכשל.",
+  "rateLimitedError": "יותר מדי בקשות. האט קצת.",
+  "authFailed": "האימות נכשל. נסה שוב.",
+  "navHome": "בית",
+  "navGames": "משחקים",
+  "navChat": "הודעות",
+  "navPerformance": "ביצועים",
+  "navProfile": "פרופיל",
+  "oops": "אופס!",
+  "language": "שפה",
+  "languageEnglish": "English",
+  "languageHebrew": "עברית",
+  "searchGamesPlayersHint": "חפש משחקים, שחקנים…",
+  "tooltipMyCalendar": "היומן שלי",
+  "fabAddGame": "הוסף משחק",
+  "fabLogTraining": "רשום אימון",
+  "pageNotFound": "הדף לא נמצא",
+  "settingsTitle": "הגדרות",
+  "pushNotifications": "התראות דחיפה",
+  "pushNotificationsSubtitle": "קבל התראות על פעילויות",
+  "activityReminders": "תזכורות פעילות",
+  "activityRemindersSubtitle": "הזכר לי לפני פעילויות מתוזמנות",
+  "darkMode": "מצב כהה",
+  "darkModeSubtitle": "השתמש בערכת נושא כהה",
+  "appVersion": "גרסת האפליקציה",
+  "notificationsEnabled": "התראות הופעלו",
+  "notificationsDisabled": "התראות כובו",
+  "remindersEnabled": "תזכורות פעילות הופעלו",
+  "remindersDisabled": "תזכורות פעילות כובו",
+  "darkModeEnabled": "מצב כהה הופעל",
+  "darkModeDisabled": "מצב כהה כובה",
+  "tooltipAdminDashboard": "לוח בקרה מנהל",
+  "tooltipEditProfile": "עריכת פרופיל",
+  "tooltipSignOut": "התנתק",
+  "mutualConnections": "{count, plural, =0{אין חיבורים משותפים} =1{חיבור משותף אחד} other{{count} חיבורים משותפים}}",
+  "@mutualConnections": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sectionAbout": "אודות",
+  "sectionLocation": "מיקום",
+  "locationRadiusKm": "רדיוס {radius} ק\"מ",
+  "@locationRadiusKm": {
+    "placeholders": {
+      "radius": {
+        "type": "int"
+      }
+    }
+  },
+  "sectionRecentActivity": "פעילות אחרונה",
+  "dialogSignOutTitle": "להתנתק?",
+  "dialogSignOutBody": "תצטרך להתחבר שוב.",
+  "signOut": "התנתק",
+  "winRatePercent": "אחוז ניצחונות",
+  "communityAverageRating": "ממוצע קהילתי {rating} מ-{count} {ratingWord}",
+  "@communityAverageRating": {
+    "placeholders": {
+      "rating": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      },
+      "ratingWord": {
+        "type": "String"
+      }
+    }
+  },
+  "ratingSingular": "דירוג",
+  "ratingsPlural": "דירוגים",
+  "sectionSports": "ספורט",
+  "sectionRatingsSummary": "סיכום דירוגים",
+  "metricOverall": "כללי",
+  "metricReliability": "אמינות",
+  "metricBehavior": "התנהגות",
+  "sectionUpcomingGames": "משחקים קרובים",
+  "snackFriendRequestSent": "בקשת חברות נשלחה",
+  "snackNowFriends": "אתם חברים עכשיו",
+  "snackFriendRequestDeclined": "בקשת החברות נדחתה",
+  "snackSignInToMessage": "התחבר כדי לשלוח הודעה.",
+  "snackCannotMessageSelf": "לא ניתן לשלוח הודעה לעצמך.",
+  "buttonMessage": "הודעה",
+  "buttonRequestSent": "בקשה נשלחה",
+  "buttonAccept": "אשר",
+  "buttonDecline": "דחה",
+  "buttonAddFriend": "הוסף חבר",
+  "noRatingsYet": "אין דירוגים עדיין",
+  "activityDurationMinutes": "{minutes} דק'",
+  "@activityDurationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "greetingGoodMorning": "בוקר טוב",
+  "greetingGoodAfternoon": "צהריים טובים",
+  "greetingGoodEvening": "ערב טוב",
+  "greetingWithName": "{greeting}, {firstName}!",
+  "@greetingWithName": {
+    "placeholders": {
+      "greeting": {
+        "type": "String"
+      },
+      "firstName": {
+        "type": "String"
+      }
+    }
+  },
+  "greetingNoName": "{greeting}!",
+  "@greetingNoName": {
+    "placeholders": {
+      "greeting": {
+        "type": "String"
+      }
+    }
+  },
+  "homeCollapsedTitleFallback": "BuddBull",
+  "tooltipNotifications": "התראות",
+  "statGames": "משחקים",
+  "statRating": "דירוג",
+  "statStreak": "רצף",
+  "streakDaysSuffix": "{days} ימים",
+  "@streakDaysSuffix": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "sectionMyUpcomingGames": "המשחקים הקרובים שלי",
+  "actionSeeAll": "הצג הכל",
+  "sectionExploreNearYou": "גלה בקרבתך",
+  "actionBrowseAll": "עיין בהכל",
+  "sectionQuickActions": "פעולות מהירות",
+  "quickActionFindGame": "מצא משחק",
+  "quickActionLogSession": "רשום אימון",
+  "quickActionCreateGame": "צור משחק",
+  "emptyNoRecentSessions": "אין אימונים אחרונים",
+  "actionLogSession": "רשום אימון",
+  "emptyNoUpcomingGames": "אין משחקים קרובים",
+  "actionBrowseGames": "עיין במשחקים",
+  "emptyCouldntLoadNearbyGames": "לא ניתן לטעון משחקים קרובים",
+  "emptyNothingNearby": "אין כרגע משהו בקרבת מקום",
+  "tooltipCreateGame": "צור משחק",
+  "searchGamesHint": "חפש משחקים, ספורט, מיקומים…",
+  "tooltipFilter": "סינון",
+  "sportFilterAll": "הכל",
+  "sportFootball": "כדורגל",
+  "sportBasketball": "כדורסל",
+  "sportTennis": "טניס",
+  "sportRunning": "ריצה",
+  "sportSwimming": "שחייה",
+  "sportCycling": "אופניים",
+  "sportVolleyball": "כדורעף",
+  "sportCricket": "קריקט",
+  "filtersActive": "{count, plural, =1{מסנן אחד פעיל} other{{count} מסננים פעילים}}",
+  "@filtersActive": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clearFilters": "נקה",
+  "emptyNoGamesFound": "לא נמצאו משחקים",
+  "emptyTryAdjustingFilters": "נסה לשנות את המסננים או ליצור משחק חדש.",
+  "buttonCreateGame": "צור משחק",
+  "filterGames": "סינון משחקים",
+  "clearAll": "נקה הכל",
+  "sport": "ספורט",
+  "nearMe": "קרוב אלי",
+  "requiredSkillLevel": "רמת מיומנות נדרשת",
+  "createGameTitle": "צור משחק",
+  "gameTitleLabel": "שם המשחק *",
+  "descriptionLabel": "תיאור",
+  "dateAndTime": "תאריך ושעה *",
+  "durationHours": "משך: {hours} ש' {minutes} דק'",
+  "@durationHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "durationMinutesOnly": "{minutes} דק'",
+  "@durationMinutesOnly": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "locationRequired": "מיקום *",
+  "addressLabel": "כתובת *",
+  "venueNameLabel": "שם המקום",
+  "maxPlayersLabel": "מקסימום שחקנים: {count}",
+  "@maxPlayersLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "visibility": "נראות",
+  "gameCreatedSuccess": "המשחק נוצר! 🎉",
+  "editGameTitle": "עריכת משחק",
+  "gameUpdatedSuccess": "המשחק עודכן!",
+  "myCalendar": "היומן שלי",
+  "today": "היום",
+  "noGamesOnDay": "אין משחקים ביום זה",
+  "joinRequestDeclinedSnack": "בקשת ההצטרפות נדחתה. אפשר לנסות שוב למטה.",
+  "infoLabelDate": "תאריך",
+  "infoLabelTime": "שעה",
+  "infoLabelDuration": "משך",
+  "sectionAboutThisGame": "אודות המשחק",
+  "sectionOrganiser": "מארגן",
+  "sectionPlayers": "שחקנים",
+  "sectionMatchResult": "תוצאת המשחק",
+  "sectionTags": "תגיות",
+  "mapPreviewUnavailable": "תצוגת מפה לא זמינה",
+  "playerListApproved": "מאושרים",
+  "playerListPendingRequests": "בקשות ממתינות",
+  "playerYouSuffix": "(את/ה)",
+  "buttonRate": "דרג",
+  "tooltipApprove": "אשר",
+  "tooltipKick": "הסר",
+  "ratePromptBanner": "דרג את המשתתפים למטה כדי לשתף איך עבר המשחק.",
+  "matchResultScore": "תוצאה: {score}",
+  "@matchResultScore": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "matchResultWinner": "מנצח: {winner}",
+  "@matchResultWinner": {
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
+  },
+  "gameStatusOpen": "פתוח",
+  "gameStatusFull": "מלא",
+  "gameStatusLive": "חי",
+  "gameStatusCompleted": "הושלם",
+  "gameStatusCancelled": "בוטל",
+  "reportGame": "דווח על משחק",
+  "buttonChat": "צ'אט",
+  "buttonRateParticipants": "דרג משתתפים",
+  "buttonLeaveGame": "עזוב משחק",
+  "buttonGameCompleted": "המשחק הושלם",
+  "buttonManageOrganiser": "ניהול (מארגן)",
+  "buttonGameIsFull": "המשחק מלא",
+  "buttonRequestToJoin": "בקש להצטרף",
+  "buttonJoinGame": "הצטרף למשחק",
+  "inviteBannerTitle": "הוזמנת למשחק זה",
+  "buttonAcceptInvitation": "קבל הזמנה",
+  "pendingApprovalMessage": "בקשתך ממתינה לאישור",
+  "buttonWithdraw": "משוך בקשה",
+  "inviteFriendsSheetTitle": "הזמן חברים",
+  "inviteFriendsEmptyState": "הוסף חברים מהפרופיל שלהם כדי להזמין למשחקים.",
+  "buttonInvited": "הוזמן",
+  "snackInvitedFriend": "הוזמן {friendName}",
+  "@snackInvitedFriend": {
+    "placeholders": {
+      "friendName": {
+        "type": "String"
+      }
+    }
+  },
+  "snackRevokedInvite": "ההזמנה ל-{friendName} בוטלה",
+  "@snackRevokedInvite": {
+    "placeholders": {
+      "friendName": {
+        "type": "String"
+      }
+    }
+  },
+  "manageInviteFriends": "הזמן חברים",
+  "manageInviteFriendsSubtitle": "שלח הזמנה לחברים מאושרים",
+  "manageEditGame": "עריכת משחק",
+  "manageViewSummaryRatePlayers": "צפה בסיכום / דרג שחקנים",
+  "manageViewSummarySubtitle": "המשחק הסתיים — פתח את תהליך הדירוג למשתתפים.",
+  "manageCompleteGame": "סיים משחק",
+  "manageCompleteGameSubtitle": "סמן את המשחק כהושלם ופתח דירוגים למשתתפים.",
+  "manageGameAlreadyCancelled": "המשחק כבר בוטל",
+  "manageCancelGame": "בטל משחק",
+  "snackGameCancelled": "המשחק בוטל.",
+  "dialogCancelGameTitle": "לבטל משחק?",
+  "dialogCancelGameBody": "פעולה זו תסמן את המשחק כמבוטל לכל השחקנים.",
+  "dialogYesCancel": "כן, בטל",
+  "dialogCompleteGameTitle": "לסיים משחק?",
+  "dialogCompleteGameBody": "פעולה זו מסמנת את המשחק כהושלם, מעדכנת סטטיסטיקות ופותחת דירוג לכל השחקנים המאושרים. לא ניתן לבטל.",
+  "dialogNotYet": "לא עדיין",
+  "dialogMarkCompleted": "סמן כהושלם",
+  "snackCouldNotLoadPendingRatings": "לא ניתן לטעון דירוגים ממתינים. משוך לרענון ונסה שוב.",
+  "fallbackPlayerName": "שחקן",
+  "snackEveryoneRated": "כולם במשחק זה דורגו.",
+  "rateParticipantPickerTitle": "דרג משתתף",
+  "dontRateThisGame": "אל תדרג משחק זה",
+  "snackWontPromptToRate": "לא תתבקש לדרג משחק זה.",
+  "dialogCancelReasonTitle": "סיבת הביטול",
+  "cancelReasonHint": "למשל: מזג אוויר, בעיה במקום, לא מספיק שחקנים…",
+  "dialogBack": "חזרה",
+  "dialogCancelGameConfirm": "בטל משחק",
+  "messagesTitle": "הודעות",
+  "tooltipNewMessage": "הודעה חדשה",
+  "failedToLoadChats": "טעינת הצ'אטים נכשלה",
+  "chatTitle": "צ'אט",
+  "notParticipantInChat": "אינך עוד משתתף בצ'אט זה.",
+  "typeMessageHint": "הקלד הודעה...",
+  "messageEdited": "• נערך",
+  "messageDeleted": "ההודעה נמחקה",
+  "messageActionReply": "השב",
+  "messageActionCopyText": "העתק טקסט",
+  "messageActionPin": "הצמד הודעה",
+  "messageActionUnpin": "בטל הצמדה",
+  "messageActionDelete": "מחק",
+  "logSessionTitle": "רשום אימון",
+  "sessionLoggedSuccess": "האימון נרשם! 💪",
+  "newPersonalBestTitle": "🏅 שיא אישי חדש!",
+  "awesome": "מעולה!",
+  "sessionType": "סוג אימון *",
+  "outcome": "תוצאה",
+  "howDidYouPerform": "איך ביצעת? {rating}/5",
+  "@howDidYouPerform": {
+    "placeholders": {
+      "rating": {
+        "type": "int"
+      }
+    }
+  },
+  "howDidYouFeel": "איך הרגשת?",
+  "notes": "הערות",
+  "saveSession": "שמור אימון 💪",
+  "tooltipLogSession": "רשום אימון",
+  "totalSessions": "סה\"כ אימונים",
+  "totalTime": "סה\"כ זמן",
+  "noSessionsYet": "אין אימונים עדיין",
+  "personalBests": "שיאים אישיים",
+  "bySport": "לפי ספורט",
+  "winRateTrend": "מגמת אחוז ניצחונות",
+  "activity": "פעילות",
+  "less": "פחות",
+  "more": "יותר",
+  "notificationsTitle": "התראות",
+  "markAllRead": "סמן הכל כנקרא",
+  "snackAlreadyRatedPlayers": "כבר דירגת את השחקנים במשחק זה.",
+  "snackCouldNotUpdateFriendRequest": "לא ניתן לעדכן את בקשת החברות",
+  "snackJoinedGame": "הצטרפת למשחק.",
+  "snackInviteDeclined": "ההזמנה נדחתה.",
+  "snackActionFailed": "הפעולה נכשלה.",
+  "snackInvitationNoLongerValid": "ההזמנה כבר לא תקפה.",
+  "snackPlayerApproved": "השחקן אושר.",
+  "snackJoinRequestRejected": "בקשת ההצטרפות נדחתה.",
+  "buttonReject": "דחה",
+  "emptyNotificationsTitle": "הכל מעודכן",
+  "emptyNotificationsBody": "נודיע לך כשיקרה משהו חדש.",
+  "relativeTimeNow": "עכשיו",
+  "relativeTimeMinutes": "{minutes} דק'",
+  "@relativeTimeMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "relativeTimeHours": "{hours} ש'",
+  "@relativeTimeHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "relativeTimeDays": "{days} ימים",
+  "@relativeTimeDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "relativeTimeWeeks": "{weeks} שב'",
+  "@relativeTimeWeeks": {
+    "placeholders": {
+      "weeks": {
+        "type": "int"
+      }
+    }
+  },
+  "confirmReport": "אשר דיווח",
+  "continueAction": "המשך",
+  "submitReportTitle": "לשלוח דיווח?",
+  "goBack": "חזרה",
+  "submit": "שלח",
+  "reportSubmitted": "הדיווח נשלח. מנהלים יבדקו אותו בקרוב.",
+  "reportDetails": "פרטי הדיווח",
+  "reportTitleLabel": "כותרת",
+  "reportReasonLabel": "סיבה",
+  "closeSearch": "סגור חיפוש",
+  "searchSectionGames": "משחקים",
+  "searchSectionPlayers": "שחקנים",
+  "ratePlayerTitle": "דרג שחקן",
+  "ratingReliability": "אמינות",
+  "ratingReliabilityHint": "האם הגיע בזמן ועמד בהתחייבות?",
+  "ratingSportsmanship": "ספורטיביות",
+  "ratingSportsmanshipHint": "האם היה הוגן, מכבד וכיף לשחק איתו?",
+  "ratingCommentHint": "השאר תגובה (אופציונלי)...",
+  "ratingSubmitAnonymously": "שלח באנונימיות",
+  "ratingAnonymousHint": "שמך לא יוצג לשחקן זה",
+  "buttonSubmitRating": "שלח דירוג",
+  "snackRatingSubmitted": "הדירוג נשלח!",
+  "friendsTitle": "חברים",
+  "dialogUnfriendTitle": "להסיר חברות?",
+  "dialogUnfriendBody": "להסיר את {name} מהחברים? אפשר לשלוח בקשה חדשה מאוחר יותר.",
+  "@dialogUnfriendBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "buttonUnfriend": "הסר חברות",
+  "snackRemovedFromFriends": "הוסר {name} מהחברים",
+  "@snackRemovedFromFriends": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "emptyNoFriendsYet": "אין חברים עדיין.\nבקר בפרופיל של מישהו והקש הוסף חבר.",
+  "updateProfilePicture": "עדכן תמונת פרופיל",
+  "uploadFromGallery": "העלה מהגלריה",
+  "choosePresetAvatar": "בחר אווטאר מוכן",
+  "changePhotoOrAvatar": "שנה תמונה או אווטאר",
+  "personalInfo": "מידע אישי",
+  "dialogAddSportTitle": "הוסף ספורט",
+  "add": "הוסף",
+  "deleteAccount": "מחק חשבון",
+  "dialogDeleteAccountTitle": "למחוק חשבון?",
+  "dialogDeleteAccountBody": "פעולה זו מוחקת לצמיתות את החשבון וכל הנתונים.",
+  "deletePermanently": "מחק לצמיתות",
+  "adminDashboard": "לוח בקרה",
+  "adminUsers": "משתמשים",
+  "adminReports": "דיווחים",
+  "adminSports": "ספורט",
+  "adminGames": "משחקים",
+  "failedToLoadDashboard": "טעינת לוח הבקרה נכשלה",
+  "periodLast7Days": "7 ימים אחרונים",
+  "periodLast30Days": "30 ימים אחרונים",
+  "periodLast90Days": "90 ימים אחרונים",
+  "sectionUsers": "משתמשים",
+  "statTotalUsers": "סה\"כ משתמשים",
+  "statActive30d": "פעילים (30 יום)",
+  "statNewPeriod": "חדשים (תקופה)",
+  "statBanned": "חסומים",
+  "statChurnRate": "שיעור נטישה",
+  "statChurnedUsersSubtitle": "{count} משתמשים",
+  "@statChurnedUsersSubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sectionRegistrations": "הרשמות",
+  "sectionGames": "משחקים",
+  "statTotalGames": "סה\"כ משחקים",
+  "statActive": "פעילים",
+  "statCompleted": "הושלמו",
+  "statCancelled": "בוטלו",
+  "statOngoing": "בתהליך",
+  "statScheduled": "מתוזמנים",
+  "sectionPerformance": "ביצועים",
+  "statTotalLogs": "סה\"כ רשומות",
+  "sectionTopSports": "ספורט מוביל",
+  "globalBroadcast": "שידור כללי",
+  "broadcastTitleLabel": "כותרת",
+  "broadcastMessageBodyLabel": "גוף ההודעה",
+  "sendToAllUsers": "שלח לכל המשתמשים",
+  "snackBroadcastSent": "השידור נשלח!",
+  "snackBroadcastFailed": "השידור נכשל",
+  "searchUsersHint": "חפש לפי שם, משתמש או אימייל",
+  "failedToLoadUsers": "טעינת משתמשים נכשלה: {error}",
+  "@failedToLoadUsers": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToLoadGames": "טעינת משחקים נכשלה: {error}",
+  "@failedToLoadGames": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noGamesFoundAdmin": "לא נמצאו משחקים",
+  "tooltipCreateEvent": "צור אירוע",
+  "statusAll": "הכל",
+  "statusInProgress": "בטיפול",
+  "statusClosed": "סגור",
+  "statusUsers": "משתמשים",
+  "tooltipSortByDate": "מיין לפי תאריך",
+  "failedToLoadReports": "טעינת דיווחים נכשלה: {error}",
+  "@failedToLoadReports": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noReportsFound": "לא נמצאו דיווחים",
+  "adminGamesPlayedCount": "{count} משחקים שוחקו",
+  "@adminGamesPlayedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "adminStatusBanned": "חסום",
+  "adminStatusRestricted": "מוגבל",
+  "adminActionUnban": "בטל חסימה",
+  "adminActionBan": "חסום",
+  "adminActionUnrestrict": "בטל הגבלה",
+  "adminActionRestrict": "הגבל",
+  "adminActionDelete": "מחק",
+  "dialogDeleteUserTitle": "מחק משתמש",
+  "dialogDeleteUserBody": "לא ניתן לבטל פעולה זו.",
+  "extraPlayersCount": "+{count}",
+  "@extraPlayersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "overviewTab": "סקירה",
+  "logsTab": "יומן",
+  "statsTab": "סטטיסטיקה",
+  "sportRequired": "ספורט *",
+  "logTypeMatch": "משחק",
+  "logTypeTraining": "אימון",
+  "logTypeFitness": "כושר",
+  "outcomeWin": "ניצחון",
+  "outcomeLoss": "הפסד",
+  "outcomeDraw": "תיקו",
+  "outcomeWinBadge": "🏆 ניצחון",
+  "outcomeLossBadge": "❌ הפסד",
+  "outcomeDrawBadge": "🤝 תיקו",
+  "moodGreat": "מעולה",
+  "moodGood": "טוב",
+  "moodOk": "בסדר",
+  "moodTired": "עייף",
+  "moodInjured": "פצוע",
+  "moodExcellent": "מצוין",
+  "moodNeutral": "ניטרלי",
+  "moodBad": "רע",
+  "moodTerrible": "נורא",
+  "durationWithMinutes": "משך: {minutes} דק'",
+  "@durationWithMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "sliderMinutesLabel": "{minutes} דק'",
+  "@sliderMinutesLabel": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "notesHint": "מה הלך טוב? מה לשפר?",
+  "makeLogPublic": "הפוך רשומה זו לציבורית",
+  "newPersonalBestBody": "שברת את השיא הקודם שלך! המשך כך! 🎉",
+  "newPersonalBestsCount": "{count, plural, =1{שיא אישי חדש אחד!} other{{count} שיאים אישיים חדשים!}}",
+  "@newPersonalBestsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sessionsPerWeek": "אימונים בשבוע",
+  "chartSessionCount": "{count, plural, =1{אימון אחד} other{{count} אימונים}}",
+  "@chartSessionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statsPreviewUnlock": "תצוגה מקדימה של הסטטיסטיקה — רשום אימונים כדי לפתוח",
+  "warmingUp": "מתחמם",
+  "activeStreak": "רצף פעיל",
+  "daySingular": "יום",
+  "daysPlural": "ימים",
+  "personalBest": "שיא אישי",
+  "logSessionStartStreak": "רשום אימון היום כדי להתחיל רצף",
+  "streakGoalProgress": "{current} מתוך יעד של {goal} ימים · המשך כך!",
+  "@streakGoalProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "goal": {
+        "type": "int"
+      }
+    }
+  },
+  "heatmapNoActivity": "אין פעילות",
+  "heatmapSessionCount": "{count, plural, =1{אימון אחד} other{{count} אימונים}}",
+  "@heatmapSessionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dayWed": "ד'",
+  "dayFri": "ו'",
+  "monthJan": "ינו'",
+  "monthFeb": "פבר'",
+  "monthMar": "מרץ",
+  "monthApr": "אפר'",
+  "monthMay": "מאי",
+  "monthJun": "יוני",
+  "monthJul": "יולי",
+  "monthAug": "אוג'",
+  "monthSep": "ספט'",
+  "monthOct": "אוק'",
+  "monthNov": "נוב'",
+  "monthDec": "דצמ'",
+  "snackFriendRequestAccepted": "בקשת החברות אושרה",
+  "confirmReportBody": "האם אתה בטוח שברצונך לדווח על {targetName}? דיווחים כוזבים עלולים לגרום לפעולה נגד חשבונך.",
+  "@confirmReportBody": {
+    "placeholders": {
+      "targetName": {
+        "type": "String"
+      }
+    }
+  },
+  "reportTargetThisUser": "משתמש זה",
+  "reportTargetThisGame": "משחק זה",
+  "submitReportBody": "הדיווח שלך בשם \"{title}\" יישלח למנהלים לבדיקה.",
+  "@submitReportBody": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "reportTitleRequired": "כותרת נדרשת",
+  "reportReasonRequired": "סיבה נדרשת",
+  "reportUser": "דווח על משתמש",
+  "searchMinChars": "הקלד לפחות 2 תווים לחיפוש",
+  "searchNoResults": "לא נמצאו תוצאות",
+  "searchNoResultsHint": "נסה ספורט, עיר או שם שחקן אחר",
+  "searchDiscoverTitle": "גלה את המשחק הבא שלך",
+  "searchDiscoverSubtitle": "חפש לפי ספורט, עיר, שם משתמש או שם שחקן",
+  "searchHintNearbyGames": "משחקים קרובים",
+  "searchPartialGamesError": "משחקים: {error}",
+  "@searchPartialGamesError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "searchPartialPlayersError": "שחקנים: {error}",
+  "@searchPartialPlayersError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "gameTitleHint": "למשל: כדורגל 5 נגד 5 ביום ראשון",
+  "gameTitleRequired": "שם המשחק נדרש",
+  "gameDescriptionHint": "פרטים אופציונליים, כללים, מה להביא…",
+  "addressHint": "התחל להקליד כתובת...",
+  "addressSelectFromSuggestions": "בחר כתובת תקינה מההצעות",
+  "addressVerificationFailed": "לא ניתן לאמת כתובת זו. בחר כתובת אחרת.",
+  "pleaseSelectValidAddress": "בחר כתובת תקינה מההצעות.",
+  "neighborhoodHint": "למשל: שכונת XYZ",
+  "venueNameHint": "למשל: מגרש ספורט מרכזי",
+  "cityRequiredLabel": "עיר *",
+  "cityHint": "למשל: תל אביב",
+  "privateGameTitle": "משחק פרטי (דורש אישור)",
+  "privateGameSubtitleOn": "מוסתר מחיפוש ציבורי. כל בקשת הצטרפות תדרוש את אישורך.",
+  "privateGameSubtitleOff": "ציבורי — כולם יכולים למצוא ולהצטרף למשחק.",
+  "anySkillLevel": "כל רמה",
+  "createGameButton": "צור משחק 🎮",
+  "sectionDetails": "פרטים",
+  "editTitleLabel": "שם *",
+  "optionalHint": "אופציונלי",
+  "sectionSchedule": "לוח זמנים",
+  "addressSelectedHint": "כתובת שנבחרה",
+  "cityRequiredError": "עיר נדרשת.",
+  "venueShortLabel": "מקום",
+  "calendarNoGames": "אין משחקים",
+  "calendarGamesCount": "{count, plural, =1{משחק אחד} other{{count} משחקים}}",
+  "@calendarGamesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rosterLabel": "סגל",
+  "playersCountLabel": "{approved}/{max} שחקנים",
+  "@playersCountLabel": {
+    "placeholders": {
+      "approved": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "distanceMetersAway": "{meters} מ' מכאן",
+  "@distanceMetersAway": {
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
+  "distanceKmAway": "{distance} ק\"מ מכאן",
+  "@distanceKmAway": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      }
+    }
+  },
+  "pendingRequestsCount": "{count} ממתינים",
+  "@pendingRequestsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "placeCouldNotResolve": "לא ניתן לאתר מקום זה. נסה אחר.",
+  "adminNoUsersMatchSearch": "אין משתמשים התואמים ל-\"{query}\".",
+  "@adminNoUsersMatchSearch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "adminUserCount": "{count, plural, =1{משתמש אחד} other{{count} משתמשים}}",
+  "@adminUserCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "failedToLoadSports": "טעינת ספורט נכשלה: {error}",
+  "@failedToLoadSports": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "adminReporterLabel": "מדווח: @{username}",
+  "@adminReporterLabel": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "adminReportedUserLabel": "משתמש מדווח: @{username}",
+  "@adminReportedUserLabel": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "adminReportedGameLabel": "משחק מדווח: {title}",
+  "@adminReportedGameLabel": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "adminSearchMatchCount": "{count, plural, =1{התאמה אחת} other{{count} התאמות}}",
+  "@adminSearchMatchCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "adminRecentUsersTotal": "משתמשים אחרונים ({total} סה\"כ)",
+  "@adminRecentUsersTotal": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "adminViewAllResultsInUsers": "הצג את כל {total} התוצאות במשתמשים",
+  "@adminViewAllResultsInUsers": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "chatTypingSingle": "{names} מקליד...",
+  "@chatTypingSingle": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "chatTypingMultiple": "{names} מקלידים...",
+  "@chatTypingMultiple": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "replyingToName": "משיב ל-{name}",
+  "@replyingToName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "chatMembersCount": "{count, plural, =1{חבר אחד} other{{count} חברים}}",
+  "@chatMembersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sectionAppearance": "מראה",
+  "sectionNotifications": "התראות",
+  "relativeYesterday": "אתמול",
+  "emptyNoMessagesYet": "אין הודעות עדיין",
+  "pinnedMessageLabel": "הודעה מוצמדת",
+  "emptyConversationsHint": "התחל שיחה על ידי לחיצה על סמל העריכה למעלה או פתיחת משחק ולחיצה על צ'אט.",
+  "emptyNoConversations": "אין שיחות עדיין",
+  "adminOpenFullUsersList": "פתח רשימת משתמשים מלאה",
+  "adminNoUsersInDatabase": "אין משתמשים במסד הנתונים עדיין.",
+  "adminSearchUserPrompt": "הקלד כדי למצוא משתמש ולנהל את החשבון שלו.",
+  "adminNotesLabel": "הערות מנהל",
+  "statusLabel": "סטטוס",
+  "fallbackUnknown": "לא ידוע",
+  "fieldIconLabel": "אייקון",
+  "fieldNameLabel": "שם",
+  "adminEditSport": "עריכת ספורט",
+  "adminDeactivateSport": "השבת",
+  "adminEdit": "ערוך",
+  "adminSportInactive": "לא פעיל",
+  "adminSportActive": "פעיל",
+  "adminNoSportsYet": "אין ספורט עדיין",
+  "adminNoUsersFound": "לא נמצאו משתמשים"
+}

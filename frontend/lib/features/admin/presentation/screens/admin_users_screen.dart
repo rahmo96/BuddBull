@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:buddbull/core/constants/app_colors.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/admin/presentation/widgets/admin_user_tile.dart';
 import 'package:buddbull/features/admin/providers/admin_provider.dart';
 import 'package:flutter/material.dart';
@@ -41,6 +42,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final usersAsync = ref.watch(adminUsersProvider(_search));
 
     return Column(
@@ -50,7 +52,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
           child: TextField(
             controller: _searchCtrl,
             decoration: InputDecoration(
-              hintText: 'Search by name, username, or email',
+              hintText: l10n.searchUsersHint,
               prefixIcon: const Icon(Icons.search),
               suffixIcon: _searchCtrl.text.isEmpty
                   ? null
@@ -74,7 +76,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
         Expanded(
           child: usersAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Failed to load users: $e')),
+            error: (e, _) => Center(child: Text(l10n.failedToLoadUsers('$e'))),
             data: (data) {
               final users = (data['users'] as List? ?? [])
                   .whereType<Map>()
@@ -84,7 +86,9 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
               if (users.isEmpty) {
                 return Center(
                   child: Text(
-                    _search.isEmpty ? 'No users found' : 'No users match "$_search".',
+                    _search.isEmpty
+                        ? l10n.adminNoUsersFound
+                        : l10n.adminNoUsersMatchSearch(_search),
                   ),
                 );
               }
@@ -97,7 +101,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                   itemBuilder: (_, i) {
                     if (i == 0) {
                       return Text(
-                        '$total user${total == 1 ? '' : 's'}',
+                        l10n.adminUserCount(total),
                         style: Theme.of(context).textTheme.labelMedium?.copyWith(
                               color: AppColors.textSecondary,
                             ),

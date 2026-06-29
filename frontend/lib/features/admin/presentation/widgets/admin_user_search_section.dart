@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/admin/presentation/widgets/admin_user_tile.dart';
 import 'package:buddbull/features/admin/providers/admin_provider.dart';
@@ -73,6 +74,7 @@ class _AdminUserSearchSectionState extends ConsumerState<AdminUserSearchSection>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final hasQuery = _search.isNotEmpty;
     final shouldLoad = hasQuery || widget.showRecentWhenEmpty;
     final usersAsync = shouldLoad ? ref.watch(adminUsersProvider(_search)) : null;
@@ -83,7 +85,7 @@ class _AdminUserSearchSectionState extends ConsumerState<AdminUserSearchSection>
         TextField(
           controller: _searchCtrl,
           decoration: InputDecoration(
-            hintText: 'Search by name, username, or email',
+            hintText: l10n.searchUsersHint,
             prefixIcon: const Icon(Icons.search),
             suffixIcon: _searchCtrl.text.isEmpty
                 ? null
@@ -107,7 +109,7 @@ class _AdminUserSearchSectionState extends ConsumerState<AdminUserSearchSection>
         const SizedBox(height: 12),
         if (!shouldLoad)
           Text(
-            'Type to find a user and manage their account.',
+            l10n.adminSearchUserPrompt,
             style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
           )
         else
@@ -119,7 +121,7 @@ class _AdminUserSearchSectionState extends ConsumerState<AdminUserSearchSection>
             error: (e, _) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
-                'Could not load users: $e',
+                l10n.failedToLoadUsers('$e'),
                 style: AppTextStyles.caption.copyWith(color: AppColors.error),
               ),
             ),
@@ -136,7 +138,9 @@ class _AdminUserSearchSectionState extends ConsumerState<AdminUserSearchSection>
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
-                    hasQuery ? 'No users match "$_search".' : 'No users in the database yet.',
+                    hasQuery
+                        ? l10n.adminNoUsersMatchSearch(_search)
+                        : l10n.adminNoUsersInDatabase,
                     style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
                   ),
                 );
@@ -147,8 +151,8 @@ class _AdminUserSearchSectionState extends ConsumerState<AdminUserSearchSection>
                 children: [
                   Text(
                     hasQuery
-                        ? '$total match${total == 1 ? '' : 'es'}'
-                        : 'Recent users ($total total)',
+                        ? l10n.adminSearchMatchCount(total)
+                        : l10n.adminRecentUsersTotal(total),
                     style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 8),
@@ -160,13 +164,13 @@ class _AdminUserSearchSectionState extends ConsumerState<AdminUserSearchSection>
                   ),
                   if (widget.showSeeAllLink && (hiddenCount > 0 || !hasQuery))
                     Align(
-                      alignment: Alignment.centerLeft,
+                      alignment: AlignmentDirectional.centerStart,
                       child: TextButton(
                         onPressed: () => context.go(Routes.adminUsers),
                         child: Text(
                           hasQuery && hiddenCount > 0
-                              ? 'View all $total results in Users'
-                              : 'Open full Users list',
+                              ? l10n.adminViewAllResultsInUsers(total)
+                              : l10n.adminOpenFullUsersList,
                         ),
                       ),
                     ),

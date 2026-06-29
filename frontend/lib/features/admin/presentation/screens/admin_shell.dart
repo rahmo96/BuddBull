@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -11,27 +12,22 @@ class AdminShell extends StatelessWidget {
 
   static const _sections = [
     _AdminSection(
-      label: 'Dashboard',
       icon: Icons.dashboard_outlined,
       route: Routes.adminDashboard,
     ),
     _AdminSection(
-      label: 'Users',
       icon: Icons.people_outline,
       route: Routes.adminUsers,
     ),
     _AdminSection(
-      label: 'Reports',
       icon: Icons.flag_outlined,
       route: Routes.adminReports,
     ),
     _AdminSection(
-      label: 'Sports',
       icon: Icons.sports_outlined,
       route: Routes.adminSports,
     ),
     _AdminSection(
-      label: 'Games',
       icon: Icons.event_outlined,
       route: Routes.adminGames,
     ),
@@ -42,6 +38,18 @@ class AdminShell extends StatelessWidget {
       if (location.startsWith(_sections[i].route)) return i;
     }
     return 0;
+  }
+
+  String _sectionLabel(BuildContext context, String route) {
+    final l10n = context.l10n;
+    return switch (route) {
+      Routes.adminDashboard => l10n.adminDashboard,
+      Routes.adminUsers => l10n.adminUsers,
+      Routes.adminReports => l10n.adminReports,
+      Routes.adminSports => l10n.adminSports,
+      Routes.adminGames => l10n.adminGames,
+      _ => route,
+    };
   }
 
   void _exitAdmin(BuildContext context) {
@@ -67,7 +75,10 @@ class AdminShell extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: AppColors.background,
           elevation: 0,
-          title: Text(_sections[selected].label, style: AppTextStyles.titleLarge),
+          title: Text(
+            _sectionLabel(context, _sections[selected].route),
+            style: AppTextStyles.titleLarge,
+          ),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => _exitAdmin(context),
@@ -81,7 +92,7 @@ class AdminShell extends StatelessWidget {
               .map(
                 (s) => NavigationDestination(
                   icon: Icon(s.icon),
-                  label: s.label,
+                  label: _sectionLabel(context, s.route),
                 ),
               )
               .toList(),
@@ -93,12 +104,10 @@ class AdminShell extends StatelessWidget {
 
 class _AdminSection {
   const _AdminSection({
-    required this.label,
     required this.icon,
     required this.route,
   });
 
-  final String label;
   final IconData icon;
   final String route;
 }

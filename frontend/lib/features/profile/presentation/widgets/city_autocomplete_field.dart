@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/games/data/game_repository.dart';
 import 'package:buddbull/features/profile/presentation/widgets/location_selected_row.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
@@ -133,7 +134,7 @@ class _CityAutocompleteFieldState extends ConsumerState<CityAutocompleteField> {
       widget.onCitySelected(location.city);
     } catch (e) {
       if (!mounted) return;
-      showErrorSnackBar(context, 'Could not resolve this place. Try another.');
+      showErrorSnackBar(context, context.l10n.placeCouldNotResolve);
     } finally {
       if (mounted) setState(() => _isResolving = false);
     }
@@ -149,7 +150,7 @@ class _CityAutocompleteFieldState extends ConsumerState<CityAutocompleteField> {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: _exitEditing,
-              child: const Text('Cancel'),
+              child: Text(context.l10n.cancel),
             ),
           ),
         BbTextField(

@@ -1,6 +1,8 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/admin/providers/admin_provider.dart';
+import 'package:buddbull/l10n/app_localizations.dart';
 import 'package:buddbull/features/reports/data/report_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +21,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final params = AdminReportsParams(
       status: _status,
       targetType: _targetType,
@@ -34,39 +37,39 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
           child: Row(
             children: [
               _FilterChip(
-                label: 'All',
+                label: l10n.statusAll,
                 selected: _status == null,
                 onSelected: () => setState(() => _status = null),
               ),
               _FilterChip(
-                label: 'Open',
+                label: l10n.gameStatusOpen,
                 selected: _status == 'open',
                 onSelected: () => setState(() => _status = 'open'),
               ),
               _FilterChip(
-                label: 'In Progress',
+                label: l10n.statusInProgress,
                 selected: _status == 'in_progress',
                 onSelected: () => setState(() => _status = 'in_progress'),
               ),
               _FilterChip(
-                label: 'Closed',
+                label: l10n.statusClosed,
                 selected: _status == 'closed',
                 onSelected: () => setState(() => _status = 'closed'),
               ),
               const SizedBox(width: 8),
               _FilterChip(
-                label: 'Users',
+                label: l10n.statusUsers,
                 selected: _targetType == 'user',
                 onSelected: () => setState(() => _targetType = 'user'),
               ),
               _FilterChip(
-                label: 'Games',
+                label: l10n.adminGames,
                 selected: _targetType == 'game',
                 onSelected: () => setState(() => _targetType = 'game'),
               ),
               const SizedBox(width: 8),
               IconButton(
-                tooltip: 'Sort by date',
+                tooltip: l10n.tooltipSortByDate,
                 onPressed: () => setState(
                   () => _sort = _sort == '-createdAt' ? 'createdAt' : '-createdAt',
                 ),
@@ -82,14 +85,14 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
         Expanded(
           child: reportsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Failed to load reports: $e')),
+            error: (e, _) => Center(child: Text(l10n.failedToLoadReports('$e'))),
             data: (data) {
               final reports = (data['reports'] as List? ?? [])
                   .whereType<Map<String, dynamic>>()
                   .map(ReportModel.fromJson)
                   .toList();
               if (reports.isEmpty) {
-                return const Center(child: Text('No reports found'));
+                return Center(child: Text(l10n.noReportsFound));
               }
               return RefreshIndicator(
                 onRefresh: () => ref.refresh(adminReportsProvider(params).future),
@@ -111,6 +114,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
   }
 
   Future<void> _openDetail(ReportModel report, AdminReportsParams params) async {
+    final l10n = context.l10n;
     final notesCtrl = TextEditingController(text: report.adminNotes ?? '');
     var status = report.status;
 
@@ -138,13 +142,19 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                   Text(report.title, style: AppTextStyles.titleMedium),
                   const SizedBox(height: 8),
                   Text(
-                    'Reporter: @${report.reporterUsername ?? 'unknown'}',
+                    l10n.adminReporterLabel(
+                      report.reporterUsername ?? l10n.fallbackUnknown,
+                    ),
                     style: AppTextStyles.bodySmall,
                   ),
                   Text(
                     report.targetType == 'user'
-                        ? 'Reported user: @${report.reportedUsername ?? 'unknown'}'
-                        : 'Reported game: ${report.reportedGameTitle ?? 'unknown'}',
+                        ? l10n.adminReportedUserLabel(
+                            report.reportedUsername ?? l10n.fallbackUnknown,
+                          )
+                        : l10n.adminReportedGameLabel(
+                            report.reportedGameTitle ?? l10n.fallbackUnknown,
+                          ),
                     style: AppTextStyles.bodySmall,
                   ),
                   const SizedBox(height: 8),
@@ -152,17 +162,17 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     initialValue: status,
-                    decoration: const InputDecoration(
-                      labelText: 'Status',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.statusLabel,
+                      border: const OutlineInputBorder(),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'open', child: Text('Open')),
+                    items: [
+                      DropdownMenuItem(value: 'open', child: Text(l10n.gameStatusOpen)),
                       DropdownMenuItem(
                         value: 'in_progress',
-                        child: Text('In Progress'),
+                        child: Text(l10n.statusInProgress),
                       ),
-                      DropdownMenuItem(value: 'closed', child: Text('Closed')),
+                      DropdownMenuItem(value: 'closed', child: Text(l10n.statusClosed)),
                     ],
                     onChanged: (v) {
                       if (v != null) setModalState(() => status = v);
@@ -172,9 +182,9 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                   TextField(
                     controller: notesCtrl,
                     maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'Admin notes',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.adminNotesLabel,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -188,7 +198,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                       ref.invalidate(adminReportsProvider(params));
                       if (ctx.mounted) Navigator.pop(ctx);
                     },
-                    child: const Text('Save'),
+                    child: Text(l10n.save),
                   ),
                 ],
               ),
@@ -215,6 +225,7 @@ class _ReportRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Material(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(12),
@@ -247,7 +258,7 @@ class _ReportRow extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      report.status.replaceAll('_', ' '),
+                      _statusLabel(l10n, report.status),
                       style: AppTextStyles.caption.copyWith(
                         color: _statusColor(report.status),
                         fontWeight: FontWeight.w600,
@@ -273,6 +284,13 @@ class _ReportRow extends StatelessWidget {
       ),
     );
   }
+
+  String _statusLabel(AppLocalizations l10n, String status) => switch (status) {
+        'open' => l10n.gameStatusOpen,
+        'in_progress' => l10n.statusInProgress,
+        'closed' => l10n.statusClosed,
+        _ => status.replaceAll('_', ' '),
+      };
 }
 
 class _FilterChip extends StatelessWidget {
@@ -289,7 +307,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsetsDirectional.only(end: 8),
       child: FilterChip(
         label: Text(label),
         selected: selected,

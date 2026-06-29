@@ -1,5 +1,8 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/constants/skill_level_labels.dart';
+import 'package:buddbull/core/locale/date_format_utils.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/core/network/api_endpoints.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
@@ -139,11 +142,10 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
       if (prevPlayer?.isRejected == true) return;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!context.mounted) return;
+        final l10n = context.l10n;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Your request to join was declined. You can try again below.',
-            ),
+          SnackBar(
+            content: Text(l10n.joinRequestDeclinedSnack),
           ),
         );
       });
@@ -161,6 +163,7 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
         ),
       ),
       data: (game) {
+        final l10n = context.l10n;
         final user = currentUser;
         final myPlayer =
             user != null ? game.getPlayer(user.id) : null;
@@ -195,21 +198,21 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
                           Expanded(
                             child: _InfoCard(
                               icon: Icons.calendar_today_rounded,
-                              label: 'Date',
-                              value: game.formattedDate,
+                              label: l10n.infoLabelDate,
+                              value: AppDateFormat.mediumDate(context, game.scheduledAt),
                             ),
                           ),
                           Expanded(
                             child: _InfoCard(
                               icon: Icons.access_time_rounded,
-                              label: 'Time',
-                              value: game.formattedTime,
+                              label: l10n.infoLabelTime,
+                              value: AppDateFormat.shortTime(context, game.scheduledAt),
                             ),
                           ),
                           Expanded(
                             child: _InfoCard(
                               icon: Icons.timer_outlined,
-                              label: 'Duration',
+                              label: l10n.infoLabelDuration,
                               value: game.formattedDuration,
                             ),
                           ),
@@ -220,7 +223,7 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
 
                       // ── Location ───────────────────────────
                       _Section(
-                        title: 'Location',
+                        title: l10n.sectionLocation,
                         child: Row(
                           children: [
                             const Icon(Icons.location_on_rounded,
@@ -240,7 +243,7 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
                       if (game.description != null &&
                           game.description!.isNotEmpty)
                         _Section(
-                          title: 'About this game',
+                          title: l10n.sectionAboutThisGame,
                           child: Text(
                             game.description!,
                             style: AppTextStyles.bodyMedium,
@@ -249,7 +252,7 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
 
                       // ── Organiser ──────────────────────────
                       _Section(
-                        title: 'Organiser',
+                        title: l10n.sectionOrganiser,
                         child: Row(
                           children: [
                             GestureDetector(
@@ -291,7 +294,7 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
 
                       // ── Players ────────────────────────────
                       _Section(
-                        title: 'Players',
+                        title: l10n.sectionPlayers,
                         trailing: Text(
                           '${game.approvedCount}/${game.maxPlayers}',
                           style: AppTextStyles.labelMedium.copyWith(
@@ -331,14 +334,14 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
                       // ── Result (if completed) ──────────────
                       if (game.isCompleted && game.result != null)
                         _Section(
-                          title: 'Match Result',
+                          title: l10n.sectionMatchResult,
                           child: _ResultCard(result: game.result!),
                         ),
 
                       // ── Tags ───────────────────────────────
                       if (game.tags.isNotEmpty)
                         _Section(
-                          title: 'Tags',
+                          title: l10n.sectionTags,
                           child: Wrap(
                             spacing: 8,
                             runSpacing: 8,
@@ -427,14 +430,17 @@ class _GameDetailAppBar extends ConsumerWidget {
               );
             }
           },
-          itemBuilder: (_) => const [
+          itemBuilder: (_) => [
             PopupMenuItem(
               value: 'report',
               child: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 20),
-                  SizedBox(width: 8),
-                  Text('Report Game', style: TextStyle(color: AppColors.error)),
+                  const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    context.l10n.reportGame,
+                    style: const TextStyle(color: AppColors.error),
+                  ),
                 ],
               ),
             ),
@@ -471,8 +477,12 @@ class _GameDetailAppBar extends ConsumerWidget {
                       color: Colors.white24,
                     ),
                     _HeaderBadge(
-                      label: game.requiredSkillLevel[0].toUpperCase() +
-                          game.requiredSkillLevel.substring(1),
+                      label: game.requiredSkillLevel == 'any'
+                          ? context.l10n.anySkillLevel
+                          : skillLevelDisplayName(
+                              context,
+                              game.requiredSkillLevel,
+                            ),
                       color: Colors.white24,
                     ),
                     _StatusBadge(status: game.status),
@@ -519,12 +529,13 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final (bgColor, label) = switch (status) {
-      'open' => (AppColors.success, 'Open'),
-      'full' => (AppColors.warning, 'Full'),
-      'in_progress' => (AppColors.info, 'Live'),
-      'completed' => (AppColors.grey500, 'Completed'),
-      'cancelled' => (AppColors.error, 'Cancelled'),
+      'open' => (AppColors.success, l10n.gameStatusOpen),
+      'full' => (AppColors.warning, l10n.gameStatusFull),
+      'in_progress' => (AppColors.info, l10n.gameStatusLive),
+      'completed' => (AppColors.grey500, l10n.gameStatusCompleted),
+      'cancelled' => (AppColors.error, l10n.gameStatusCancelled),
       _ => (AppColors.grey500, status),
     };
 
@@ -649,8 +660,8 @@ class _StaticLocationMap extends StatelessWidget {
           errorBuilder: (context, _, __) => Container(
             color: AppColors.grey100,
             alignment: Alignment.center,
-            child: const Text(
-              'Map preview unavailable',
+            child: Text(
+              context.l10n.mapPreviewUnavailable,
               style: AppTextStyles.bodySmall,
             ),
           ),
@@ -684,6 +695,7 @@ class _PlayerList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final approved =
         game.players.where((p) => p.isApproved).toList();
     final pending =
@@ -698,7 +710,7 @@ class _PlayerList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (approved.isNotEmpty) ...[
-          Text('Approved',
+          Text(l10n.playerListApproved,
               style: AppTextStyles.labelMedium
                   .copyWith(color: AppColors.success)),
           const SizedBox(height: 6),
@@ -714,7 +726,7 @@ class _PlayerList extends StatelessWidget {
         ],
         if (isOrganizer && pending.isNotEmpty) ...[
           const SizedBox(height: 10),
-          Text('Pending requests',
+          Text(l10n.playerListPendingRequests,
               style: AppTextStyles.labelMedium
                   .copyWith(color: AppColors.warning)),
           const SizedBox(height: 6),
@@ -765,6 +777,7 @@ class _PlayerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     // Rating UI is hidden for the viewer's own row (no self-rating).
     final showRateButton = canRate && !isCurrentUser && player.isApproved;
 
@@ -790,7 +803,8 @@ class _PlayerTile extends StatelessWidget {
           children: [
             Flexible(
               child: Text(
-                player.displayName + (isCurrentUser ? ' (You)' : ''),
+                player.displayName +
+                    (isCurrentUser ? ' ${l10n.playerYouSuffix}' : ''),
                 style: AppTextStyles.bodyMedium,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -810,12 +824,13 @@ class _PlayerTile extends StatelessWidget {
         ),
         subtitle: Text('@${player.username}',
             style: AppTextStyles.bodySmall),
-        trailing: _buildTrailing(showRateButton),
+        trailing: _buildTrailing(context, showRateButton),
       ),
     );
   }
 
-  Widget? _buildTrailing(bool showRateButton) {
+  Widget? _buildTrailing(BuildContext context, bool showRateButton) {
+    final l10n = context.l10n;
     final hasOrganizerControls = isOrganizer && !isCurrentUser;
     if (!hasOrganizerControls && !showRateButton) return null;
 
@@ -826,7 +841,7 @@ class _PlayerTile extends StatelessWidget {
           TextButton.icon(
             onPressed: onRate,
             icon: const Icon(Icons.star_outline_rounded, size: 18),
-            label: const Text('Rate'),
+            label: Text(l10n.buttonRate),
             style: TextButton.styleFrom(
               foregroundColor: AppColors.secondary,
               visualDensity: VisualDensity.compact,
@@ -839,13 +854,13 @@ class _PlayerTile extends StatelessWidget {
               icon: const Icon(Icons.check_circle_outline_rounded,
                   color: AppColors.success, size: 20),
               onPressed: onApprove,
-              tooltip: 'Approve',
+              tooltip: l10n.tooltipApprove,
             ),
           IconButton(
             icon: const Icon(Icons.remove_circle_outline_rounded,
                 color: AppColors.error, size: 20),
             onPressed: onKick,
-            tooltip: 'Kick',
+            tooltip: l10n.tooltipKick,
           ),
         ],
       ],
@@ -874,7 +889,7 @@ class _RatePromptBanner extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Rate participants below to share how the game went.',
+              context.l10n.ratePromptBanner,
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textPrimary,
               ),
@@ -916,14 +931,15 @@ class _ResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (result.score != null)
-          Text('Score: ${result.score}',
+          Text(l10n.matchResultScore(result.score!),
               style: AppTextStyles.titleMedium),
         if (result.winner != null)
-          Text('Winner: ${result.winner}',
+          Text(l10n.matchResultWinner(result.winner!),
               style: AppTextStyles.bodyMedium),
         if (result.notes != null)
           Text(result.notes!, style: AppTextStyles.bodyMedium),
@@ -1012,6 +1028,7 @@ class _BottomActionBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final hasChat =
         game.groupChatId != null && myPlayer?.isApproved == true;
     final main = _buildMainAction(context, ref);
@@ -1034,7 +1051,7 @@ class _BottomActionBar extends ConsumerWidget {
             Expanded(
               flex: 1,
               child: BbButton(
-                label: 'Chat',
+                label: l10n.buttonChat,
                 onPressed: onOpenChat,
                 variant: BbButtonVariant.outlined,
                 icon: Icons.chat_outlined,
@@ -1056,6 +1073,7 @@ class _BottomActionBar extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) {
+    final l10n = context.l10n;
     if (isOrganizer) {
       if (game.isCompleted) {
         // Organizer who played on the pitch should always get the rate CTA
@@ -1064,7 +1082,7 @@ class _BottomActionBar extends ConsumerWidget {
         // the queue itself and falls back to `game.players` if needed.
         if (myPlayer?.isApproved == true) {
           return BbButton(
-            label: 'Rate Participants',
+            label: l10n.buttonRateParticipants,
             onPressed: () => _openRateParticipantsPicker(
               context,
               ref,
@@ -1076,15 +1094,15 @@ class _BottomActionBar extends ConsumerWidget {
             icon: Icons.star_rate_rounded,
           );
         }
-        return const BbButton(
-          label: 'Game Completed',
+        return BbButton(
+          label: l10n.buttonGameCompleted,
           onPressed: null,
           variant: BbButtonVariant.outlined,
           icon: Icons.check_circle_outline_rounded,
         );
       }
       return BbButton(
-        label: 'Manage (Organiser)',
+        label: l10n.buttonManageOrganiser,
         onPressed: onManage,
         variant: BbButtonVariant.outlined,
         icon: Icons.military_tech_rounded,
@@ -1093,15 +1111,15 @@ class _BottomActionBar extends ConsumerWidget {
 
     if (myPlayer == null) {
       if (game.isFull) {
-        return const BbButton(
-          label: 'Game is Full',
+        return BbButton(
+          label: l10n.buttonGameIsFull,
           onPressed: null,
           variant: BbButtonVariant.outlined,
         );
       }
       final isPrivate = game.isPrivate || game.requiresApproval;
       return BbButton(
-        label: isPrivate ? 'Request to Join' : 'Join Game',
+        label: isPrivate ? l10n.buttonRequestToJoin : l10n.buttonJoinGame,
         onPressed: game.isUpcoming ? onJoin : null,
         isLoading: actionsState.isJoining,
       );
@@ -1128,15 +1146,15 @@ class _BottomActionBar extends ConsumerWidget {
 
     if (myPlayer!.canJoinAgain) {
       if (game.isFull) {
-        return const BbButton(
-          label: 'Game is Full',
+        return BbButton(
+          label: l10n.buttonGameIsFull,
           onPressed: null,
           variant: BbButtonVariant.outlined,
         );
       }
       final isPrivate = game.isPrivate || game.requiresApproval;
       return BbButton(
-        label: isPrivate ? 'Request to Join' : 'Join Game',
+        label: isPrivate ? l10n.buttonRequestToJoin : l10n.buttonJoinGame,
         onPressed: game.isUpcoming ? onJoin : null,
         isLoading: actionsState.isJoining,
       );
@@ -1149,7 +1167,7 @@ class _BottomActionBar extends ConsumerWidget {
         // pending-rating provider's current state. The picker handles the
         // (rare) case where the queue is genuinely empty.
         return BbButton(
-          label: 'Rate Participants',
+          label: l10n.buttonRateParticipants,
           onPressed: () => _openRateParticipantsPicker(
             context,
             ref,
@@ -1162,7 +1180,7 @@ class _BottomActionBar extends ConsumerWidget {
         );
       }
       return BbButton(
-        label: 'Leave Game',
+        label: l10n.buttonLeaveGame,
         onPressed: game.isUpcoming ? onLeave : null,
         variant: BbButtonVariant.danger,
         isLoading: actionsState.isLeaving,
@@ -1189,6 +1207,7 @@ class _GameInvitePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -1207,7 +1226,7 @@ class _GameInvitePanel extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'You\'re invited to this game',
+                  l10n.inviteBannerTitle,
                   style: AppTextStyles.bodySmall.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
@@ -1223,7 +1242,7 @@ class _GameInvitePanel extends StatelessWidget {
             Expanded(
               flex: 2,
               child: BbButton(
-                label: 'Accept Invitation',
+                label: l10n.buttonAcceptInvitation,
                 onPressed: (isAccepting || isDeclining) ? null : onAccept,
                 isLoading: isAccepting,
                 icon: Icons.check_rounded,
@@ -1232,7 +1251,7 @@ class _GameInvitePanel extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: BbButton(
-                label: 'Decline',
+                label: l10n.buttonDecline,
                 onPressed: (isAccepting || isDeclining) ? null : onDecline,
                 isLoading: isDeclining,
                 variant: BbButtonVariant.outlined,
@@ -1260,6 +1279,7 @@ class _PendingRequestPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -1272,10 +1292,10 @@ class _PendingRequestPanel extends StatelessWidget {
           const Icon(Icons.hourglass_top_rounded,
               size: 18, color: AppColors.warning),
           const SizedBox(width: 10),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Your request is pending approval',
-              style: TextStyle(
+              l10n.pendingApprovalMessage,
+              style: const TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -1297,7 +1317,7 @@ class _PendingRequestPanel extends StatelessWidget {
                     height: 14,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Withdraw'),
+                : Text(l10n.buttonWithdraw),
           ),
         ],
       ),
@@ -1342,7 +1362,7 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
       if (!mounted) return;
       if (ok) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Invited $friendName')),
+          SnackBar(content: Text(context.l10n.snackInvitedFriend(friendName))),
         );
       }
     } finally {
@@ -1360,7 +1380,8 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
       if (!mounted) return;
       if (ok) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Revoked invite for $friendName')),
+          SnackBar(
+              content: Text(context.l10n.snackRevokedInvite(friendName))),
         );
       } else {
         final err = ref.read(gameActionsProvider(widget.gameId)).error;
@@ -1386,6 +1407,7 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final friendsAsync = ref.watch(friendsProvider);
     final actionsState = ref.watch(gameActionsProvider(widget.gameId));
     final gameAsync = ref.watch(gameDetailProvider(widget.gameId));
@@ -1408,7 +1430,7 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: Text(
-                'Invite Friends',
+                l10n.inviteFriendsSheetTitle,
                 style: AppTextStyles.titleMedium.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -1421,11 +1443,11 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
                 error: (e, _) => Center(child: Text(e.toString())),
                 data: (friends) {
                   if (friends.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Padding(
-                        padding: EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(24),
                         child: Text(
-                          'Add friends from their profile to invite them to games.',
+                          l10n.inviteFriendsEmptyState,
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -1466,7 +1488,7 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
                                               friend.fullName,
                                             ),
                                     child: Text(
-                                      'Invited',
+                                      l10n.buttonInvited,
                                       style:
                                           AppTextStyles.labelMedium.copyWith(
                                         color: disabled
@@ -1521,152 +1543,151 @@ Future<void> _showManageSheet(
   await showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    builder: (sheetCtx) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (canEdit)
-            ListTile(
-              leading: const Icon(Icons.group_add_outlined),
-              title: const Text('Invite Friends'),
-              subtitle: const Text('Send an invite to your approved friends'),
-              onTap: () {
-                Navigator.pop(sheetCtx);
-                if (!context.mounted) return;
-                _showInviteFriendsSheet(context, ref, gameId);
-              },
-            ),
-          ListTile(
-            leading: const Icon(Icons.edit_outlined),
-            title: const Text('Edit Game'),
-            enabled: canEdit,
-            onTap: !canEdit
-                ? null
-                : () {
-                    Navigator.pop(sheetCtx);
-                    if (!context.mounted) return;
-                    context.push('/games/$gameId/edit');
-                  },
-          ),
-          if (game.isCompleted)
-            // Already completed — replace "Complete Game" with a clear
-            // CTA back to the rating flow. Tapping closes the sheet and
-            // hands off to the same picker the bottom action bar uses.
-            ListTile(
-              leading: const Icon(Icons.star_rate_rounded,
-                  color: AppColors.primary),
-              title: const Text('View Summary / Rate Players'),
-              subtitle: const Text(
-                'Game is finished — open the rating flow for participants.',
+    builder: (sheetCtx) {
+      final l10n = context.l10n;
+      return SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (canEdit)
+              ListTile(
+                leading: const Icon(Icons.group_add_outlined),
+                title: Text(l10n.manageInviteFriends),
+                subtitle: Text(l10n.manageInviteFriendsSubtitle),
+                onTap: () {
+                  Navigator.pop(sheetCtx);
+                  if (!context.mounted) return;
+                  _showInviteFriendsSheet(context, ref, gameId);
+                },
               ),
-              onTap: () {
-                Navigator.pop(sheetCtx);
-                if (!context.mounted) return;
-                final currentUserId =
-                    ref.read(currentUserProvider)?.id ?? '';
-                _openRateParticipantsPicker(
-                  context,
-                  ref,
-                  game,
-                  gameId,
-                  currentUserId,
-                );
-              },
-            )
-          else
             ListTile(
-              leading: const Icon(Icons.emoji_events_outlined,
-                  color: AppColors.success),
-              title: const Text('Complete Game'),
-              subtitle: const Text(
-                'Mark the game as finished and open ratings for participants.',
-              ),
-              enabled: canComplete,
-              onTap: !canComplete
+              leading: const Icon(Icons.edit_outlined),
+              title: Text(l10n.manageEditGame),
+              enabled: canEdit,
+              onTap: !canEdit
                   ? null
-                  : () async {
-                      final confirmed = await _confirmComplete(context);
-                      if (!confirmed || !context.mounted) return;
-
+                  : () {
                       Navigator.pop(sheetCtx);
-
-                      final ok = await ref
-                          .read(gameActionsProvider(gameId).notifier)
-                          .completeGame();
-                      if (!ok || !context.mounted) return;
+                      if (!context.mounted) return;
+                      context.push('/games/$gameId/edit');
                     },
             ),
-          ListTile(
-            leading: Icon(
-              Icons.cancel_outlined,
-              color: canCancel
-                  ? AppColors.error
-                  : AppColors.grey400,
+            if (game.isCompleted)
+              ListTile(
+                leading: const Icon(Icons.star_rate_rounded,
+                    color: AppColors.primary),
+                title: Text(l10n.manageViewSummaryRatePlayers),
+                subtitle: Text(l10n.manageViewSummarySubtitle),
+                onTap: () {
+                  Navigator.pop(sheetCtx);
+                  if (!context.mounted) return;
+                  final currentUserId =
+                      ref.read(currentUserProvider)?.id ?? '';
+                  _openRateParticipantsPicker(
+                    context,
+                    ref,
+                    game,
+                    gameId,
+                    currentUserId,
+                  );
+                },
+              )
+            else
+              ListTile(
+                leading: const Icon(Icons.emoji_events_outlined,
+                    color: AppColors.success),
+                title: Text(l10n.manageCompleteGame),
+                subtitle: Text(l10n.manageCompleteGameSubtitle),
+                enabled: canComplete,
+                onTap: !canComplete
+                    ? null
+                    : () async {
+                        final confirmed = await _confirmComplete(context);
+                        if (!confirmed || !context.mounted) return;
+
+                        Navigator.pop(sheetCtx);
+
+                        final ok = await ref
+                            .read(gameActionsProvider(gameId).notifier)
+                            .completeGame();
+                        if (!ok || !context.mounted) return;
+                      },
+              ),
+            ListTile(
+              leading: Icon(
+                Icons.cancel_outlined,
+                color: canCancel
+                    ? AppColors.error
+                    : AppColors.grey400,
+              ),
+              title: Text(
+                game.isCancelled
+                    ? l10n.manageGameAlreadyCancelled
+                    : l10n.manageCancelGame,
+              ),
+              enabled: canCancel,
+              onTap: !canCancel
+                  ? null
+                  : () async {
+                      final confirmed = await _confirmCancel(context);
+                      if (!confirmed || !context.mounted) return;
+
+                      final reason = await _askCancelReason(context);
+                      if (reason == null ||
+                          reason.trim().isEmpty ||
+                          !context.mounted) {
+                        return;
+                      }
+
+                      FocusScope.of(context).unfocus();
+                      Navigator.pop(sheetCtx);
+
+                      try {
+                        await ref.read(gameRepositoryProvider).cancelGame(
+                              gameId,
+                              reason: reason.trim(),
+                            );
+                        ref.invalidate(gameDetailProvider(gameId));
+                        ref.invalidate(myGamesProvider);
+                        ref.invalidate(calendarGamesProvider);
+                        if (!context.mounted) return;
+
+                        showSuccessSnackBar(context, l10n.snackGameCancelled);
+
+                        await Future<void>.delayed(
+                            const Duration(milliseconds: 80));
+                        if (!context.mounted) return;
+                        context.go(Routes.home);
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        showErrorSnackBar(context, e.toString());
+                      }
+                    },
             ),
-            title: Text(
-              game.isCancelled ? 'Game already cancelled' : 'Cancel Game',
-            ),
-            enabled: canCancel,
-            onTap: !canCancel
-                ? null
-                : () async {
-                    final confirmed = await _confirmCancel(context);
-                    if (!confirmed || !context.mounted) return;
-
-                    final reason = await _askCancelReason(context);
-                    if (reason == null ||
-                        reason.trim().isEmpty ||
-                        !context.mounted) {
-                      return;
-                    }
-
-                    FocusScope.of(context).unfocus();
-                    Navigator.pop(sheetCtx);
-
-                    try {
-                      await ref.read(gameRepositoryProvider).cancelGame(
-                            gameId,
-                            reason: reason.trim(),
-                          );
-                      ref.invalidate(gameDetailProvider(gameId));
-                      ref.invalidate(myGamesProvider);
-                      ref.invalidate(calendarGamesProvider);
-                      if (!context.mounted) return;
-
-                      showSuccessSnackBar(context, 'Game cancelled.');
-
-                      await Future<void>.delayed(
-                          const Duration(milliseconds: 80));
-                      if (!context.mounted) return;
-                      context.go(Routes.home);
-                    } catch (e) {
-                      if (!context.mounted) return;
-                      showErrorSnackBar(context, e.toString());
-                    }
-                  },
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
-    ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      );
+    },
   );
 }
 
 Future<bool> _confirmCancel(BuildContext context) async {
+  final l10n = context.l10n;
   final res = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Cancel game?'),
-      content: const Text('This will mark the game as cancelled for all players.'),
+      title: Text(l10n.dialogCancelGameTitle),
+      content: Text(l10n.dialogCancelGameBody),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('No'),
+          child: Text(l10n.no),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
           style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-          child: const Text('Yes, cancel'),
+          child: Text(l10n.dialogYesCancel),
         ),
       ],
     ),
@@ -1675,23 +1696,21 @@ Future<bool> _confirmCancel(BuildContext context) async {
 }
 
 Future<bool> _confirmComplete(BuildContext context) async {
+  final l10n = context.l10n;
   final res = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Complete game?'),
-      content: const Text(
-        'This marks the game as finished, updates player stats, and unlocks '
-        'rating for all approved players. This action cannot be undone.',
-      ),
+      title: Text(l10n.dialogCompleteGameTitle),
+      content: Text(l10n.dialogCompleteGameBody),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Not yet'),
+          child: Text(l10n.dialogNotYet),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
           style: FilledButton.styleFrom(backgroundColor: AppColors.success),
-          child: const Text('Mark completed'),
+          child: Text(l10n.dialogMarkCompleted),
         ),
       ],
     ),
@@ -1714,6 +1733,8 @@ Future<void> _openRateParticipantsPicker(
   String gameId,
   String currentUserId,
 ) async {
+  if (!context.mounted) return;
+  final l10n = context.l10n;
   ref.invalidate(pendingRatingsProvider);
   List<PendingRatingItem> list;
   try {
@@ -1721,8 +1742,8 @@ Future<void> _openRateParticipantsPicker(
   } catch (_) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not load pending ratings. Pull to refresh and try again.'),
+        SnackBar(
+          content: Text(l10n.snackCouldNotLoadPendingRatings),
         ),
       );
     }
@@ -1747,7 +1768,7 @@ Future<void> _openRateParticipantsPicker(
       final un = raw['username']?.toString() ?? '';
       final display = (fn.isNotEmpty && ln.isNotEmpty)
           ? '$fn $ln'
-          : (un.isNotEmpty ? un : 'Player');
+          : (un.isNotEmpty ? un : l10n.fallbackPlayerName);
       entries.add(_RatePickerEntry(rateeId: id, displayName: display));
     }
   }
@@ -1765,8 +1786,8 @@ Future<void> _openRateParticipantsPicker(
   if (entries.isEmpty) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Everyone in this game has been rated.'),
+        SnackBar(
+          content: Text(l10n.snackEveryoneRated),
           backgroundColor: AppColors.success,
         ),
       );
@@ -1794,18 +1815,20 @@ Future<void> _openRateParticipantsPicker(
   await showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    builder: (sheetCtx) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 12, 20, 4),
-            child: Text(
-              'Rate a participant',
-              style: AppTextStyles.titleSmall,
+    builder: (sheetCtx) {
+      final l10n = context.l10n;
+      return SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+              child: Text(
+                l10n.rateParticipantPickerTitle,
+                style: AppTextStyles.titleSmall,
+              ),
             ),
-          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
             child: Text(
@@ -1855,10 +1878,8 @@ Future<void> _openRateParticipantsPicker(
                   await dismissGameRatingQueue(ref, gameId);
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'You will not be prompted to rate this game.',
-                      ),
+                    SnackBar(
+                      content: Text(l10n.snackWontPromptToRate),
                     ),
                   );
                 } catch (e) {
@@ -1870,7 +1891,7 @@ Future<void> _openRateParticipantsPicker(
                 }
               },
               child: Text(
-                "Don't rate this game",
+                l10n.dontRateThisGame,
                 style: AppTextStyles.bodySmall
                     .copyWith(color: AppColors.textSecondary),
               ),
@@ -1879,7 +1900,8 @@ Future<void> _openRateParticipantsPicker(
           const SizedBox(height: 8),
         ],
       ),
-    ),
+    );
+    },
   );
 }
 
@@ -1902,23 +1924,24 @@ Future<void> _openRatePlayerSheet(
 }
 
 Future<String?> _askCancelReason(BuildContext context) async {
+  final l10n = context.l10n;
   final ctrl = TextEditingController();
   final res = await showDialog<String>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Reason for cancellation'),
+      title: Text(l10n.dialogCancelReasonTitle),
       content: TextField(
         controller: ctrl,
         autofocus: true,
         maxLength: 300,
-        decoration: const InputDecoration(
-          hintText: 'e.g. Weather, venue issue, not enough players…',
+        decoration: InputDecoration(
+          hintText: l10n.cancelReasonHint,
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx),
-          child: const Text('Back'),
+          child: Text(l10n.dialogBack),
         ),
         FilledButton(
           onPressed: () {
@@ -1926,7 +1949,7 @@ Future<String?> _askCancelReason(BuildContext context) async {
             Navigator.pop(ctx, ctrl.text);
           },
           style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-          child: const Text('Cancel game'),
+          child: Text(l10n.dialogCancelGameConfirm),
         ),
       ],
     ),

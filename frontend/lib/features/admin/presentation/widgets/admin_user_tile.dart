@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/admin/providers/admin_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +17,7 @@ class AdminUserTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final userId = (user['_id'] ?? user['id'])?.toString() ?? '';
     final isBanned = user['isBanned'] == true;
     final isRestricted = user['isRestricted'] == true;
@@ -58,14 +60,14 @@ class AdminUserTile extends ConsumerWidget {
                   ),
                 if (gamesPlayed != null)
                   Text(
-                    '$gamesPlayed games played',
+                    l10n.adminGamesPlayedCount((gamesPlayed as num).toInt()),
                     style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
                   ),
                 if (isBanned || isRestricted)
                   Text(
                     [
-                      if (isBanned) 'Banned',
-                      if (isRestricted) 'Restricted',
+                      if (isBanned) l10n.adminStatusBanned,
+                      if (isRestricted) l10n.adminStatusRestricted,
                     ].join(' · '),
                     style: AppTextStyles.caption.copyWith(color: AppColors.error),
                   ),
@@ -77,15 +79,17 @@ class AdminUserTile extends ConsumerWidget {
             itemBuilder: (_) => [
               PopupMenuItem(
                 value: isBanned ? 'unban' : 'ban',
-                child: Text(isBanned ? 'Unban' : 'Ban'),
+                child: Text(isBanned ? l10n.adminActionUnban : l10n.adminActionBan),
               ),
               PopupMenuItem(
                 value: isRestricted ? 'unrestrict' : 'restrict',
-                child: Text(isRestricted ? 'Unrestrict' : 'Restrict'),
+                child: Text(
+                  isRestricted ? l10n.adminActionUnrestrict : l10n.adminActionRestrict,
+                ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'delete',
-                child: Text('Delete', style: TextStyle(color: AppColors.error)),
+                child: Text(l10n.adminActionDelete, style: const TextStyle(color: AppColors.error)),
               ),
             ],
           ),
@@ -100,6 +104,7 @@ class AdminUserTile extends ConsumerWidget {
     String action,
     String userId,
   ) async {
+    final l10n = context.l10n;
     if (action == 'ban' || action == 'unban') {
       await ref.read(banUserProvider.notifier).banUser(
             userId,
@@ -116,13 +121,13 @@ class AdminUserTile extends ConsumerWidget {
       final confirm = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Delete User'),
-          content: const Text('This cannot be undone.'),
+          title: Text(l10n.dialogDeleteUserTitle),
+          content: Text(l10n.dialogDeleteUserBody),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete', style: TextStyle(color: AppColors.error)),
+              child: Text(l10n.delete, style: const TextStyle(color: AppColors.error)),
             ),
           ],
         ),

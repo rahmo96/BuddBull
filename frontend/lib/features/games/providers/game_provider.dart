@@ -412,7 +412,10 @@ class GameActionsNotifier extends StateNotifier<GameActionsState> {
   void clearSuccess() => state = state.copyWith(clearSuccess: true);
 
   String _msg(Object e) {
-    if (e is AppException && e.message.isNotEmpty) return e.message;
+    if (e is AppException) {
+      final msg = e.serverMessage;
+      if (msg != null && msg.isNotEmpty) return msg;
+    }
     final raw = e.toString();
     final m = RegExp(r'\): (.+)$').firstMatch(raw);
     return m?.group(1) ?? raw;

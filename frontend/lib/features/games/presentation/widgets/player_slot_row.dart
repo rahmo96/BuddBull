@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +20,7 @@ class PlayerAvatarRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final approved =
         players.where((p) => p.isApproved).toList();
     final pending =
@@ -57,14 +59,15 @@ class PlayerAvatarRow extends StatelessWidget {
 
         if (extraCount > 0) ...[
           const SizedBox(width: 4),
-          Text('+$extraCount', style: AppTextStyles.labelSmall),
+          Text(l10n.extraPlayersCount(extraCount),
+              style: AppTextStyles.labelSmall),
         ],
 
         const SizedBox(width: 8),
 
         // ── Slot indicator ────────────────────────────────────
         Text(
-          '${approved.length}/$maxPlayers players',
+          l10n.playersCountLabel(approved.length, maxPlayers),
           style: AppTextStyles.bodySmall,
         ),
 
@@ -78,7 +81,7 @@ class PlayerAvatarRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              '${pending.length} pending',
+              l10n.pendingRequestsCount(pending.length),
               style: AppTextStyles.labelSmall.copyWith(
                 color: AppColors.warning,
               ),

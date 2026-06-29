@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/chat/data/models/chat_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +20,7 @@ class ChatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final title = chat.chatTitle(currentUserId);
     final avatarUrl = chat.chatAvatar(currentUserId);
     final hasUnread = chat.unreadCount > 0;
@@ -30,15 +32,12 @@ class ChatTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           children: [
-            // ── Avatar ──────────────────────────────────────────────
             _Avatar(
               avatarUrl: avatarUrl,
               title: title,
               isGroup: chat.type == 'group',
             ),
             const SizedBox(width: 12),
-
-            // ── Content ──────────────────────────────────────────────
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,7 +56,7 @@ class ChatTile extends StatelessWidget {
                       ),
                       if (lastMsg != null)
                         Text(
-                          _formatTime(lastMsg.sentAt),
+                          _formatTime(context, lastMsg.sentAt),
                           style: AppTextStyles.caption.copyWith(
                             color: hasUnread ? AppColors.primary : AppColors.textSecondary,
                           ),
@@ -69,7 +68,7 @@ class ChatTile extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          lastMsg?.content ?? 'No messages yet',
+                          lastMsg?.content ?? l10n.emptyNoMessagesYet,
                           style: AppTextStyles.caption.copyWith(
                             color: hasUnread ? AppColors.textPrimary : AppColors.textSecondary,
                             fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
@@ -110,17 +109,17 @@ class ChatTile extends StatelessWidget {
     );
   }
 
-  String _formatTime(DateTime dt) {
+  String _formatTime(BuildContext context, DateTime dt) {
+    final l10n = context.l10n;
     final now = DateTime.now();
     final diff = now.difference(dt);
     if (diff.inDays == 0) return DateFormat.Hm().format(dt);
-    if (diff.inDays == 1) return 'Yesterday';
+    if (diff.inDays == 1) return l10n.relativeYesterday;
     if (diff.inDays < 7) return DateFormat.EEEE().format(dt);
     return DateFormat.yMd().format(dt);
   }
 }
 
-// ── Avatar widget ─────────────────────────────────────────────────────────────
 class _Avatar extends StatelessWidget {
   final String? avatarUrl;
   final String title;

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/games/data/game_repository.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/profile/presentation/widgets/location_selected_row.dart';
@@ -176,7 +177,7 @@ class _NeighborhoodAutocompleteFieldState
       widget.onNeighborhoodSelected(_resolveNeighborhoodName(location, suggestion));
     } catch (e) {
       if (!mounted) return;
-      showErrorSnackBar(context, 'Could not resolve this place. Try another.');
+      showErrorSnackBar(context, context.l10n.placeCouldNotResolve);
     } finally {
       if (mounted) setState(() => _isResolving = false);
     }
@@ -192,7 +193,7 @@ class _NeighborhoodAutocompleteFieldState
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: _exitEditing,
-              child: const Text('Cancel'),
+              child: Text(context.l10n.cancel),
             ),
           ),
         BbTextField(

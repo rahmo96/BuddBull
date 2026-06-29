@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/auth/data/models/user_model.dart';
 import 'package:buddbull/features/games/presentation/widgets/game_card.dart';
@@ -93,7 +94,7 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
                           size: 20),
                       color: AppColors.slate,
                       onPressed: _close,
-                      tooltip: 'Close search',
+                      tooltip: context.l10n.closeSearch,
                     ),
                     Expanded(
                       child: GlobalSearchField(
@@ -121,6 +122,7 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
   }
 
   Widget _buildBody(GlobalSearchState state) {
+    final l10n = context.l10n;
     final trimmed = state.query.trim();
 
     if (trimmed.isEmpty) {
@@ -132,7 +134,7 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Text(
-            'Type at least 2 characters to search',
+            l10n.searchMinChars,
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.textSecondary,
             ),
@@ -174,13 +176,13 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'No results found',
+              Text(
+                l10n.searchNoResults,
                 style: AppTextStyles.titleSmall,
               ),
               const SizedBox(height: 6),
               Text(
-                'Try a different sport, city, or player name',
+                l10n.searchNoResultsHint,
                 style: AppTextStyles.bodySmall.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -200,7 +202,10 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
           const SizedBox(height: 12),
         ],
         if (state.games.isNotEmpty) ...[
-          _SectionLabel(title: 'Games', count: state.games.length),
+          _SectionLabel(
+            title: l10n.searchSectionGames,
+            count: state.games.length,
+          ),
           const SizedBox(height: 10),
           SizedBox(
             height: 220,
@@ -222,7 +227,10 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
           const SizedBox(height: 24),
         ],
         if (state.users.isNotEmpty) ...[
-          _SectionLabel(title: 'Players', count: state.users.length),
+          _SectionLabel(
+            title: l10n.searchSectionPlayers,
+            count: state.users.length,
+          ),
           const SizedBox(height: 8),
           ...state.users.map((user) => _PlayerResultTile(user: user)),
         ],
@@ -238,12 +246,13 @@ class _PartialSearchNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final messages = <String>[];
     if (state.gamesError != null && state.games.isEmpty) {
-      messages.add('Games: ${state.gamesError}');
+      messages.add(l10n.searchPartialGamesError(state.gamesError!));
     }
     if (state.usersError != null && state.users.isEmpty) {
-      messages.add('Players: ${state.usersError}');
+      messages.add(l10n.searchPartialPlayersError(state.usersError!));
     }
     if (messages.isEmpty) return const SizedBox.shrink();
 
@@ -272,15 +281,16 @@ class _IdleSearchHints extends StatelessWidget {
 
   final ValueChanged<String> onHintTap;
 
-  static const _hints = [
-    ('Football', Icons.sports_soccer_rounded),
-    ('Basketball', Icons.sports_basketball_rounded),
-    ('Tennis', Icons.sports_tennis_rounded),
-    ('Nearby games', Icons.near_me_rounded),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final hints = [
+      (l10n.sportFootball, Icons.sports_soccer_rounded, l10n.sportFootball),
+      (l10n.sportBasketball, Icons.sports_basketball_rounded, l10n.sportBasketball),
+      (l10n.sportTennis, Icons.sports_tennis_rounded, l10n.sportTennis),
+      (l10n.searchHintNearbyGames, Icons.near_me_rounded, l10n.searchHintNearbyGames),
+    ];
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -308,14 +318,14 @@ class _IdleSearchHints extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Discover your next game',
+            Text(
+              l10n.searchDiscoverTitle,
               style: AppTextStyles.titleMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Search by sport, city, username, or player name',
+              l10n.searchDiscoverSubtitle,
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -326,7 +336,7 @@ class _IdleSearchHints extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               alignment: WrapAlignment.center,
-              children: _hints
+              children: hints
                   .map(
                     (hint) => ActionChip(
                       avatar: Icon(hint.$2, size: 16, color: AppColors.teal),
@@ -340,7 +350,7 @@ class _IdleSearchHints extends StatelessWidget {
                         color: AppColors.grey200.withValues(alpha: 0.8),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 4),
-                      onPressed: () => onHintTap(hint.$1),
+                      onPressed: () => onHintTap(hint.$3),
                     ),
                   )
                   .toList(),

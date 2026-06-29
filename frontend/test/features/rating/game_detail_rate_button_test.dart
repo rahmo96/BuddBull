@@ -31,12 +31,15 @@ import 'package:buddbull/features/games/providers/game_provider.dart';
 import 'package:buddbull/features/rating/data/models/rating_model.dart';
 import 'package:buddbull/features/rating/providers/rating_provider.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
+import 'package:buddbull/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../helpers/l10n_test_helpers.dart';
 import '../../helpers/test_bootstrap.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -137,6 +140,9 @@ PendingRatingItem _pendingItem() => const PendingRatingItem(
 Finder _bbButtonWithLabel(String label) =>
     find.widgetWithText(BbButton, label);
 
+Finder _rateButton() => _bbButtonWithLabel(enL10n().buttonRateParticipants);
+Finder _leaveButton() => _bbButtonWithLabel(enL10n().buttonLeaveGame);
+
 Future<SharedPreferences> _prefs() async {
   SharedPreferences.setMockInitialValues({});
   return SharedPreferences.getInstance();
@@ -159,7 +165,7 @@ Future<void> _pumpDetail(
         gameDetailProvider.overrideWith((ref, _) async => game),
         pendingRatingsProvider.overrideWith((ref) async => pending),
       ],
-      child: const MaterialApp(home: GameDetailScreen(gameId: _gameId)),
+      child: wrapWithL10n(const GameDetailScreen(gameId: _gameId)),
     ),
   );
   // Two pumps: first resolves the FutureProvider, second runs the
@@ -201,7 +207,17 @@ Future<GoRouter> _pumpDetailOverRoute(
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: MaterialApp.router(routerConfig: router),
+      child: MaterialApp.router(
+        locale: const Locale('en'),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        routerConfig: router,
+      ),
     ),
   );
   await tester.pumpAndSettle();
@@ -231,8 +247,8 @@ void main() {
         pending: [_pendingItem()],
       );
 
-      expect(_bbButtonWithLabel('Rate Participants'), findsOneWidget);
-      expect(_bbButtonWithLabel('Leave Game'), findsNothing);
+      expect(_rateButton(), findsOneWidget);
+      expect(_leaveButton(), findsNothing);
     });
 
     testWidgets('approved viewer on an in_progress game shows "Leave Game"',
@@ -244,8 +260,8 @@ void main() {
       );
 
       // While the game is still in progress there's nothing to rate.
-      expect(_bbButtonWithLabel('Leave Game'), findsOneWidget);
-      expect(_bbButtonWithLabel('Rate Participants'), findsNothing);
+      expect(_leaveButton(), findsOneWidget);
+      expect(_rateButton(), findsNothing);
     });
 
     testWidgets(
@@ -262,7 +278,7 @@ void main() {
         pending: const [],
       );
 
-      expect(_bbButtonWithLabel('Rate Participants'), findsOneWidget);
+      expect(_rateButton(), findsOneWidget);
     });
 
     testWidgets('a kicked viewer sees no rate / leave affordance',
@@ -273,8 +289,8 @@ void main() {
         pending: const [],
       );
 
-      expect(_bbButtonWithLabel('Rate Participants'), findsNothing);
-      expect(_bbButtonWithLabel('Leave Game'), findsNothing);
+      expect(_rateButton(), findsNothing);
+      expect(_leaveButton(), findsNothing);
     });
   });
 
@@ -301,18 +317,18 @@ void main() {
             ),
             pendingRatingsProvider.overrideWith((ref) async => const []),
           ],
-          child: const MaterialApp(home: GameDetailScreen(gameId: _gameId)),
+          child: wrapWithL10n(const GameDetailScreen(gameId: _gameId)),
         ),
       );
       await tester.pump();
       await tester.pump();
 
       expect(
-        _bbButtonWithLabel('Leave Game'),
+        _leaveButton(),
         findsOneWidget,
-        reason: 'In-progress games must offer "Leave Game"',
+        reason: 'In-progress games must offer leave button',
       );
-      expect(_bbButtonWithLabel('Rate Participants'), findsNothing);
+      expect(_rateButton(), findsNothing);
 
       // Organiser hits "Complete" — push the new state through the driver.
       final element = tester.element(find.byType(GameDetailScreen));
@@ -327,14 +343,14 @@ void main() {
       await tester.pump();
 
       expect(
-        _bbButtonWithLabel('Rate Participants'),
+        _rateButton(),
         findsOneWidget,
         reason:
-            'Once the game completes, every approved player must see "Rate '
-            'Participants" — including non-organisers — regardless of the '
+            'Once the game completes, every approved player must see rate '
+            'participants — including non-organisers — regardless of the '
             'pending-rating provider state.',
       );
-      expect(_bbButtonWithLabel('Leave Game'), findsNothing);
+      expect(_leaveButton(), findsNothing);
     });
   });
 
@@ -368,7 +384,7 @@ void main() {
       // Sanity check: we landed on the detail screen with the rate CTA,
       // and the host route is hidden behind it.
       expect(find.byType(GameDetailScreen), findsOneWidget);
-      expect(_bbButtonWithLabel('Rate Participants'), findsOneWidget);
+      expect(_rateButton(), findsOneWidget);
 
       // Drain the queue. The override now resolves to `[]`; the
       // FutureProvider re-runs; the listener inside GameDetailScreen

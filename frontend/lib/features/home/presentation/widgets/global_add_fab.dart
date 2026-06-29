@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/home/home_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -67,6 +68,7 @@ class _GlobalAddFabState extends State<GlobalAddFab>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final bottom = HomeScaffold.navBottomInset(context) + 8;
 
     return Stack(
@@ -81,8 +83,8 @@ class _GlobalAddFabState extends State<GlobalAddFab>
               ),
             ),
           ),
-          Positioned(
-            right: 16,
+          PositionedDirectional(
+            end: 16,
             bottom: bottom + 64,
             child: FadeTransition(
               opacity: _menuFade,
@@ -96,13 +98,13 @@ class _GlobalAddFabState extends State<GlobalAddFab>
                     children: [
                       _MenuAction(
                         icon: Icons.sports_rounded,
-                        label: 'Add Game',
+                        label: l10n.fabAddGame,
                         onTap: () => _navigate(Routes.createGame),
                       ),
                       const SizedBox(height: 10),
                       _MenuAction(
                         icon: Icons.fitness_center_rounded,
-                        label: 'Log Training',
+                        label: l10n.fabLogTraining,
                         onTap: () => _navigate(Routes.createLog),
                       ),
                     ],
@@ -112,8 +114,8 @@ class _GlobalAddFabState extends State<GlobalAddFab>
             ),
           ),
         ],
-        Positioned(
-          right: 16,
+        PositionedDirectional(
+          end: 16,
           bottom: bottom,
           child: RotationTransition(
             turns: _rotation,

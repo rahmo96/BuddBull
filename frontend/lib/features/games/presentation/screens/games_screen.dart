@@ -1,6 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/games/presentation/widgets/game_card.dart';
@@ -68,6 +68,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final searchState = ref.watch(gameSearchProvider);
     final user = ref.watch(authProvider).user;
     final activeFilters = _countActiveFilters(searchState.params);
@@ -75,7 +76,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(AppStrings.navGames),
+        title: Text(l10n.navGames),
         backgroundColor: AppColors.background,
         elevation: 0,
         actions: [
@@ -83,7 +84,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
             IconButton(
               icon: const Icon(Icons.add_circle_outline_rounded),
               onPressed: () => context.push('/games/create'),
-              tooltip: 'Create game',
+              tooltip: l10n.tooltipCreateGame,
             ),
         ],
       ),
@@ -103,7 +104,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
                       searchState.params.copyWith(city: q.isEmpty ? null : q),
                     ),
                 decoration: InputDecoration(
-                  hintText: 'Search games, sports, locations…',
+                  hintText: l10n.searchGamesHint,
                   hintStyle: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.textDisabled,
                   ),
@@ -119,7 +120,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
                       child: const Icon(Icons.tune_rounded),
                     ),
                     onPressed: _openFilters,
-                    tooltip: 'Filter',
+                    tooltip: l10n.tooltipFilter,
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
@@ -146,7 +147,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
                   final isActive =
                       searchState.params.sport == null;
                   return _SportFilterChip(
-                    label: 'All',
+                    label: l10n.sportFilterAll,
                     emoji: '🏆',
                     selected: isActive,
                     onTap: () => ref
@@ -158,7 +159,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
                 final selected =
                     searchState.params.sport == sport;
                 return _SportFilterChip(
-                  label: sport,
+                  label: _sportDisplayName(context, sport),
                   emoji: _sportEmoji(sport),
                   selected: selected,
                   onTap: () => ref
@@ -179,7 +180,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
               child: Row(
                 children: [
                   Text(
-                    '$activeFilters filter${activeFilters > 1 ? 's' : ''} active',
+                    l10n.filtersActive(activeFilters),
                     style: AppTextStyles.bodySmall.copyWith(
                         color: AppColors.primary),
                   ),
@@ -192,7 +193,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
                           .clearFilters();
                     },
                     child: Text(
-                      'Clear',
+                      l10n.clearFilters,
                       style: AppTextStyles.labelSmall.copyWith(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w600,
@@ -340,6 +341,7 @@ class _EmptyGames extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -348,11 +350,11 @@ class _EmptyGames extends StatelessWidget {
           children: [
             const Text('⚽', style: TextStyle(fontSize: 56)),
             const SizedBox(height: 16),
-            const Text('No games found',
+            Text(l10n.emptyNoGamesFound,
                 style: AppTextStyles.headlineSmall),
             const SizedBox(height: 8),
             Text(
-              'Try adjusting your filters or create a new game.',
+              l10n.emptyTryAdjustingFilters,
               style: AppTextStyles.bodyMedium.copyWith(
                   color: AppColors.textSecondary),
               textAlign: TextAlign.center,
@@ -362,7 +364,7 @@ class _EmptyGames extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onCreateTap,
                 icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Create a game'),
+                label: Text(l10n.buttonCreateGame),
                 style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primary),
               ),
@@ -395,6 +397,21 @@ class _ShimmerList extends StatelessWidget {
       ),
     );
   }
+}
+
+String _sportDisplayName(BuildContext context, String sport) {
+  final l10n = context.l10n;
+  return switch (sport) {
+    'Football' => l10n.sportFootball,
+    'Basketball' => l10n.sportBasketball,
+    'Tennis' => l10n.sportTennis,
+    'Running' => l10n.sportRunning,
+    'Swimming' => l10n.sportSwimming,
+    'Cycling' => l10n.sportCycling,
+    'Volleyball' => l10n.sportVolleyball,
+    'Cricket' => l10n.sportCricket,
+    _ => sport,
+  };
 }
 
 String _sportEmoji(String sport) {

@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/reports/data/report_repository.dart';
 import 'package:buddbull/features/reports/providers/report_provider.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
@@ -15,25 +16,26 @@ Future<void> showReportFlow(
   required String targetId,
   String? targetLabel,
 }) async {
+  final l10n = context.l10n;
   final targetName = targetLabel ??
-      (targetType == ReportTargetType.user ? 'this user' : 'this game');
+      (targetType == ReportTargetType.user
+          ? l10n.reportTargetThisUser
+          : l10n.reportTargetThisGame);
 
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Confirm Report'),
-      content: Text(
-        'Are you sure you want to report $targetName? '
-        'False reports may result in action against your account.',
-      ),
+      title: Text(l10n.confirmReport),
+      content: Text(l10n.confirmReportBody(targetName)),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Cancel'),
+          child: Text(l10n.cancel),
         ),
         TextButton(
           onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Continue', style: TextStyle(color: AppColors.error)),
+          child: Text(l10n.continueAction,
+              style: const TextStyle(color: AppColors.error)),
         ),
       ],
     ),
@@ -53,22 +55,24 @@ Future<void> showReportFlow(
 
   final submitConfirmed = await showDialog<bool>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Submit Report?'),
-      content: Text(
-        'Your report titled "${formResult['title']}" will be sent to admins for review.',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Go Back'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Submit', style: TextStyle(color: AppColors.error)),
-        ),
-      ],
-    ),
+    builder: (ctx) {
+      final dialogL10n = ctx.l10n;
+      return AlertDialog(
+        title: Text(dialogL10n.submitReportTitle),
+        content: Text(dialogL10n.submitReportBody(formResult['title']!)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(dialogL10n.goBack),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(dialogL10n.submit,
+                style: const TextStyle(color: AppColors.error)),
+          ),
+        ],
+      );
+    },
   );
   if (submitConfirmed != true || !context.mounted) return;
 
@@ -85,14 +89,17 @@ Future<void> showReportFlow(
   if (!context.mounted) return;
   if (error == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Report submitted. Admins will review it shortly.'),
+      SnackBar(
+        content: Text(context.l10n.reportSubmitted),
         backgroundColor: AppColors.success,
       ),
     );
   } else {
+    final display = error == '__localize__'
+        ? context.l10n.genericError
+        : error;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(error), backgroundColor: AppColors.error),
+      SnackBar(content: Text(display), backgroundColor: AppColors.error),
     );
   }
 }
@@ -118,6 +125,7 @@ class _ReportFormSheetState extends State<_ReportFormSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return Padding(
@@ -139,26 +147,28 @@ class _ReportFormSheetState extends State<_ReportFormSheet> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text('Report Details', style: AppTextStyles.titleMedium),
+            Text(l10n.reportDetails, style: AppTextStyles.titleMedium),
             const SizedBox(height: 16),
             BbTextField(
-              label: 'Title',
+              label: l10n.reportTitleLabel,
               controller: _titleCtrl,
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Title is required' : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? l10n.reportTitleRequired
+                  : null,
             ),
             const SizedBox(height: 12),
             BbTextField(
-              label: 'Reason',
+              label: l10n.reportReasonLabel,
               controller: _reasonCtrl,
               maxLines: 4,
               minLines: 3,
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Reason is required' : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? l10n.reportReasonRequired
+                  : null,
             ),
             const SizedBox(height: 20),
             BbButton(
-              label: 'Continue',
+              label: l10n.continueAction,
               onPressed: () {
                 if (!_formKey.currentState!.validate()) return;
                 Navigator.pop(context, {
@@ -181,16 +191,17 @@ class ReportActionButton extends ConsumerWidget {
     required this.targetType,
     required this.targetId,
     this.targetLabel,
-    this.label = 'Report User',
+    this.label,
   });
 
   final ReportTargetType targetType;
   final String targetId;
   final String? targetLabel;
-  final String label;
+  final String? label;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     return OutlinedButton.icon(
       onPressed: () => showReportFlow(
         context,
@@ -206,7 +217,7 @@ class ReportActionButton extends ConsumerWidget {
       ),
       icon: const Icon(Icons.warning_amber_rounded, color: AppColors.error),
       label: Text(
-        label,
+        label ?? l10n.reportUser,
         style: AppTextStyles.labelLarge.copyWith(
           color: AppColors.error,
           fontWeight: FontWeight.w600,

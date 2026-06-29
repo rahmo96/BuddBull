@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/admin/providers/admin_provider.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +19,7 @@ class _AdminGamesScreenState extends ConsumerState<AdminGamesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final gamesAsync = ref.watch(adminGamesProvider(_status));
 
     return Column(
@@ -32,27 +34,27 @@ class _AdminGamesScreenState extends ConsumerState<AdminGamesScreen> {
                   child: Row(
                     children: [
                       _StatusChip(
-                        label: 'All',
+                        label: l10n.statusAll,
                         selected: _status == null,
                         onTap: () => setState(() => _status = null),
                       ),
                       _StatusChip(
-                        label: 'Open',
+                        label: l10n.gameStatusOpen,
                         selected: _status == 'open',
                         onTap: () => setState(() => _status = 'open'),
                       ),
                       _StatusChip(
-                        label: 'Full',
+                        label: l10n.gameStatusFull,
                         selected: _status == 'full',
                         onTap: () => setState(() => _status = 'full'),
                       ),
                       _StatusChip(
-                        label: 'Completed',
+                        label: l10n.gameStatusCompleted,
                         selected: _status == 'completed',
                         onTap: () => setState(() => _status = 'completed'),
                       ),
                       _StatusChip(
-                        label: 'Cancelled',
+                        label: l10n.gameStatusCancelled,
                         selected: _status == 'cancelled',
                         onTap: () => setState(() => _status = 'cancelled'),
                       ),
@@ -61,7 +63,7 @@ class _AdminGamesScreenState extends ConsumerState<AdminGamesScreen> {
                 ),
               ),
               IconButton(
-                tooltip: 'Create event',
+                tooltip: l10n.tooltipCreateEvent,
                 onPressed: () => context.push(Routes.createGame),
                 icon: const Icon(Icons.add_circle_outline),
               ),
@@ -71,11 +73,11 @@ class _AdminGamesScreenState extends ConsumerState<AdminGamesScreen> {
         Expanded(
           child: gamesAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Failed to load games: $e')),
+            error: (e, _) => Center(child: Text(l10n.failedToLoadGames('$e'))),
             data: (data) {
               final games = (data['games'] as List? ?? []).cast<Map<String, dynamic>>();
               if (games.isEmpty) {
-                return const Center(child: Text('No games found'));
+                return Center(child: Text(l10n.noGamesFoundAdmin));
               }
               return RefreshIndicator(
                 onRefresh: () => ref.refresh(adminGamesProvider(_status).future),
@@ -131,7 +133,7 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsetsDirectional.only(end: 8),
       child: FilterChip(
         label: Text(label),
         selected: selected,

@@ -1,5 +1,8 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/constants/skill_level_labels.dart';
+import 'package:buddbull/core/locale/date_format_utils.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/games/presentation/widgets/game_sport_wallpaper.dart';
 import 'package:flutter/material.dart';
@@ -64,6 +67,7 @@ class _FullContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -82,7 +86,7 @@ class _FullContent extends StatelessWidget {
               _InfoRow(
                 icon: Icons.calendar_today_rounded,
                 iconColor: AppColors.info,
-                text: '${game.formattedDate} · ${game.formattedTime}',
+                text: AppDateFormat.mediumDateTime(context, game.scheduledAt),
               ),
               const SizedBox(height: 6),
               _InfoRow(
@@ -95,7 +99,7 @@ class _FullContent extends StatelessWidget {
                 _InfoRow(
                   icon: Icons.near_me_rounded,
                   iconColor: AppColors.teal,
-                  text: _formatDistance(game.distanceKm!),
+                  text: _formatDistance(context, game.distanceKm!),
                 ),
               ],
               const SizedBox(height: 14),
@@ -123,9 +127,9 @@ class _FullContent extends StatelessWidget {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'Join Game',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.buttonJoinGame,
+                        style: const TextStyle(
                           fontFamily: 'Inter',
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
@@ -134,7 +138,8 @@ class _FullContent extends StatelessWidget {
                     )
                   else
                     Text(
-                      '${game.approvedCount}/${game.maxPlayers} players',
+                      l10n.playersCountLabel(
+                          game.approvedCount, game.maxPlayers),
                       style: AppTextStyles.labelMedium.copyWith(
                         fontWeight: FontWeight.w600,
                         color: AppColors.textSecondary,
@@ -176,7 +181,7 @@ class _CompactContent extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${game.formattedDate} · ${game.formattedTime}',
+                  AppDateFormat.mediumDateTime(context, game.scheduledAt),
                   style: AppTextStyles.bodySmall,
                 ),
                 const SizedBox(height: 12),
@@ -264,6 +269,7 @@ class _RosterProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final fraction = total > 0 ? filled / total : 0.0;
     final color = fraction >= 1
         ? AppColors.statusFull
@@ -278,14 +284,14 @@ class _RosterProgressBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Roster',
+              l10n.rosterLabel,
               style: AppTextStyles.labelSmall.copyWith(
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),
             Text(
-              '$filled/$total players',
+              l10n.playersCountLabel(filled, total),
               style: AppTextStyles.labelSmall.copyWith(
                 fontWeight: FontWeight.w700,
                 color: color,
@@ -321,11 +327,20 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, label) = switch (status) {
-      'open' => (AppColors.statusOpen, 'Open'),
-      'full' => (AppColors.statusFull, 'Full'),
-      'in_progress' => (AppColors.statusInProgress, 'Live'),
-      'completed' => (AppColors.statusCompleted, 'Done'),
-      'cancelled' => (AppColors.statusCancelled, 'Cancelled'),
+      'open' => (AppColors.statusOpen, context.l10n.gameStatusOpen),
+      'full' => (AppColors.statusFull, context.l10n.gameStatusFull),
+      'in_progress' => (
+          AppColors.statusInProgress,
+          context.l10n.gameStatusLive
+        ),
+      'completed' => (
+          AppColors.statusCompleted,
+          context.l10n.gameStatusCompleted
+        ),
+      'cancelled' => (
+          AppColors.statusCancelled,
+          context.l10n.gameStatusCancelled
+        ),
       _ => (AppColors.grey500, status),
     };
 
@@ -359,6 +374,7 @@ class _FullBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final label = context.l10n.gameStatusFull.toUpperCase();
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: small ? 8 : 10,
@@ -369,7 +385,7 @@ class _FullBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        'FULL',
+        label,
         style: (small ? AppTextStyles.labelSmall : AppTextStyles.labelMedium)
             .copyWith(
           color: Colors.white,
@@ -387,6 +403,9 @@ class _SkillBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final display = level == 'any'
+        ? context.l10n.anySkillLevel
+        : skillLevelDisplayName(context, level);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -394,7 +413,7 @@ class _SkillBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        level[0].toUpperCase() + level.substring(1),
+        display,
         style: AppTextStyles.labelSmall.copyWith(
           fontWeight: FontWeight.w600,
           color: AppColors.textSecondary,
@@ -436,9 +455,12 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-String _formatDistance(double km) {
+String _formatDistance(BuildContext context, double km) {
+  final l10n = context.l10n;
   if (km < 1) {
-    return '${(km * 1000).round()} m away';
+    return l10n.distanceMetersAway((km * 1000).round());
   }
-  return '${km.toStringAsFixed(km < 10 ? 1 : 0)} km away';
+  return l10n.distanceKmAway(
+    km.toStringAsFixed(km < 10 ? 1 : 0),
+  );
 }

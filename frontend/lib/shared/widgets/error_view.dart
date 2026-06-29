@@ -1,6 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:flutter/material.dart';
 
 /// Full-page error state with retry button.
@@ -33,8 +33,8 @@ class ErrorView extends StatelessWidget {
               child: Icon(icon, size: 40, color: AppColors.error),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Oops!',
+            Text(
+              context.l10n.oops,
               style: AppTextStyles.headlineSmall,
               textAlign: TextAlign.center,
             ),
@@ -51,7 +51,7 @@ class ErrorView extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text(AppStrings.retry),
+                label: Text(context.l10n.retry),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.primary,
                 ),

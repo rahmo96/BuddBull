@@ -1,14 +1,13 @@
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/core/storage/shared_preferences_provider.dart';
 import 'package:buddbull/features/auth/presentation/screens/login_screen.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../helpers/auth_router.dart';
+import '../helpers/l10n_test_helpers.dart';
 import '../helpers/test_bootstrap.dart';
 
 void main() {
@@ -25,7 +24,7 @@ void main() {
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
         ],
-        child: MaterialApp.router(routerConfig: router),
+        child: authTestApp(router),
       ),
     );
     await tester.pump();
@@ -33,24 +32,25 @@ void main() {
   }
 
   Future<void> fillValidRegistrationForm(WidgetTester tester) async {
+    final l10n = enL10n();
     await tester.enterText(
-        textFieldBelowLabel(AppStrings.firstNameLabel), 'Alex');
+        textFieldBelowLabel(l10n.firstNameLabel), 'Alex');
     await tester.enterText(
-        textFieldBelowLabel(AppStrings.lastNameLabel), 'Rivera');
+        textFieldBelowLabel(l10n.lastNameLabel), 'Rivera');
     await tester.enterText(
-        textFieldBelowLabel(AppStrings.usernameLabel), 'alexriver');
+        textFieldBelowLabel(l10n.usernameLabel), 'alexriver');
     await tester.enterText(
-        textFieldBelowLabel(AppStrings.emailLabel), 'alex@example.com');
+        textFieldBelowLabel(l10n.emailLabel), 'alex@example.com');
     await tester.enterText(
-        textFieldBelowLabel(AppStrings.passwordLabel), 'password01');
+        textFieldBelowLabel(l10n.passwordLabel), 'password01');
     await tester.enterText(
-        textFieldBelowLabel(AppStrings.confirmPasswordLabel), 'password01');
+        textFieldBelowLabel(l10n.confirmPasswordLabel), 'password01');
   }
 
   Finder createAccountBbButtonFinder() {
+    final label = enL10n().registerButton;
     return find.byWidgetPredicate(
-      (w) =>
-          w is BbButton && (w.label == AppStrings.registerButton),
+      (w) => w is BbButton && (w.label == label),
     );
   }
 
@@ -63,7 +63,7 @@ void main() {
       await tester.tap(createAccountBbButtonFinder());
       await tester.pumpAndSettle();
 
-      expect(find.text(AppStrings.fieldRequired), findsWidgets);
+      expect(find.text(enL10n().fieldRequired), findsWidgets);
     });
 
     testWidgets(
@@ -76,18 +76,19 @@ void main() {
       await tester.tap(createAccountBbButtonFinder());
       await tester.pumpAndSettle();
 
-      expect(find.text(AppStrings.acceptTerms), findsOneWidget);
+      expect(find.text(enL10n().acceptTerms), findsOneWidget);
     });
 
     testWidgets('should expose sign-in shortcut back to login', (tester) async {
       await pumpRegister(tester);
+      final l10n = enL10n();
 
-      await tester.ensureVisible(find.text(AppStrings.signInLink));
-      await tester.tap(find.text(AppStrings.signInLink));
+      await tester.ensureVisible(find.text(l10n.signInLink));
+      await tester.tap(find.text(l10n.signInLink));
       await tester.pumpAndSettle();
 
       expect(find.byType(LoginScreen), findsOneWidget);
-      expect(find.text(AppStrings.loginButton), findsOneWidget);
+      expect(find.text(l10n.loginButton), findsOneWidget);
     });
   });
 }

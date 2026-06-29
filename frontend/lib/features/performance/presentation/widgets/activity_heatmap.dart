@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/locale/l10n_extension.dart';
 import 'package:buddbull/features/performance/data/models/performance_model.dart';
 import 'package:flutter/material.dart';
 
@@ -14,6 +15,8 @@ class ActivityHeatmap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     // Build a map of date → count for O(1) lookup
     final dateMap = <String, int>{};
     for (final e in entries) {
@@ -48,7 +51,7 @@ class ActivityHeatmap extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Activity', style: AppTextStyles.titleSmall),
+        Text(l10n.activity, style: AppTextStyles.titleSmall),
         const SizedBox(height: 10),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -63,7 +66,7 @@ class ActivityHeatmap extends StatelessWidget {
                     (week) => SizedBox(
                       width: cellSize + gap,
                       child: Text(
-                        _monthLabel(week, weekColumns.indexOf(week)),
+                        _monthLabel(context, week, weekColumns.indexOf(week)),
                         style: AppTextStyles.labelSmall
                             .copyWith(fontSize: 9),
                       ),
@@ -77,15 +80,15 @@ class ActivityHeatmap extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Day-of-week labels
-                  const Column(
+                  Column(
                     children: [
-                      SizedBox(height: cellSize + gap),
-                      SizedBox(height: cellSize + gap),
-                      _DayLabel('Wed'),
-                      SizedBox(height: cellSize + gap),
-                      _DayLabel('Fri'),
-                      SizedBox(height: cellSize + gap),
-                      SizedBox(height: cellSize + gap),
+                      const SizedBox(height: cellSize + gap),
+                      const SizedBox(height: cellSize + gap),
+                      _DayLabel(l10n.dayWed),
+                      const SizedBox(height: cellSize + gap),
+                      _DayLabel(l10n.dayFri),
+                      const SizedBox(height: cellSize + gap),
+                      const SizedBox(height: cellSize + gap),
                     ],
                   ),
                   const SizedBox(width: 4),
@@ -105,8 +108,8 @@ class ActivityHeatmap extends StatelessWidget {
                             message: isFuture
                                 ? ''
                                 : count == 0
-                                    ? 'No activity'
-                                    : '$count session${count > 1 ? 's' : ''}',
+                                    ? l10n.heatmapNoActivity
+                                    : l10n.heatmapSessionCount(count),
                             child: Container(
                               width: cellSize,
                               height: cellSize,
@@ -140,7 +143,7 @@ class ActivityHeatmap extends StatelessWidget {
         // ── Legend ────────────────────────────────────────────
         Row(
           children: [
-            const Text('Less', style: AppTextStyles.labelSmall),
+            Text(l10n.less, style: AppTextStyles.labelSmall),
             const SizedBox(width: 4),
             ...List.generate(
               5,
@@ -155,7 +158,7 @@ class ActivityHeatmap extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            const Text('More', style: AppTextStyles.labelSmall),
+            Text(l10n.more, style: AppTextStyles.labelSmall),
           ],
         ),
       ],
@@ -172,17 +175,31 @@ class ActivityHeatmap extends StatelessWidget {
     )!;
   }
 
-  String _monthLabel(List<DateTime> week, int weekIndex) {
+  String _monthLabel(BuildContext context, List<DateTime> week, int weekIndex) {
     if (weekIndex == 0 || week.first.day <= 7) {
-      return _monthAbbr(week.first.month);
+      return _monthAbbr(context, week.first.month);
     }
     return '';
   }
 
-  String _monthAbbr(int month) => const [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-      ][month - 1];
+  String _monthAbbr(BuildContext context, int month) {
+    final l10n = context.l10n;
+    return switch (month) {
+      1 => l10n.monthJan,
+      2 => l10n.monthFeb,
+      3 => l10n.monthMar,
+      4 => l10n.monthApr,
+      5 => l10n.monthMay,
+      6 => l10n.monthJun,
+      7 => l10n.monthJul,
+      8 => l10n.monthAug,
+      9 => l10n.monthSep,
+      10 => l10n.monthOct,
+      11 => l10n.monthNov,
+      12 => l10n.monthDec,
+      _ => '',
+    };
+  }
 }
 
 bool isSameDay(DateTime a, DateTime b) =>
