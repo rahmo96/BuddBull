@@ -16,7 +16,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage --forceExit",
     "seed:games": "node scripts/seed-games.js",
-    "seed:demo-activity": "node scripts/seed-demo-activity.js"
+    "seed:demo-activity": "node scripts/seed-demo-activity.js",
+    "load-test": "npx artillery run tests/load/artillery-config.yml --output tests/load/report.json && npx artillery report tests/load/report.json --output tests/load/load-test-report.html"
   },
   "dependencies": {
     "agenda": "^5.0.0",

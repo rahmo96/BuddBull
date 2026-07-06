@@ -1,0 +1,61 @@
+# BuddBull API — Load & Stress Test (Artillery.io)
+#
+# Prerequisites:
+#   1. MongoDB running and MONGO_URI configured in backend/.env
+#   2. API server started:  npm run dev
+#   3. Run from backend/:   npm run load-test
+#
+# IMPORTANT — target port MUST match PORT in backend/.env (commonly 5000).
+# Code default is 3000; if .env sets PORT=5000 the server listens on 5000
+# while Artillery still pointing at 3000 produces 100% ECONNREFUSED.
+#
+# Target endpoints (all public — no JWT required):
+#   GET /health                  — lightweight liveness probe (no DB)
+#   GET /api/v1/games?status=open&limit=20  — read-heavy catalogue (optionalAuth)
+
+config:
+  target: "http://127.0.0.1:5000"
+  plugins:
+    expect: {}
+  defaults:
+    headers:
+      Accept: "application/json"
+  phases:
+  # Phase 1 — Warm-up: steady baseline traffic
+    - name: Warm-up
+      duration: 60
+      arrivalRate: 20
+
+  # Phase 2 — Ramp-up to stress: linear increase 20 → 250 req/s
+    - name: Ramp-up to stress
+      duration: 120
+      arrivalRate: 20
+      rampTo: 250
+
+  # Phase 3 — Peak load: sustained maximum throughput
+    - name: Peak load
+      duration: 60
+      arrivalRate: 500
+
+scenarios:
+  - name: Health check
+    weight: 30
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+            - contentType: json
+            - hasProperty: success
+
+  - name: Public games catalogue
+    weight: 70
+    flow:
+      - get:
+          url: "/api/v1/games"
+          qs:
+            status: open
+            limit: 20
+          expect:
+            - statusCode: 200
+            - contentType: json

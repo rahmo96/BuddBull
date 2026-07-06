@@ -99,9 +99,15 @@ const startServer = async () => {
   }, { timezone: retentionTz });
 
   // ── 5. Listen ───────────────────────────────────────────────
-  server.listen(port, () => {
+  // Bind 0.0.0.0 (all IPv4 interfaces) so local tools — Artillery, curl,
+  // Docker port-forwarding, WSL→Windows — can reach the API via 127.0.0.1.
+  // Omitting the host makes Node prefer IPv6 (::) which can cause ECONNREFUSED
+  // on Windows when clients connect via 127.0.0.1 or localhost.
+  const host = process.env.HOST || '0.0.0.0';
+  server.listen(port, host, () => {
     logger.info(`BuddBull API  [${nodeEnv}]  →  http://localhost:${port}`);
     logger.info(`Health check →  http://localhost:${port}/health`);
+    logger.info(`Listening on ${host}:${port}`);
   });
 
   // ── Unhandled promise rejections ────────────────────────────
