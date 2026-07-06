@@ -1651,7 +1651,7 @@ class _GameMergeSelectorSheetState extends ConsumerState<_GameMergeSelectorSheet
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Merge Game', style: AppTextStyles.headlineSmall),
+              const Text('Merge Game', style: AppTextStyles.headlineSmall),
               const SizedBox(height: 8),
               Text(
                 'Pick an open ${widget.sourceGame.sport} game in '
