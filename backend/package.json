@@ -15,7 +15,8 @@
     "test": "jest --forceExit --detectOpenHandles",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage --forceExit",
-    "seed:games": "node scripts/seed-games.js"
+    "seed:games": "node scripts/seed-games.js",
+    "seed:demo-activity": "node scripts/seed-demo-activity.js"
   },
   "dependencies": {
     "agenda": "^5.0.0",
