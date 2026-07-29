@@ -9,7 +9,14 @@ const envSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
   PORT: Joi.number().integer().min(1024).max(65535).default(3000),
 
-  MONGO_URI: Joi.string().uri().required(),
+  // Do not use Joi.string().uri() — Atlas replica-set URIs list multiple
+  // hosts with commas (host1:27017,host2:27017,...) which fail URI parsing.
+  MONGO_URI: Joi.string()
+    .pattern(/^mongodb(\+srv)?:\/\//)
+    .required()
+    .messages({
+      'string.pattern.base': '"MONGO_URI" must start with mongodb:// or mongodb+srv://',
+    }),
 
   JWT_SECRET: Joi.string().min(32).required(),
   JWT_EXPIRES_IN: Joi.string().default('7d'),
