@@ -3,7 +3,6 @@
 #
 #  Services:
 #    api       — Node.js Express backend (hot-reload via nodemon)
-#    redis     — (optional) Redis for session caching / rate-limit store
 #
 #  Usage:
 #    docker compose up -d          # start all services
@@ -12,17 +11,6 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:
-
-  # ── Redis ─────────────────────────────────────────────────────────────────
-  redis:
-    image: redis:7-alpine
-    container_name: buddbull_redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    command: redis-server --save 20 1 --loglevel warning
-    volumes:
-      - redis_data:/data
 
   # ── API (Node.js / Express) ────────────────────────────────────────────────
   api:
@@ -36,7 +24,6 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      REDIS_URL: redis://redis:6379
       NODE_ENV: development
     volumes:
       # Hot-reload: mount source code
@@ -53,7 +40,6 @@ services:
       start_period: 20s
 
 volumes:
-  redis_data:
   uploads_data:
 
 networks:

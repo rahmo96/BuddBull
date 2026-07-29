@@ -38,6 +38,15 @@ service-account.json
 service-account*.json
 firebase-adminsdk*.json
 
+# k6 load-test tokens (Firebase ID tokens — short-lived secrets)
+load/tokens.json
+
+# k6 generated reports
+load/reports/
+load/*.html
+load/results-*.json
+load/results-*.txt
+
 # OS
 .DS_Store
 Thumbs.db
