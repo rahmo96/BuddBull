@@ -20,6 +20,8 @@ services:
     container_name: buddbull_api
     restart: unless-stopped
     ports:
+      # App default is http://<host>:8000 — keep 5000 for local tooling.
+      - "8000:5000"
       - "5000:5000"
     env_file:
       - ./backend/.env
