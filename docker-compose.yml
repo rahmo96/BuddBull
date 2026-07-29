@@ -35,7 +35,9 @@ services:
       # Persist uploads between restarts
       - uploads_data:/app/uploads
     healthcheck:
-      test: [ "CMD", "wget", "-qO-", "http://localhost:5000/health" ]
+      # Use 127.0.0.1 — busybox wget resolves "localhost" to ::1, but Node
+      # listens on IPv4 only (0.0.0.0:5000), which marks the container unhealthy.
+      test: [ "CMD", "wget", "-qO-", "http://127.0.0.1:5000/health" ]
       interval: 15s
       timeout: 5s
       retries: 3
