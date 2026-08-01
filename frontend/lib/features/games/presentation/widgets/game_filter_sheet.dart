@@ -54,7 +54,7 @@ class _GameFilterSheetState extends ConsumerState<GameFilterSheet> {
     if (_nearMe) {
       setState(() => _isResolvingLocation = true);
       final position =
-          await ref.read(locationServiceProvider).getCurrentPosition();
+          await ref.read(locationServiceProvider).getPositionForSearch();
       if (!mounted) return;
       setState(() => _isResolvingLocation = false);
 

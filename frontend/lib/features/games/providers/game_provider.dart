@@ -32,7 +32,7 @@ final exploreGamesProvider =
   final radiusKm = user?.location?.radiusKm ?? 10;
 
   final position =
-      await ref.watch(locationServiceProvider).getCurrentPosition();
+      await ref.watch(locationServiceProvider).getPositionForSearch();
 
   GameSearchParams params;
   if (position != null) {
