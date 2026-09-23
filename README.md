@@ -1,239 +1,187 @@
-# BuddBull — Social-Sport Platform
+# BuddBull
 
-> Connect people for physical activities, group matches, and performance tracking.
+[![BuddBull CI](https://github.com/rahmo96/BuddBull/actions/workflows/buddbull-ci.yml/badge.svg)](https://github.com/rahmo96/BuddBull/actions/workflows/buddbull-ci.yml)
 
----
+**A social-sport app for finding people to play with, organizing games, and tracking your progress.**
 
-## Tech Stack
+BuddBull is a Flutter mobile app (iOS & Android) backed by a Node.js / Express / MongoDB API with real-time chat over Socket.io and Firebase for authentication and push notifications.
 
-| Layer        | Technology                               |
-|--------------|------------------------------------------|
-| Frontend     | Flutter (iOS & Android)                  |
-| Backend      | Node.js 18+ · Express 4                  |
-| Database     | MongoDB 7 · Mongoose 8                   |
-| Real-time    | Socket.io 4                              |
-| Auth         | JWT (access + refresh tokens) · bcryptjs |
-| Email        | Nodemailer (SendGrid)                    |
-| File storage | Local (dev) · AWS S3 (prod)              |
-| Logging      | Winston                                  |
-| Testing      | Jest · Supertest                         |
-| Lint/Format  | ESLint (Airbnb) · Prettier               |
-| DevOps       | Docker · GitHub Actions                  |
+## Features
 
----
+- **Games** — create, search, and join pickup games; organizers approve join requests, invite friends, kick players, and merge groups. Calendar view and automatic completion of past games.
+- **Performance tracking** — log matches and training sessions, see stats, streaks, progress charts, and per-sport leaderboards.
+- **Chat** — a group chat for every game plus direct messages, with read receipts, reactions, replies, and pinned messages.
+- **Ratings** — rate other players on reliability and behavior after a game.
+- **Social** — profiles, followers, friend requests, and user search.
+- **Notifications** — push notifications (Firebase Cloud Messaging), an in-app inbox, and scheduled pre-game reminders.
+- **Moderation** — user reports and an admin dashboard for managing users, games, sports, and reports, with CSV export and broadcast messages.
 
-## Repository Structure
+## Quick start
 
-```
-buddbull/
-├── frontend/          # Flutter app (iOS & Android)
-├── backend/           # Node.js / Express / MongoDB API
-└── README.md
-```
+### Prerequisites
 
----
+- [Docker](https://docs.docker.com/get-docker/) — or Node.js ≥ 18 to run the API without Docker
+- A MongoDB database (local or [Atlas](https://www.mongodb.com/atlas))
+- A [Firebase](https://console.firebase.google.com/) project with Authentication enabled
+- Flutter ≥ 3.24 (Dart ≥ 3.5)
 
-## Frontend (`frontend/`)
-
-Flutter app for BuddBull — auth, games, performance, chat, ratings, admin.
-
-### Stack
-- **SDK:** Dart ≥3.5, Flutter ≥3.24
-- **State:** Riverpod
-- **Navigation:** go_router
-- **Networking:** Dio, Socket.io client
-- **Storage:** flutter_secure_storage, shared_preferences
-- **UI:** Google Fonts, cached_network_image, image_picker, shimmer, fl_chart, table_calendar
-- **Firebase:** firebase_core
-
-### Layout
-
-```
-frontend/
-├── lib/
-│   ├── main.dart
-│   ├── app.dart
-│   ├── core/                    # Shared app layer
-│   │   ├── constants/           # app_colors, app_text_styles
-│   │   ├── network/             # api_client, api_endpoints
-│   │   ├── router/              # app_router
-│   │   ├── services/            # socket_service
-│   │   └── theme/               # app_theme
-│   ├── features/
-│   │   ├── auth/                # login, register, forgot password, providers, repositories
-│   │   ├── home/                # home_scaffold, home_screen
-│   │   ├── profile/             # profile, edit profile, user_repository, stats
-│   │   ├── games/               # games list, create game, calendar, game detail, filters
-│   │   ├── performance/        # logs, create log, heatmap, streak, progress chart
-│   │   ├── chat/                # chat list, chat screen, message bubbles, pinned
-│   │   ├── rating/              # rate player, rating stars, rating repository
-│   │   └── admin/               # admin dashboard, stat cards, admin repository
-│   └── shared/
-│       └── widgets/             # bb_button, bb_text_field, loading_overlay, error_view
-├── assets/                      # images, icons, lottie
-├── pubspec.yaml
-└── (android/, ios/, etc.)
-```
-
-### Run
+### 1. Start the backend
 
 ```bash
-cd buddbull/frontend
+git clone https://github.com/rahmo96/BuddBull.git
+cd BuddBull
+```
+
+Create `backend/.env` with at least the required variables from [Configuration](#configuration). Set `PORT=5000` so it matches the ports in `docker-compose.yml`, then start the API:
+
+```bash
+docker compose up -d
+```
+
+Check that it's running:
+
+```bash
+curl http://127.0.0.1:5000/health
+```
+
+<details>
+<summary>Run without Docker</summary>
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+</details>
+
+### 2. Run the app
+
+The app is already set up for BuddBull's Firebase project (`lib/firebase_options.dart`). If you use your own Firebase project, regenerate that file with the [FlutterFire CLI](https://firebase.google.com/docs/flutter/setup) (`flutterfire configure`). The backend's Firebase Admin credentials must belong to the same project.
+
+```bash
+cd frontend
 flutter pub get
-flutter run
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:5000/api/v1
 ```
 
-### Build
+Use `http://10.0.2.2:5000/api/v1` for the Android emulator and `http://127.0.0.1:5000/api/v1` for the iOS simulator or desktop. Without `API_BASE_URL`, the app connects to the production server.
+
+## Configuration
+
+The backend reads its settings from `backend/.env`. They're validated at startup by [`src/config/environment.js`](backend/src/config/environment.js), and the server **refuses to start** if a required value is missing or invalid.
+
+| Variable | Required | Default | Notes |
+|---|---|---|---|
+| `MONGO_URI` | ✅ | — | Must start with `mongodb://` or `mongodb+srv://` |
+| `JWT_SECRET` | ✅ | — | At least 32 characters |
+| `JWT_REFRESH_SECRET` | ✅ | — | At least 32 characters |
+| `EMAIL_HOST` | ✅ | — | SMTP host |
+| `EMAIL_USER` | ✅ | — | SMTP username |
+| `EMAIL_PASS` | ✅ | — | SMTP password |
+| `EMAIL_PORT` | | `587` | |
+| `EMAIL_SECURE` | | `false` | |
+| `EMAIL_FROM` | | `BuddBull <noreply@buddbull.app>` | |
+| `PORT` | | `3000` | Use `5000` with `docker-compose.yml` |
+| `NODE_ENV` | | `development` | `development`, `test`, or `production` |
+| `CLIENT_URL` | | `http://localhost:3000` | Allowed CORS / Socket.io origin in production |
+| `UPLOAD_DIR` | | `uploads/` | Where uploaded images are stored |
+| `RATE_LIMIT_WINDOW_MS` | | `900000` (15 min) | |
+| `RATE_LIMIT_MAX` | | `500` | Requests per window per IP |
+| `GOOGLE_MAPS_API_KEY` | | empty | Needed for place autocomplete and map previews |
+
+**Firebase Admin credentials** are also required to verify sign-ins and send push notifications. Either set `GOOGLE_APPLICATION_CREDENTIALS` to a service-account JSON file, or set all three of `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, and `FIREBASE_PRIVATE_KEY`.
+
+Optional scheduler settings: `RETENTION_CRON_HOUR` (default `19`) and `RETENTION_CRON_TZ` (default `UTC`) control the daily retention-reminder job.
+
+## Architecture
+
+![System components](docs/BuddBull_System_Component.svg)
+
+| Layer | Technology |
+|---|---|
+| Mobile app | Flutter · Riverpod · go_router · Dio · fl_chart · table_calendar |
+| API | Node.js · Express 4 · Joi / express-validator |
+| Database | MongoDB · Mongoose 8 |
+| Real-time | Socket.io 4 |
+| Auth | Firebase Authentication (the API verifies Firebase ID tokens with `firebase-admin`) |
+| Notifications | Firebase Cloud Messaging · Agenda (scheduled jobs) · node-cron |
+| Email | Nodemailer (any SMTP provider) |
+| Logging | Winston · Morgan |
+| Testing | Jest · Supertest · mongodb-memory-server · Artillery · flutter_test |
+| DevOps | Docker · GitHub Actions |
+
+More diagrams live in [`docs/`](docs/): [backend architecture](docs/BuddBull_Backend_Architecture.svg), [frontend architecture](docs/BuddBull_Frontend_Architecture.svg), [domain model](docs/BuddBull_Domain_Model.svg), [use cases](docs/BuddBull_UseCase_Overview.svg), and sequence diagrams for [auth](docs/BuddBull_Sequence_Auth.svg), [joining a game](docs/BuddBull_Sequence_JoinGame.svg), and [chat](docs/BuddBull_Sequence_Chat.svg).
+
+### Security
+
+- Every protected route verifies a Firebase ID token (`Authorization: Bearer <token>`) and checks that the account is active and not banned.
+- Role-based access control (`player`, `organizer`, `admin`).
+- `helmet` security headers, NoSQL-injection and XSS sanitization, and a CORS allow-list.
+- Rate limiting on `/api/` routes in production.
+- A central error handler that hides stack traces in production.
+
+## Development
+
+### Backend (`backend/`)
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Start the API with hot reload (nodemon) |
+| `npm start` | Start the API with Node |
+| `npm test` | Run the Jest test suite |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run test:coverage` | Run tests with a coverage report |
+| `npm run lint` / `npm run lint:fix` | Lint with ESLint (Airbnb) |
+| `npm run format` | Format with Prettier |
+| `npm run seed:games` | Seed sample games |
+| `npm run seed:demo-activity` | Seed demo activity data |
+| `npm run load-test` | Run the Artillery load test and write an HTML report |
+
+### Frontend (`frontend/`)
 
 ```bash
-flutter build apk
+flutter analyze
+flutter test
+flutter build apk --release
 flutter build ios
 ```
 
----
+### CI
 
-## Backend (`backend/`)
+[GitHub Actions](.github/workflows/buddbull-ci.yml) runs on pushes and pull requests to `main`. It only runs jobs for the parts of the repo that changed:
 
-Node.js / Express API — auth, users, games, performance, chat, ratings, admin, Socket.io.
+- **Backend:** `npm ci`, lint, and tests on Node.js 20
+- **Frontend:** `flutter analyze`, `flutter test`, and a release APK build, which it uploads as a build artifact
 
-### Layout
+## Project structure
 
 ```
-backend/
-├── src/
-│   ├── config/
-│   │   ├── database.js          # Mongoose connection, retry & graceful shutdown
-│   │   └── environment.js       # Joi-validated env loader
-│   ├── models/
-│   │   ├── User.model.js
-│   │   ├── Game.model.js
-│   │   ├── PerformanceLog.model.js
-│   │   ├── Chat.model.js
-│   │   ├── Message.model.js
-│   │   ├── Rating.model.js
-│   │   └── SportCategory.model.js
-│   ├── routes/
-│   │   ├── auth.routes.js
-│   │   ├── user.routes.js
-│   │   ├── game.routes.js
-│   │   ├── performance.routes.js
-│   │   ├── chat.routes.js
-│   │   ├── rating.routes.js
-│   │   └── admin.routes.js
-│   ├── controllers/             # auth, user, game, performance, chat, rating, admin
-│   ├── services/                # business logic + notification.service, admin.service
-│   ├── validators/              # Joi/express-validator per domain
-│   ├── middleware/
-│   │   ├── auth.middleware.js
-│   │   ├── upload.middleware.js
-│   │   ├── errorHandler.js
-│   │   └── notFound.js
-│   ├── socket/
-│   │   └── socket.manager.js
-│   ├── utils/
-│   │   ├── logger.js
-│   │   ├── email.js
-│   │   ├── token.js
-│   │   ├── catchAsync.js
-│   │   ├── AppError.js
-│   │   └── csvExport.js
-│   └── app.js                   # Express app (security, CORS, rate-limit)
-├── tests/                       # Jest unit & integration
-├── .env.example                 # Copy to .env and fill in
-├── package.json
-├── server.js                    # HTTP + Socket.io entry
-└── Dockerfile
+BuddBull/
+├── backend/
+│   ├── server.js            # HTTP + Socket.io entry point, scheduled jobs
+│   ├── src/
+│   │   ├── app.js           # Express app, middleware, route mounting
+│   │   ├── config/          # env validation, database, Agenda
+│   │   ├── models/          # Mongoose schemas
+│   │   ├── routes/          # /api/v1/* routers
+│   │   ├── controllers/
+│   │   ├── services/        # business logic
+│   │   ├── validators/
+│   │   ├── middleware/      # auth, uploads, errors
+│   │   ├── socket/          # Socket.io handlers
+│   │   └── utils/
+│   ├── scripts/             # seed scripts
+│   └── tests/
+├── frontend/
+│   └── lib/
+│       ├── main.dart
+│       ├── firebase_options.dart
+│       ├── core/            # network, router, theme, services
+│       ├── features/        # admin, auth, chat, games, home, notifications,
+│       │                    # onboarding, performance, profile, rating, reports, search
+│       └── shared/          # reusable widgets
+├── docs/                    # UML and architecture diagrams, manual test cases
+├── docker-compose.yml       # local API container
+└── nginx.conf
 ```
-
-### Prerequisites
-- Node.js ≥18
-- MongoDB 7 (local or Atlas)
-
-### Install & run
-
-```bash
-cd buddbull/backend
-npm install
-cp .env.example .env
-# Edit .env: MONGO_URI, JWT_SECRET, JWT_REFRESH_SECRET, email, etc.
-```
-
-```bash
-npm run dev        # development (nodemon)
-NODE_ENV=production npm start   # production
-```
-
-### Tests, lint, format
-
-```bash
-npm test
-npm run test:watch
-npm run test:coverage
-npm run lint
-npm run format
-```
-
-### Environment variables
-
-See `backend/.env.example`. Minimum: `MONGO_URI`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, email settings.
-
----
-
-## Build Phases
-
-| Phase | Scope                                            | Status      |
-|-------|--------------------------------------------------|-------------|
-| 1     | Project Init · DB Schemas                        | Complete    |
-| 2     | Auth Service · JWT Middleware · User CRUD        | Pending     |
-| 3     | Matchmaking & Groups API · Geographic queries    | Pending     |
-| 4     | Flutter Architecture · Auth UI · Profile screens | Pending     |
-| 5     | Flutter Core — Matchmaking · Calendar · Stats    | Pending     |
-| 6     | Real-time Chat (Socket.io) · Rating System       | Pending     |
-| 7     | Admin Dashboard · Docker · GitHub Actions CI/CD  | Pending     |
-
----
-
-## Security Highlights
-
-- Passwords hashed with **bcrypt** (min 12 rounds, configurable).
-- JWT access tokens (short-lived) + refresh tokens (long-lived, stored as hash).
-- **Never** stores precise GPS coordinates — geographic queries use city / neighbourhood / postal code.
-- `helmet` HTTP security headers on all responses.
-- `express-mongo-sanitize` prevents NoSQL injection.
-- Global rate limiter (`express-rate-limit`) on all `/api/` routes.
-- CORS whitelist — only approved origins accepted.
-- Centralised error handler prevents stack-trace leaks in production.
-
----
-
-## Data Models Summary
-
-### User
-Auth credentials, role (player/organizer/admin), sports interests with skill levels,
-privacy-safe location (city + neighbourhood + radius preference), social graph (followers/following),
-aggregate stats (games played, win rate, streaks, community rating), push tokens, soft delete.
-
-### Game
-Title, sport, organizer, schedule (date + duration), area-level location, capacity (min/max),
-player slots with approval workflow, skill filter, lifecycle status, merge support, group chat ref,
-double-booking detection via `hasConflict` static.
-
-### PerformanceLog
-Match results and standalone training sessions. Sport-agnostic flexible KV stats, universal
-physical metrics, mood, self-rating, personal best snapshots, streak capture, aggregation
-pipeline for dashboard stats.
-
-### Chat
-Group (tied to a Game) and DM (2-person) rooms. Per-participant read pointers for unread counts,
-mute preferences, last-message denormalised snapshot, pinned messages (max 5).
-
-### Message
-Paginated message feed per chat. Types: text, image, video, file, system. Reply threading,
-emoji reactions (Map), read receipts, soft delete (content replaced), edit audit trail (original
-content retained for moderation, `select: false`).
-
-### Rating
-Post-game peer ratings — reliability score (1–5) + behavior score (1–5) → composite score.
-One rating per rater–ratee–game triple (unique index). Post-save hook rolls up into
-`User.stats.averageRating`. Anonymous option. Admin moderation flags. Distribution aggregation
-pipeline for profile rating card.
