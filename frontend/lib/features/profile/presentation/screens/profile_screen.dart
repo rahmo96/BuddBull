@@ -9,6 +9,7 @@ import 'package:buddbull/features/chat/data/models/chat_model.dart';
 import 'package:buddbull/features/chat/providers/chat_provider.dart';
 import 'package:buddbull/features/home/home_scaffold.dart';
 import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
+import 'package:buddbull/features/profile/presentation/widgets/language_sheet.dart';
 import 'package:buddbull/features/profile/presentation/widgets/sport_chip.dart';
 import 'package:buddbull/features/profile/presentation/widgets/stats_card.dart';
 import 'package:buddbull/features/profile/providers/profile_provider.dart';
@@ -174,6 +175,22 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
+                ),
+              ),
+            ),
+
+            // ── Language ──────────────────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 0),
+                child: Material(
+                  color: AppColors.surface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: AppColors.grey200),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: const LanguageTile(),
                 ),
               ),
             ),
