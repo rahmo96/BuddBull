@@ -43,7 +43,9 @@ abstract class AppTheme {
       useMaterial3: true,
       colorScheme: scheme,
       fontFamily: GoogleFonts.inter().fontFamily,
-      textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
+      fontFamilyFallback: const ['Heebo'],
+      textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme)
+          .apply(fontFamilyFallback: const ['Heebo']),
 
       // ── Scaffold ──────────────────────────────────────────────
       scaffoldBackgroundColor: AppColors.background,
