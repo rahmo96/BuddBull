@@ -9,7 +9,10 @@ Map<String, dynamic> _load(String name) =>
 Set<String> _messageKeys(Map<String, dynamic> arb) =>
     arb.keys.where((k) => !k.startsWith('@')).toSet();
 
-Set<String> _placeholders(String message) => RegExp(r'\{(\w+)')
+/// Extracts ICU placeholder argument names from a message.
+/// Handles ICU syntax like {count, plural, ...} and regular placeholders like {name}.
+/// Returns only the argument name, filtering out 'plural' and 'select' keywords.
+Set<String> icuArgumentNames(String message) => RegExp(r'\{\s*(\w+)\s*[,}]')
     .allMatches(message)
     .map((m) => m.group(1)!)
     .where((p) => !const {'plural', 'select'}.contains(p))
@@ -19,23 +22,57 @@ void main() {
   final en = _load('app_en.arb');
   final he = _load('app_he.arb');
 
+  group('icuArgumentNames', () {
+    test('extracts argument from simple placeholder', () {
+      expect(icuArgumentNames('Hi {name}!'), equals({'name'}));
+    });
+
+    test('extracts multiple arguments', () {
+      expect(icuArgumentNames('{a} and {b}'), equals({'a', 'b'}));
+    });
+
+    test('returns empty set for plain text', () {
+      expect(icuArgumentNames('Hello'), isEmpty);
+    });
+
+    test('extracts only argument name from ICU plural, not content', () {
+      expect(
+        icuArgumentNames('{count, plural, =0{No players} =1{1 player} other{{count} players}}'),
+        equals({'count'}),
+      );
+    });
+
+    test('extracts argument from Hebrew ICU plural', () {
+      expect(
+        icuArgumentNames('{count, plural, =0{אין שחקנים} =1{שחקן אחד} other{{count} שחקנים}}'),
+        equals({'count'}),
+      );
+    });
+
+    test('detects placeholder argument mismatch between English and Hebrew', () {
+      final enArgs = icuArgumentNames('{count, plural, other{{count} players}}');
+      final heArgs = icuArgumentNames('{cnt, plural, other{{cnt} שחקנים}}');
+      expect(enArgs, isNot(heArgs), reason: 'should detect en has count, he has cnt');
+    });
+  });
+
   test('en and he define exactly the same message keys', () {
-    final enKeys = _messageKeys(en)..remove('@@locale');
-    final heKeys = _messageKeys(he)..remove('@@locale');
+    final enKeys = _messageKeys(en);
+    final heKeys = _messageKeys(he);
     expect(heKeys.difference(enKeys), isEmpty, reason: 'keys only in he');
     expect(enKeys.difference(heKeys), isEmpty, reason: 'keys only in en');
   });
 
   test('en and he use the same placeholders for every message', () {
-    for (final key in _messageKeys(en).where((k) => !k.startsWith('@@'))) {
-      final enPh = _placeholders(en[key] as String);
-      final hePh = _placeholders((he[key] ?? '') as String);
-      expect(hePh, enPh, reason: 'placeholder mismatch for "$key"');
+    for (final key in _messageKeys(en)) {
+      final enArgs = icuArgumentNames(en[key] as String);
+      final heArgs = icuArgumentNames((he[key] ?? '') as String);
+      expect(heArgs, enArgs, reason: 'placeholder mismatch for "$key"');
     }
   });
 
-  test('no Hebrew message is left empty or identical-by-accident placeholder text', () {
-    for (final key in _messageKeys(he).where((k) => !k.startsWith('@@'))) {
+  test('no Hebrew message is left empty', () {
+    for (final key in _messageKeys(he)) {
       expect((he[key] as String).trim(), isNotEmpty, reason: key);
     }
   });
