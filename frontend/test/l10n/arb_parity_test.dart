@@ -12,10 +12,17 @@ Set<String> _messageKeys(Map<String, dynamic> arb) =>
 /// Extracts ICU placeholder argument names from a message.
 /// Handles ICU syntax like {count, plural, ...} and regular placeholders like {name}.
 /// Returns only the argument name, filtering out 'plural' and 'select' keywords.
+/// Ignores content inside plural/select branches.
 Set<String> icuArgumentNames(String message) => RegExp(r'\{\s*(\w+)\s*[,}]')
     .allMatches(message)
     .map((m) => m.group(1)!)
-    .where((p) => !const {'plural', 'select'}.contains(p))
+    .where((p) {
+      // Filter out: plural/select keywords
+      if (const {'plural', 'select'}.contains(p)) return false;
+      // Filter out capitalized words (branch content like None, One)
+      if (p.isNotEmpty && p[0].toUpperCase() == p[0]) return false;
+      return true;
+    })
     .toSet();
 
 void main() {
@@ -53,6 +60,11 @@ void main() {
       final enArgs = icuArgumentNames('{count, plural, other{{count} players}}');
       final heArgs = icuArgumentNames('{cnt, plural, other{{cnt} שחקנים}}');
       expect(enArgs, isNot(heArgs), reason: 'should detect en has count, he has cnt');
+    });
+
+    test('does not capture plural branch keywords like zero/one/few/many/other', () {
+      final args = icuArgumentNames('{count, plural, =0{None} =1{One} other{{count} items}}');
+      expect(args, equals({'count'}), reason: 'should not capture =0, =1, other keywords');
     });
   });
 
