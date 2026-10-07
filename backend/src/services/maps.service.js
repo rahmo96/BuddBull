@@ -4,7 +4,10 @@ const GOOGLE_PLACES_AUTOCOMPLETE_URL = 'https://places.googleapis.com/v1/places:
 const GOOGLE_PLACES_DETAILS_URL = 'https://places.googleapis.com/v1/places';
 const GOOGLE_STATIC_MAP_URL = 'https://maps.googleapis.com/maps/api/staticmap';
 
-const getApiKey = () => process.env.GOOGLE_MAPS_API_KEY || '';
+const REGION_CODE = 'IL';
+const HEBREW_CHARS = /[֐-׿]/;
+
+const getApiKey =() => process.env.GOOGLE_MAPS_API_KEY || '';
 
 const ensureApiKey = () => {
   if (!getApiKey()) {
@@ -29,7 +32,7 @@ const googleErrorMessage = async (response) => {
 const toIncludedPrimaryTypes = (types) => {
   const raw = `${types || ''}`.trim();
   if (!raw) return undefined;
-  if (raw === 'address') return ['street_address', 'premise', 'subpremise'];
+  if (raw === 'address') return ['street_address', 'route', 'premise', 'subpremise'];
   if (raw === '(cities)' || raw === '(regions)') return [raw];
   const list = raw
     .split('|')
@@ -50,6 +53,8 @@ const toAddressParts = (components = []) => {
     longName(findByType('locality')) ||
     longName(findByType('postal_town')) ||
     longName(findByType('administrative_area_level_2')) ||
+    longName(findByType('sublocality')) ||
+    longName(findByType('sublocality_level_1')) ||
     '';
 
   const neighborhood =
@@ -74,8 +79,13 @@ const toAddressParts = (components = []) => {
 const autocompleteAddress = async ({ input, sessionToken, types }) => {
   ensureApiKey();
 
+  // The request comes from the server, so without these Google biases by the server's IP
+  // and defaults to en-US, which hurts Israeli (often Hebrew) address results.
   const requestBody = {
     input,
+    includedRegionCodes: [REGION_CODE.toLowerCase()],
+    regionCode: REGION_CODE,
+    languageCode: HEBREW_CHARS.test(`${input || ''}`) ? 'he' : 'en',
   };
   const includedPrimaryTypes = toIncludedPrimaryTypes(types);
   if (includedPrimaryTypes) {
@@ -127,7 +137,7 @@ const normalizePlaceId = (placeId) => {
   return raw.startsWith('places/') ? raw.slice('places/'.length) : raw;
 };
 
-const getPlaceDetails = async ({ placeId, sessionToken }) => {
+const getPlaceDetails = async ({ placeId, sessionToken, languageCode }) => {
   ensureApiKey();
 
   const id = normalizePlaceId(placeId);
@@ -138,6 +148,11 @@ const getPlaceDetails = async ({ placeId, sessionToken }) => {
   const url = new URL(`${GOOGLE_PLACES_DETAILS_URL}/${encodeURIComponent(id)}`);
   if (sessionToken && `${sessionToken}`.trim()) {
     url.searchParams.set('sessionToken', `${sessionToken}`.trim());
+  }
+
+  url.searchParams.set('regionCode', REGION_CODE);
+  if (languageCode && `${languageCode}`.trim()) {
+    url.searchParams.set('languageCode', `${languageCode}`.trim());
   }
 
   const response = await globalThis.fetch(url.toString(), {
