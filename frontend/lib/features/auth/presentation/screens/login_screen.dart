@@ -215,6 +215,7 @@ class _AuthHeader extends StatelessWidget {
                 'BuddBull',
                 style: TextStyle(
                   fontFamily: 'Inter',
+                  fontFamilyFallback: const ['Heebo'],
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,

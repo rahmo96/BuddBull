@@ -731,6 +731,7 @@ class _HomeHeaderFlexibleSpace extends StatelessWidget {
                                     expandedTitle,
                                     style: const TextStyle(
                                       fontFamily: 'Inter',
+                                      fontFamilyFallback: const ['Heebo'],
                                       fontSize: 26,
                                       fontWeight: FontWeight.w800,
                                       color: Colors.white,
@@ -743,6 +744,7 @@ class _HomeHeaderFlexibleSpace extends StatelessWidget {
                                     'Find your squad. Play your game.',
                                     style: TextStyle(
                                       fontFamily: 'Inter',
+                                      fontFamilyFallback: const ['Heebo'],
                                       fontSize: 14,
                                       color:
                                           Colors.white.withValues(alpha: 0.82),
@@ -760,6 +762,7 @@ class _HomeHeaderFlexibleSpace extends StatelessWidget {
                                 collapsedTitle,
                                 style: const TextStyle(
                                   fontFamily: 'Inter',
+                                  fontFamilyFallback: const ['Heebo'],
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,

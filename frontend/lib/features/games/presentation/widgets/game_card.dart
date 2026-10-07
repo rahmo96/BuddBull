@@ -127,6 +127,7 @@ class _FullContent extends StatelessWidget {
                         'Join Game',
                         style: TextStyle(
                           fontFamily: 'Inter',
+                          fontFamilyFallback: const ['Heebo'],
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
                         ),

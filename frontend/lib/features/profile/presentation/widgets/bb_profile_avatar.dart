@@ -116,6 +116,7 @@ class _InitialsAvatar extends StatelessWidget {
               fontSize: radius * 0.65,
               fontWeight: FontWeight.w700,
               fontFamily: 'Inter',
+              fontFamilyFallback: const ['Heebo'],
             ),
           ),
         ),

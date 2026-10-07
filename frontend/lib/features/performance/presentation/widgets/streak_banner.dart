@@ -70,6 +70,7 @@ class StreakBanner extends StatelessWidget {
                           '$currentStreak',
                           style: TextStyle(
                             fontFamily: 'Inter',
+                            fontFamilyFallback: const ['Heebo'],
                             fontSize: 40,
                             fontWeight: FontWeight.w800,
                             color: isActive
@@ -85,6 +86,7 @@ class StreakBanner extends StatelessWidget {
                             currentStreak == 1 ? 'day' : 'days',
                             style: TextStyle(
                               fontFamily: 'Inter',
+                              fontFamilyFallback: const ['Heebo'],
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
                               color: isActive
@@ -114,6 +116,7 @@ class StreakBanner extends StatelessWidget {
                     '$longestStreak d',
                     style: TextStyle(
                       fontFamily: 'Inter',
+                      fontFamilyFallback: const ['Heebo'],
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: isActive ? Colors.white : AppColors.textPrimary,

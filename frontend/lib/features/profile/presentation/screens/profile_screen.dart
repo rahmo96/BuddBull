@@ -96,6 +96,7 @@ class ProfileScreen extends ConsumerWidget {
                           user.fullName,
                           style: const TextStyle(
                             fontFamily: 'Inter',
+                            fontFamilyFallback: const ['Heebo'],
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
@@ -105,6 +106,7 @@ class ProfileScreen extends ConsumerWidget {
                           '@${user.username}',
                           style: TextStyle(
                             fontFamily: 'Inter',
+                            fontFamilyFallback: const ['Heebo'],
                             fontSize: 14,
                             color: Colors.white.withValues(alpha: 0.8),
                           ),
@@ -372,6 +374,7 @@ class _PublicProfileView extends ConsumerWidget {
                           user.fullName,
                           style: const TextStyle(
                             fontFamily: 'Inter',
+                            fontFamilyFallback: const ['Heebo'],
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
@@ -937,6 +940,7 @@ class _HeaderRatingRow extends StatelessWidget {
           'No ratings yet',
           style: TextStyle(
             fontFamily: 'Inter',
+            fontFamilyFallback: const ['Heebo'],
             fontSize: 12,
             color: Colors.white.withValues(alpha: 0.75),
           ),
@@ -958,6 +962,7 @@ class _HeaderRatingRow extends StatelessWidget {
             '${rating.toStringAsFixed(1)} · $totalRatings',
             style: TextStyle(
               fontFamily: 'Inter',
+              fontFamilyFallback: const ['Heebo'],
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: Colors.white.withValues(alpha: 0.95),
