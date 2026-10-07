@@ -731,7 +731,7 @@ class _HomeHeaderFlexibleSpace extends StatelessWidget {
                                     expandedTitle,
                                     style: const TextStyle(
                                       fontFamily: 'Inter',
-                                      fontFamilyFallback: const ['Heebo'],
+                                      fontFamilyFallback: ['Heebo'],
                                       fontSize: 26,
                                       fontWeight: FontWeight.w800,
                                       color: Colors.white,
@@ -762,7 +762,7 @@ class _HomeHeaderFlexibleSpace extends StatelessWidget {
                                 collapsedTitle,
                                 style: const TextStyle(
                                   fontFamily: 'Inter',
-                                  fontFamilyFallback: const ['Heebo'],
+                                  fontFamilyFallback: ['Heebo'],
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,

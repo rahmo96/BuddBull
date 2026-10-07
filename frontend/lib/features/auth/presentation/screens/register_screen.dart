@@ -292,7 +292,7 @@ class _RegisterHeader extends StatelessWidget {
                   'BuddBull',
                   style: TextStyle(
                     fontFamily: 'Inter',
-                    fontFamilyFallback: const ['Heebo'],
+                    fontFamilyFallback: ['Heebo'],
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,

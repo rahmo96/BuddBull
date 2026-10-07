@@ -96,7 +96,7 @@ class ProfileScreen extends ConsumerWidget {
                           user.fullName,
                           style: const TextStyle(
                             fontFamily: 'Inter',
-                            fontFamilyFallback: const ['Heebo'],
+                            fontFamilyFallback: ['Heebo'],
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
@@ -374,7 +374,7 @@ class _PublicProfileView extends ConsumerWidget {
                           user.fullName,
                           style: const TextStyle(
                             fontFamily: 'Inter',
-                            fontFamilyFallback: const ['Heebo'],
+                            fontFamilyFallback: ['Heebo'],
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,

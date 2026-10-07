@@ -456,7 +456,7 @@ class _GameDetailAppBar extends ConsumerWidget {
                   game.title,
                   style: const TextStyle(
                     fontFamily: 'Inter',
-                    fontFamilyFallback: const ['Heebo'],
+                    fontFamilyFallback: ['Heebo'],
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
@@ -509,7 +509,7 @@ class _HeaderBadge extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.w600,
           fontFamily: 'Inter',
-          fontFamilyFallback: const ['Heebo'],
+          fontFamilyFallback: ['Heebo'],
         ),
       ),
     );
@@ -544,7 +544,7 @@ class _StatusBadge extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.w700,
           fontFamily: 'Inter',
-          fontFamilyFallback: const ['Heebo'],
+          fontFamilyFallback: ['Heebo'],
         ),
       ),
     );
@@ -1281,7 +1281,7 @@ class _PendingRequestPanel extends StatelessWidget {
               'Your request is pending approval',
               style: TextStyle(
                 fontFamily: 'Inter',
-                fontFamilyFallback: const ['Heebo'],
+                fontFamilyFallback: ['Heebo'],
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,

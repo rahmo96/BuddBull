@@ -173,13 +173,13 @@ abstract class AppTheme {
         elevation: 0,
         selectedLabelStyle: TextStyle(
           fontFamily: 'Inter',
-          fontFamilyFallback: const ['Heebo'],
+          fontFamilyFallback: ['Heebo'],
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
         unselectedLabelStyle: TextStyle(
           fontFamily: 'Inter',
-          fontFamilyFallback: const ['Heebo'],
+          fontFamilyFallback: ['Heebo'],
           fontSize: 12,
           fontWeight: FontWeight.w400,
         ),
@@ -199,7 +199,7 @@ abstract class AppTheme {
           if (states.contains(WidgetState.selected)) {
             return const TextStyle(
               fontFamily: 'Inter',
-              fontFamilyFallback: const ['Heebo'],
+              fontFamilyFallback: ['Heebo'],
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.primary,
@@ -207,7 +207,7 @@ abstract class AppTheme {
           }
           return const TextStyle(
             fontFamily: 'Inter',
-            fontFamilyFallback: const ['Heebo'],
+            fontFamilyFallback: ['Heebo'],
             fontSize: 12,
             fontWeight: FontWeight.w400,
             color: AppColors.grey500,
