@@ -2,6 +2,7 @@ import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/constants/skill_level_labels.dart';
 import 'package:buddbull/features/auth/data/models/user_model.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 /// A coloured chip showing a user's sport and skill level.
@@ -41,7 +42,7 @@ class SportChip extends StatelessWidget {
                 ),
               ),
               Text(
-                skillLevelDisplayName(interest.skillLevel),
+                skillLevelDisplayName(interest.skillLevel, context.l10n),
                 style: AppTextStyles.labelSmall.copyWith(color: color),
               ),
             ],

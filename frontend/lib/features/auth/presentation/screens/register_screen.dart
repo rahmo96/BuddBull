@@ -4,6 +4,7 @@ import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/auth/presentation/widgets/password_strength_indicator.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/app_logo.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
@@ -29,7 +30,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _passwordCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
 
-  static const String _defaultRole = 'player';
+  static const String _defaultRole = 'player'; // l10n-ignore: API role value
   bool _acceptedTerms = false;
   String _password = '';
 
@@ -47,7 +48,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (!_acceptedTerms) {
-      showErrorSnackBar(context, AppStrings.acceptTerms);
+      showErrorSnackBar(context, context.l10n.validationAcceptTerms);
       return;
     }
     ref.read(authProvider.notifier).register(
@@ -102,11 +103,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(AppStrings.createAccount,
+                        Text(context.l10n.authRegisterTitle,
                             style: AppTextStyles.headlineMedium),
                         const SizedBox(height: 4),
                         Text(
-                          AppStrings.registerSubtitle,
+                          context.l10n.authRegisterSubtitle,
                           style: AppTextStyles.bodyMedium.copyWith(
                             color: AppColors.textSecondary,
                           ),
@@ -119,22 +120,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           children: [
                             Expanded(
                               child: BbTextField(
-                                label: AppStrings.firstNameLabel,
-                                hint: AppStrings.firstNameHint,
+                                label: context.l10n.authFirstNameLabel,
+                                hint: context.l10n.authFirstNameHint,
                                 controller: _firstNameCtrl,
                                 prefixIcon: Icons.person_outline_rounded,
                                 validator: (v) => (v?.trim().isEmpty ?? true)
-                                    ? AppStrings.fieldRequired
+                                    ? context.l10n.validationFieldRequired
                                     : null,
                               ),
                             ),
                             Expanded(
                               child: BbTextField(
-                                label: AppStrings.lastNameLabel,
-                                hint: AppStrings.lastNameHint,
+                                label: context.l10n.authLastNameLabel,
+                                hint: context.l10n.authLastNameHint,
                                 controller: _lastNameCtrl,
                                 validator: (v) => (v?.trim().isEmpty ?? true)
-                                    ? AppStrings.fieldRequired
+                                    ? context.l10n.validationFieldRequired
                                     : null,
                               ),
                             ),
@@ -144,16 +145,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                         // ── Username ──────────────────────────
                         BbTextField(
-                          label: AppStrings.usernameLabel,
-                          hint: AppStrings.usernameHint,
+                          label: context.l10n.authUsernameLabel,
+                          hint: context.l10n.authUsernameHint,
                           controller: _usernameCtrl,
                           prefixIcon: Icons.alternate_email_rounded,
                           validator: (v) {
                             if (v == null || v.trim().isEmpty) {
-                              return AppStrings.fieldRequired;
+                              return context.l10n.validationFieldRequired;
                             }
                             if (v.trim().length < 3) {
-                              return AppStrings.usernameTooShort;
+                              return context.l10n.validationUsernameTooShort;
                             }
                             return null;
                           },
@@ -162,18 +163,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                         // ── Email ─────────────────────────────
                         BbTextField(
-                          label: AppStrings.emailLabel,
-                          hint: AppStrings.emailHint,
+                          label: context.l10n.authEmailLabel,
+                          hint: context.l10n.authEmailHint,
                           controller: _emailCtrl,
                           keyboardType: TextInputType.emailAddress,
                           prefixIcon: Icons.email_outlined,
                           validator: (v) {
                             if (v == null || v.trim().isEmpty) {
-                              return AppStrings.fieldRequired;
+                              return context.l10n.validationFieldRequired;
                             }
                             if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$')
                                 .hasMatch(v.trim())) {
-                              return AppStrings.invalidEmail;
+                              return context.l10n.validationInvalidEmail;
                             }
                             return null;
                           },
@@ -182,18 +183,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                         // ── Password ──────────────────────────
                         BbTextField(
-                          label: AppStrings.passwordLabel,
-                          hint: 'At least 8 characters',
+                          label: context.l10n.authPasswordLabel,
+                          hint: context.l10n.authNewPasswordHint,
                           controller: _passwordCtrl,
                           isPassword: true,
                           prefixIcon: Icons.lock_outline_rounded,
                           onChanged: (v) => setState(() => _password = v),
                           validator: (v) {
                             if (v == null || v.isEmpty) {
-                              return AppStrings.fieldRequired;
+                              return context.l10n.validationFieldRequired;
                             }
                             if (v.length < 8) {
-                              return AppStrings.passwordTooShort;
+                              return context.l10n.validationPasswordTooShort;
                             }
                             return null;
                           },
@@ -203,15 +204,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                         // ── Confirm password ──────────────────
                         BbTextField(
-                          label: AppStrings.confirmPasswordLabel,
-                          hint: AppStrings.confirmPasswordHint,
+                          label: context.l10n.authConfirmPasswordLabel,
+                          hint: context.l10n.authConfirmPasswordHint,
                           controller: _confirmCtrl,
                           isPassword: true,
                           prefixIcon: Icons.lock_outline_rounded,
                           textInputAction: TextInputAction.done,
                           validator: (v) {
                             if (v != _passwordCtrl.text) {
-                              return AppStrings.passwordsNoMatch;
+                              return context.l10n.validationPasswordsNoMatch;
                             }
                             return null;
                           },
@@ -228,7 +229,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                         // ── Submit ────────────────────────────
                         BbButton(
-                          label: AppStrings.registerButton,
+                          label: context.l10n.authRegisterButton,
                           onPressed: _submit,
                           isLoading: authState.isSubmitting,
                         ),
@@ -246,14 +247,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    AppStrings.haveAccount,
+                    context.l10n.authHaveAccount,
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.textSecondary,
                     ),
                   ),
                   TextButton(
                     onPressed: () => context.go(Routes.login),
-                    child: const Text(AppStrings.signInLink),
+                    child: Text(context.l10n.authSignInLink),
                   ),
                 ],
               ),
@@ -289,7 +290,7 @@ class _RegisterHeader extends StatelessWidget {
                 AppLogo(size: 48, borderRadius: 14),
                 SizedBox(width: 10),
                 Text(
-                  'BuddBull',
+                  AppStrings.appName,
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontFamilyFallback: ['Heebo'],
@@ -335,18 +336,18 @@ class _TermsCheckbox extends StatelessWidget {
             text: TextSpan(
               style: AppTextStyles.bodySmall,
               children: [
-                const TextSpan(text: AppStrings.termsAgreement),
+                TextSpan(text: context.l10n.authTermsAgreement),
                 TextSpan(
-                  text: AppStrings.termsOfService,
+                  text: context.l10n.authTermsOfService,
                   style: const TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,
                   ),
                   recognizer: TapGestureRecognizer()..onTap = () {},
                 ),
-                const TextSpan(text: AppStrings.andText),
+                TextSpan(text: context.l10n.authTermsAnd),
                 TextSpan(
-                  text: AppStrings.privacyPolicy,
+                  text: context.l10n.authPrivacyPolicy,
                   style: const TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,

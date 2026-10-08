@@ -1,9 +1,10 @@
 import 'package:buddbull/core/storage/shared_preferences_provider.dart';
 import 'package:buddbull/features/onboarding/presentation/screens/onboarding_welcome_screen.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'helpers/l10n_app.dart';
 
 void main() {
   testWidgets('Onboarding welcome smoke (no Firebase)', (tester) async {
@@ -16,8 +17,8 @@ void main() {
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
         ],
-        child: const MaterialApp(
-          home: OnboardingWelcomeScreen(),
+        child: l10nMaterialApp(
+          home: const OnboardingWelcomeScreen(),
         ),
       ),
     );

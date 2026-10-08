@@ -1,10 +1,11 @@
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/storage/shared_preferences_provider.dart';
 import 'package:buddbull/features/onboarding/presentation/screens/onboarding_welcome_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../helpers/l10n_app.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -19,18 +20,41 @@ void main() {
           overrides: [
             sharedPreferencesProvider.overrideWithValue(prefs),
           ],
-          child: const MaterialApp(
-            home: OnboardingWelcomeScreen(),
+          child: l10nMaterialApp(
+            home: const OnboardingWelcomeScreen(),
           ),
         ),
       );
 
-      expect(find.text(AppStrings.onboardingWelcomeMessage), findsOneWidget);
-      expect(find.text(AppStrings.onboardingSportsSection), findsOneWidget);
+      expect(find.text(enL10n.onboardingWelcomeMessage), findsOneWidget);
+      expect(find.text(enL10n.onboardingSportsSection), findsOneWidget);
       expect(find.text('Football'), findsOneWidget);
       expect(find.text('Basketball'), findsOneWidget);
-      expect(find.text(AppStrings.onboardingNext), findsOneWidget);
-      expect(find.text(AppStrings.onboardingSkip), findsOneWidget);
+      expect(find.text(enL10n.onboardingNext), findsOneWidget);
+      expect(find.text(enL10n.onboardingSkip), findsOneWidget);
+    });
+
+    testWidgets('renders Hebrew copy and RTL when locale is he', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+          ],
+          child: l10nMaterialApp(
+            locale: const Locale('he'),
+            home: const OnboardingWelcomeScreen(),
+          ),
+        ),
+      );
+
+      expect(find.text(heL10n.onboardingWelcomeMessage), findsOneWidget);
+      expect(find.text(heL10n.onboardingNext), findsOneWidget);
+      expect(find.text(heL10n.onboardingStepOf(1, 3)), findsOneWidget);
+      final ctx = tester.element(find.text(heL10n.onboardingNext));
+      expect(Directionality.of(ctx), TextDirection.rtl);
     });
 
     testWidgets('selecting a sport reveals per-sport skill chips', (tester) async {
@@ -42,8 +66,8 @@ void main() {
           overrides: [
             sharedPreferencesProvider.overrideWithValue(prefs),
           ],
-          child: const MaterialApp(
-            home: OnboardingWelcomeScreen(),
+          child: l10nMaterialApp(
+            home: const OnboardingWelcomeScreen(),
           ),
         ),
       );
@@ -51,8 +75,8 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('onboarding_sport_football')));
       await tester.pump();
 
-      expect(find.text(AppStrings.onboardingSkillPerSport), findsOneWidget);
-      expect(find.text(AppStrings.beginner), findsWidgets);
+      expect(find.text(enL10n.onboardingSkillPerSport), findsOneWidget);
+      expect(find.text(enL10n.skillBeginner), findsWidgets);
       expect(find.byKey(const ValueKey('onboarding_skill_football')), findsOneWidget);
     });
 
@@ -65,8 +89,8 @@ void main() {
           overrides: [
             sharedPreferencesProvider.overrideWithValue(prefs),
           ],
-          child: const MaterialApp(
-            home: OnboardingWelcomeScreen(),
+          child: l10nMaterialApp(
+            home: const OnboardingWelcomeScreen(),
           ),
         ),
       );
@@ -75,11 +99,11 @@ void main() {
       await tester.tap(footballChip);
       await tester.pump();
       expect(find.byIcon(Icons.check_rounded), findsWidgets);
-      expect(find.text(AppStrings.onboardingSkillPerSport), findsOneWidget);
+      expect(find.text(enL10n.onboardingSkillPerSport), findsOneWidget);
 
       await tester.tap(footballChip);
       await tester.pump();
-      expect(find.text(AppStrings.onboardingSkillPerSport), findsNothing);
+      expect(find.text(enL10n.onboardingSkillPerSport), findsNothing);
       expect(find.byKey(const ValueKey('onboarding_skill_football')), findsNothing);
     });
   });

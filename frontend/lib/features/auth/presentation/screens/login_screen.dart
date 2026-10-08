@@ -3,6 +3,7 @@ import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/app_logo.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
@@ -82,13 +83,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          AppStrings.welcomeBack,
+                        Text(
+                          context.l10n.authWelcomeBack,
                           style: AppTextStyles.headlineMedium,
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          AppStrings.loginSubtitle,
+                          context.l10n.authLoginSubtitle,
                           style: AppTextStyles.bodyMedium.copyWith(
                             color: AppColors.textSecondary,
                           ),
@@ -97,19 +98,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                         // Email
                         BbTextField(
-                          label: AppStrings.emailLabel,
-                          hint: AppStrings.emailHint,
+                          label: context.l10n.authEmailLabel,
+                          hint: context.l10n.authEmailHint,
                           controller: _emailCtrl,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           prefixIcon: Icons.email_outlined,
                           validator: (v) {
                             if (v == null || v.trim().isEmpty) {
-                              return AppStrings.fieldRequired;
+                              return context.l10n.validationFieldRequired;
                             }
                             if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$')
                                 .hasMatch(v.trim())) {
-                              return AppStrings.invalidEmail;
+                              return context.l10n.validationInvalidEmail;
                             }
                             return null;
                           },
@@ -118,8 +119,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                         // Password
                         BbTextField(
-                          label: AppStrings.passwordLabel,
-                          hint: AppStrings.passwordHint,
+                          label: context.l10n.authPasswordLabel,
+                          hint: context.l10n.authPasswordHint,
                           controller: _passwordCtrl,
                           isPassword: true,
                           textInputAction: TextInputAction.done,
@@ -127,7 +128,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onSubmitted: (_) => _submit(),
                           validator: (v) {
                             if (v == null || v.isEmpty) {
-                              return AppStrings.fieldRequired;
+                              return context.l10n.validationFieldRequired;
                             }
                             return null;
                           },
@@ -143,14 +144,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               padding: const EdgeInsets.symmetric(
                                   vertical: 4, horizontal: 0),
                             ),
-                            child: const Text(AppStrings.forgotPassword),
+                            child: Text(context.l10n.authForgotPassword),
                           ),
                         ),
                         const SizedBox(height: 8),
 
                         // Login button
                         BbButton(
-                          label: AppStrings.loginButton,
+                          label: context.l10n.authLoginButton,
                           onPressed: _submit,
                           isLoading: authState.isSubmitting,
                         ),
@@ -168,14 +169,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    AppStrings.noAccount,
+                    context.l10n.authNoAccount,
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.textSecondary,
                     ),
                   ),
                   TextButton(
                     onPressed: () => context.go(Routes.register),
-                    child: const Text(AppStrings.signUpLink),
+                    child: Text(context.l10n.authSignUpLink),
                   ),
                 ],
               ),
@@ -212,7 +213,7 @@ class _AuthHeader extends StatelessWidget {
               AppLogo(size: 72),
               SizedBox(height: 12),
               Text(
-                'BuddBull',
+                AppStrings.appName,
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontFamilyFallback: ['Heebo'],

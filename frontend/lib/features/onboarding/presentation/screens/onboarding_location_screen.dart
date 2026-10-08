@@ -1,5 +1,4 @@
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/onboarding/presentation/widgets/onboarding_progress_header.dart';
@@ -7,6 +6,7 @@ import 'package:buddbull/features/onboarding/providers/onboarding_draft_provider
 import 'package:buddbull/features/profile/presentation/widgets/city_autocomplete_field.dart';
 import 'package:buddbull/features/profile/presentation/widgets/neighborhood_autocomplete_field.dart';
 import 'package:buddbull/features/profile/presentation/widgets/travel_radius_slider.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,7 +42,7 @@ class OnboardingLocationScreen extends ConsumerWidget {
                 children: [
                   const OnboardingProgressHeader(step: 2, totalSteps: 3),
                   Text(
-                    AppStrings.onboardingLocationTitle,
+                    context.l10n.onboardingLocationTitle,
                     style: AppTextStyles.headlineMedium.copyWith(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w800,
@@ -51,7 +51,7 @@ class OnboardingLocationScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    AppStrings.onboardingLocationSubtitle,
+                    context.l10n.onboardingLocationSubtitle,
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.textSecondary,
                       height: 1.4,
@@ -60,8 +60,8 @@ class OnboardingLocationScreen extends ConsumerWidget {
                   const SizedBox(height: 28),
                   CityAutocompleteField(
                     selectedCity: draft.city,
-                    label: AppStrings.cityLabel,
-                    hint: AppStrings.onboardingLocationCityHint,
+                    label: context.l10n.profileCityLabel,
+                    hint: context.l10n.onboardingLocationCityHint,
                     onCitySelected: (city) => ref
                         .read(onboardingDraftProvider.notifier)
                         .setCity(city),
@@ -71,8 +71,8 @@ class OnboardingLocationScreen extends ConsumerWidget {
                     key: ValueKey(draft.city ?? ''),
                     selectedCity: draft.city,
                     selectedNeighborhood: draft.neighborhood,
-                    label: AppStrings.neighborhoodLabel,
-                    hint: AppStrings.onboardingLocationNeighborhoodHint,
+                    label: context.l10n.profileNeighborhoodLabel,
+                    hint: context.l10n.onboardingLocationNeighborhoodHint,
                     onNeighborhoodSelected: (neighborhood) => ref
                         .read(onboardingDraftProvider.notifier)
                         .setNeighborhood(neighborhood),
@@ -89,7 +89,7 @@ class OnboardingLocationScreen extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: BbButton(
-                          label: AppStrings.onboardingBack,
+                          label: context.l10n.onboardingBack,
                           onPressed: () => context.pop(),
                           variant: BbButtonVariant.outlined,
                           height: 50,
@@ -99,7 +99,7 @@ class OnboardingLocationScreen extends ConsumerWidget {
                       Expanded(
                         flex: 2,
                         child: BbButton(
-                          label: AppStrings.onboardingNext,
+                          label: context.l10n.onboardingNext,
                           onPressed: canContinue
                               ? () => context.push(Routes.onboardingProfile)
                               : null,

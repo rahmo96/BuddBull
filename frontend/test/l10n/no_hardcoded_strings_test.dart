@@ -6,6 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 /// come from AppLocalizations. Migration tasks append to this list.
 const List<String> migratedPaths = <String>[
   'lib/features/profile/presentation/widgets/language_sheet.dart',
+  'lib/features/auth/presentation',
+  'lib/features/onboarding/presentation',
+  'lib/shared/widgets',
+  'lib/core/constants/skill_level_labels.dart',
 ];
 
 Iterable<File> _dartFiles(String path) {
@@ -238,6 +242,11 @@ bool _isNonUiContext(String codeBefore, String literal) {
     return true;
   }
 
+  // Font family names (fontFamilyFallback: ['Heebo'] etc.) are not UI text.
+  if (RegExp(r'fontFamilyFallback:\s*(const\s*)?\[[^\]]*$').hasMatch(codeBefore)) {
+    return true;
+  }
+
   // Equality comparisons against a literal are logic, not UI.
   if (RegExp(r'[=!]=\s*$').hasMatch(codeBefore)) {
     return true;
@@ -247,6 +256,7 @@ bool _isNonUiContext(String codeBefore, String literal) {
   final nonUiCallees = [
     'Key(',
     'ValueKey(',
+    'ValueKey<String>(',
     'PageStorageKey(',
     'GlobalKey(',
     'Locale(',
