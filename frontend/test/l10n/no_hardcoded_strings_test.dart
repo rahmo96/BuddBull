@@ -24,11 +24,12 @@ Iterable<File> _dartFiles(String path) {
 class StringLiteral {
   final String content; // The string literal value (without quotes)
   final int lineNumber; // 1-based line number where the literal starts
+  final int endLine; // 1-based line number where the literal ends
   final String sourceLineText; // The source line text
   final int sourceStart; // Position in source where the literal starts
   final String source; // The full source for context
 
-  StringLiteral(this.content, this.lineNumber, this.sourceLineText, this.sourceStart, this.source);
+  StringLiteral(this.content, this.lineNumber, this.endLine, this.sourceLineText, this.sourceStart, this.source);
 }
 
 /// Removes interpolation (${...} and $ident) from a string literal.
@@ -116,7 +117,7 @@ List<StringLiteral> _tokenizeAndExtractStrings(String source) {
         if (i < source.length && source[i] == quote) i++;
       }
 
-      literals.add(StringLiteral(content, startLine, getLineText(startLine), startPos, source));
+      literals.add(StringLiteral(content, startLine, lineNumber, getLineText(startLine), startPos, source));
       continue;
     }
 
@@ -140,6 +141,7 @@ List<StringLiteral> _tokenizeAndExtractStrings(String source) {
           if (source[i] == '\n') lineNumber++;
           if (source[i] == '\\' && i + 1 < source.length) {
             i++;
+            if (source[i] == '\n') lineNumber++;
             content += source[i];
             i++;
           } else if (source[i] == '\$' && i + 1 < source.length) {
@@ -174,6 +176,7 @@ List<StringLiteral> _tokenizeAndExtractStrings(String source) {
           if (source[i] == '\n') lineNumber++;
           if (source[i] == '\\' && i + 1 < source.length) {
             i++;
+            if (source[i] == '\n') lineNumber++;
             content += source[i];
             i++;
           } else if (source[i] == '\$' && i + 1 < source.length) {
@@ -205,7 +208,7 @@ List<StringLiteral> _tokenizeAndExtractStrings(String source) {
         if (i < source.length && source[i] == quote) i++;
       }
 
-      literals.add(StringLiteral(content, startLine, getLineText(startLine), startPos, source));
+      literals.add(StringLiteral(content, startLine, lineNumber, getLineText(startLine), startPos, source));
       continue;
     }
 
@@ -226,12 +229,17 @@ bool _isIdentChar(String char) {
 /// Checks if a string literal is in a non-UI context and should be skipped.
 bool _isNonUiContext(String codeBefore, String literal) {
   // Check for import/export/part directives
-  if (RegExp(r'\b(import|export|part|library)\b').hasMatch(codeBefore)) {
+  if (RegExp(r'(^|[;\n])\s*(import|export|part|library)\b[^;]*$').hasMatch(codeBefore)) {
     return true;
   }
 
   // Check for case labels: 'case' keyword before the literal
   if (RegExp(r'\bcase\s*$').hasMatch(codeBefore)) {
+    return true;
+  }
+
+  // Equality comparisons against a literal are logic, not UI.
+  if (RegExp(r'[=!]=\s*$').hasMatch(codeBefore)) {
     return true;
   }
 
@@ -277,9 +285,13 @@ bool _isNonUiContext(String codeBefore, String literal) {
   ];
 
   for (final callee in nonUiCallees) {
-    if (codeBefore.endsWith(callee)) {
-      return true;
-    }
+    if (!codeBefore.endsWith(callee)) continue;
+    final before = codeBefore.length > callee.length
+        ? codeBefore[codeBefore.length - callee.length - 1]
+        : '';
+    final needsBoundary = RegExp(r'^[A-Za-z]').hasMatch(callee);
+    if (needsBoundary && RegExp(r'[A-Za-z0-9_$]').hasMatch(before)) continue;
+    return true;
   }
 
   // Check for map-index access: identifier or ] before [
@@ -303,25 +315,25 @@ List<String> findHardcodedStrings(String source) {
   final offenders = <String>[];
   final literals = _tokenizeAndExtractStrings(source);
 
-  // Build a map of l10n-ignore markers by line
+  // A trailing marker covers its own line; a marker on a comment-only line
+  // also covers the line directly below it.
   final lines = source.split('\n');
   final ignoreLinesSet = <int>{};
   for (var lineIdx = 0; lineIdx < lines.length; lineIdx++) {
     final lineNum = lineIdx + 1;
-    if (lines[lineIdx].contains('l10n-ignore')) {
-      ignoreLinesSet.add(lineNum);
-      // Also mark the next line (if the marker is on the line above the literal)
-      if (lineIdx + 1 < lines.length) {
-        ignoreLinesSet.add(lineNum + 1);
-      }
-    }
+    final text = lines[lineIdx];
+    if (!text.contains('l10n-ignore')) continue;
+    ignoreLinesSet.add(lineNum);
+    if (text.trimLeft().startsWith('//')) ignoreLinesSet.add(lineNum + 1);
   }
 
   for (final lit in literals) {
-    // Check l10n-ignore marker on the same line or line above
-    if (ignoreLinesSet.contains(lit.lineNumber)) {
-      continue;
+    // A marker on any line the literal spans covers it.
+    var ignored = false;
+    for (var l = lit.lineNumber; l <= lit.endLine; l++) {
+      if (ignoreLinesSet.contains(l)) ignored = true;
     }
+    if (ignored) continue;
 
     // Remove interpolation and check for letters
     final noInterp = _removeInterpolation(lit.content);
@@ -353,7 +365,12 @@ List<String> findHardcodedStrings(String source) {
   }
 
   // Remove duplicates and sort
-  return offenders.toSet().toList()..sort();
+  int lineOf(String o) => int.parse(RegExp(r'^line (\d+)').firstMatch(o)!.group(1)!);
+  return offenders.toSet().toList()
+    ..sort((a, b) {
+      final c = lineOf(a).compareTo(lineOf(b));
+      return c != 0 ? c : a.compareTo(b);
+    });
 }
 
 void main() {
@@ -576,6 +593,103 @@ Text('Hi')
       final result = findHardcodedStrings(source);
       expect(result, isNotEmpty);
       expect(result[0], contains('line 4'));
+    });
+
+    // H1: l10n-ignore marker leaks
+    test('H1.1: trailing marker covers only its line, not next', () {
+      final result = findHardcodedStrings("Text('Save') // l10n-ignore: brand\nText('Leaked')");
+      expect(result, hasLength(1), reason: 'should flag only Leaked');
+      expect(result[0], contains('line 2'));
+    });
+
+    test('H1.2: comment-only marker above covers literal below', () {
+      final result = findHardcodedStrings("// l10n-ignore: brand\nText('Saved')");
+      expect(result, isEmpty, reason: 'marker-only line above should cover literal below');
+    });
+
+    test('H1.3: comment-only marker above does NOT cover two lines below', () {
+      final result = findHardcodedStrings("// l10n-ignore: brand\n\nText('NotCovered')");
+      expect(result, isNotEmpty, reason: 'marker should not skip blank line to literal');
+    });
+
+    test('H1.4: multi-line string with marker on end line is covered', () {
+      final result = findHardcodedStrings("final s = '''Multi\nline\ntext'''; // l10n-ignore");
+      expect(result, isEmpty, reason: 'marker on end line of multi-line string should cover it');
+    });
+
+    // H2: import|export|part|library check anchoring
+    test('H2.1: import directive not flagged', () {
+      final result = findHardcodedStrings("import 'package:flutter/material.dart';");
+      expect(result, isEmpty);
+    });
+
+    test('H2.2: export directive not flagged', () {
+      final result = findHardcodedStrings("export 'a.dart' show X;");
+      expect(result, isEmpty);
+    });
+
+    test('H2.3: part directive not flagged', () {
+      final result = findHardcodedStrings("part 'x.g.dart';");
+      expect(result, isEmpty);
+    });
+
+    test('H2.4: Text after export keyword IS flagged', () {
+      final result = findHardcodedStrings("Text('Tap to export'), Text('Hello')");
+      expect(result, isNotEmpty, reason: 'Hello is not in directive');
+      expect(result.any((s) => s.contains('Hello')), isTrue);
+    });
+
+    test('H2.5: part as variable does NOT suppress Text', () {
+      final result = findHardcodedStrings("final part = 1; Text(part ? 'Hello world' : null)");
+      expect(result, isNotEmpty, reason: 'part is a variable, not directive');
+      expect(result[0], contains('Hello world'));
+    });
+
+    // M1: Callee deny-list word boundary
+    test('M1.1: dialog( should flag, not suppress like log(', () {
+      final result = findHardcodedStrings("dialog('Hello there')");
+      expect(result, isNotEmpty, reason: 'dialog is not a non-UI callee');
+    });
+
+    test('M1.2: log( should not flag', () {
+      final result = findHardcodedStrings("log('x y z')");
+      expect(result, isEmpty);
+    });
+
+    // M2: fontFamilyFallback list skip
+    test('M2: fontFamilyFallback const list not flagged', () {
+      final result = findHardcodedStrings("fontFamilyFallback: const ['Heebo']");
+      expect(result, isEmpty);
+    });
+
+    // M3: Equality comparison skip
+    test('M3.1: equality comparison not flagged', () {
+      final result = findHardcodedStrings("if (status == 'open') {}");
+      expect(result, isEmpty);
+    });
+
+    test('M3.2: Text(\'open\') still flags even with open elsewhere', () {
+      final result = findHardcodedStrings("if (x == 'open') Text('open')");
+      expect(result, isNotEmpty, reason: 'Text with open should flag');
+    });
+
+    // M4: Backslash-escaped newline line counter
+    test('M4: backslash-escaped newline increments line counter', () {
+      const source = "final s = 'line\\\nnewline'; Text('Hello')";
+      final result = findHardcodedStrings(source);
+      // The first literal is also flagged (line 1); Hello must be on line 2.
+      expect(result.any((r) => r.startsWith('line 2') && r.contains('Hello')), isTrue);
+    });
+
+    // M5: Numeric line sorting
+    test('M5: offenders sorted numerically by line', () {
+      const source = "Text('Line27')\nText('Line127')";
+      final result = findHardcodedStrings(source);
+      expect(result, hasLength(2));
+      // Extract line numbers
+      final line1 = int.parse(RegExp(r'line (\d+)').firstMatch(result[0])!.group(1)!);
+      final line2 = int.parse(RegExp(r'line (\d+)').firstMatch(result[1])!.group(1)!);
+      expect(line1, lessThan(line2), reason: 'should be sorted by line number');
     });
   });
 
