@@ -1,12 +1,12 @@
 import 'dart:ui';
 
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/services/socket_service.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/chat/providers/chat_provider.dart';
 import 'package:buddbull/features/home/presentation/widgets/global_add_fab.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -53,33 +53,33 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
     super.dispose();
   }
 
-  static const _tabs = [
+  static final _tabs = <_TabItem>[
     _TabItem(
-      label: AppStrings.navHome,
+      label: (l) => l.navHome,
       icon: Icons.home_outlined,
       selectedIcon: Icons.home_rounded,
       route: '/home',
     ),
     _TabItem(
-      label: AppStrings.navGames,
+      label: (l) => l.navGames,
       icon: Icons.sports_outlined,
       selectedIcon: Icons.sports_rounded,
       route: '/games',
     ),
     _TabItem(
-      label: AppStrings.navChat,
+      label: (l) => l.navChat,
       icon: Icons.chat_bubble_outline_rounded,
       selectedIcon: Icons.chat_bubble_rounded,
       route: '/chats',
     ),
     _TabItem(
-      label: AppStrings.navPerformance,
+      label: (l) => l.navPerformance,
       icon: Icons.bar_chart_outlined,
       selectedIcon: Icons.bar_chart_rounded,
       route: '/performance',
     ),
     _TabItem(
-      label: AppStrings.navProfile,
+      label: (l) => l.navProfile,
       icon: Icons.person_outline_rounded,
       selectedIcon: Icons.person_rounded,
       route: '/profile',
@@ -250,7 +250,7 @@ class _NavItem extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                tab.label,
+                tab.label(context.l10n),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.labelSmall.copyWith(
@@ -276,7 +276,7 @@ class _TabItem {
     required this.route,
   });
 
-  final String label;
+  final String Function(AppLocalizations l10n) label;
   final IconData icon;
   final IconData selectedIcon;
   final String route;

@@ -82,5 +82,398 @@
   "onboardingProfileSubtitle": "Upload a photo or pick a Buddy avatar. You can always update later.",
   "onboardingUploadPhoto": "Upload from device",
   "onboardingOrPickAvatar": "Or choose a starter avatar",
-  "onboardingFinish": "Get started"
+  "onboardingFinish": "Get started",
+  "commonSeeAll": "See all",
+  "commonBrowseAll": "Browse all",
+  "navHome": "Home",
+  "navGames": "Games",
+  "navChat": "Messages",
+  "navPerformance": "Performance",
+  "navProfile": "Profile",
+  "homeGreetingMorning": "Good morning",
+  "homeGreetingAfternoon": "Good afternoon",
+  "homeGreetingEvening": "Good evening",
+  "homeGreetingWithName": "{greeting}, {name}!",
+  "@homeGreetingWithName": {
+    "placeholders": {
+      "greeting": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homeGreetingNoName": "{greeting}!",
+  "@homeGreetingNoName": {
+    "placeholders": {
+      "greeting": {
+        "type": "String"
+      }
+    }
+  },
+  "homeStatGames": "Games",
+  "homeStatRating": "Rating",
+  "homeStatStreak": "Streak",
+  "homeStreakDaysShort": "{count}d",
+  "@homeStreakDaysShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeMyUpcomingGames": "My Upcoming Games",
+  "homeExploreNearYou": "Explore Near You",
+  "homeQuickActions": "Quick Actions",
+  "homeFindGame": "Find a Game",
+  "homeLogSession": "Log Session",
+  "homeCreateGame": "Create Game",
+  "homeRecentActivity": "Recent Activity",
+  "homeNoRecentSessions": "No recent sessions",
+  "homeLogASession": "Log a session",
+  "homeNoUpcomingGames": "No upcoming games",
+  "homeBrowseGames": "Browse games",
+  "homeNearbyLoadFailed": "Couldn't load nearby games",
+  "homeNothingNearby": "Nothing nearby right now",
+  "homeTagline": "Find your squad. Play your game.",
+  "homeNotificationsTooltip": "Notifications",
+  "homeMyCalendarTooltip": "My calendar",
+  "homeAddGame": "Add Game",
+  "homeLogTraining": "Log Training",
+  "searchHint": "Search games, players…",
+  "searchCloseTooltip": "Close search",
+  "searchMinChars": "Type at least 2 characters to search",
+  "searchNoResults": "No results found",
+  "searchNoResultsHint": "Try a different sport, city, or player name",
+  "searchSectionGames": "Games",
+  "searchSectionPlayers": "Players",
+  "searchGamesError": "Games: {error}",
+  "@searchGamesError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "searchPlayersError": "Players: {error}",
+  "@searchPlayersError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "searchChipNearby": "Nearby games",
+  "searchDiscoverTitle": "Discover your next game",
+  "searchDiscoverSubtitle": "Search by sport, city, username, or player name",
+  "sportFootball": "Football",
+  "sportBasketball": "Basketball",
+  "sportTennis": "Tennis",
+  "sportVolleyball": "Volleyball",
+  "sportRunning": "Running",
+  "sportSwimming": "Swimming",
+  "sportCycling": "Cycling",
+  "sportCricket": "Cricket",
+  "commonAll": "All",
+  "commonClear": "Clear",
+  "gamesCreateTooltip": "Create game",
+  "gamesSearchHint": "Search games, sports, locations…",
+  "gamesFilterTooltip": "Filter",
+  "gamesFiltersActive": "{count, plural, =1{1 filter active} other{{count} filters active}}",
+  "@gamesFiltersActive": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gamesNoneFound": "No games found",
+  "gamesNoneFoundHint": "Try adjusting your filters or create a new game.",
+  "gamesCreateAGame": "Create a game",
+  "skillAnyLevel": "Any level",
+  "commonClearAll": "Clear all",
+  "commonSport": "Sport",
+  "gamesFilterTitle": "Filter Games",
+  "gamesFilterNearMe": "Near me",
+  "gamesFilterNearMeHint": "Show games closest to your current location",
+  "gamesFilterCityHint": "e.g. London",
+  "gamesFilterSkillTitle": "Required skill level",
+  "gamesFilterGettingLocation": "Getting location…",
+  "gamesFilterApply": "Apply Filters",
+  "gamesPlayersOf": "{current}/{max} players",
+  "@gamesPlayersOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "gamesPendingCount": "{count} pending",
+  "@gamesPendingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gamesJoinGame": "Join Game",
+  "gamesRoster": "Roster",
+  "gamesStatusOpen": "Open",
+  "gamesStatusFull": "Full",
+  "gamesStatusLive": "Live",
+  "gamesStatusDone": "Done",
+  "gamesStatusCancelled": "Cancelled",
+  "gamesFullBadge": "FULL",
+  "gamesDistanceMeters": "{meters} m away",
+  "@gamesDistanceMeters": {
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
+  "gamesDistanceKm": "{km} km away",
+  "@gamesDistanceKm": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "calendarTitle": "My Calendar",
+  "calendarToday": "Today",
+  "calendarNoGamesOnDay": "No games on this day",
+  "calendarFormatMonth": "Month",
+  "calendarFormatTwoWeeks": "2 weeks",
+  "calendarFormatWeek": "Week",
+  "gamesCount": "{count, plural, =0{No games} =1{1 game} other{{count} games}}",
+  "@gamesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonLocationPermissionDenied": "Location access is needed to find games near you. Enable it in settings or use city search.",
+  "commonOptional": "Optional",
+  "commonSaveChanges": "Save Changes",
+  "gameCreateTitle": "Create Game",
+  "gameCreateButton": "Create Game 🎮",
+  "gameCreateSuccess": "Game created! 🎉",
+  "gameEditTitle": "Edit Game",
+  "gameEditUpdated": "Game updated.",
+  "gameFormSportLabel": "Sport *",
+  "gameFormTitleLabel": "Game title *",
+  "gameFormTitleHint": "e.g. Sunday 5-a-side",
+  "gameFormTitleRequired": "Title is required",
+  "gameFormDescriptionLabel": "Description",
+  "gameFormDescriptionHint": "Optional details, rules, what to bring…",
+  "gameFormDateTime": "Date & Time *",
+  "gameFormDuration": "Duration: {hours}h {minutes}m",
+  "@gameFormDuration": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "gameFormDurationSlider": "{minutes}min",
+  "@gameFormDurationSlider": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "gameFormLocationRequired": "Location *",
+  "gameFormAddressLabel": "Address *",
+  "gameFormAddressHint": "Start typing an address...",
+  "gameFormAddressInvalid": "Select a valid address from suggestions",
+  "gameFormAddressNotVerified": "Could not verify this address. Please choose another one.",
+  "gameFormAddressSelectFromList": "Please select a valid address from suggestions.",
+  "gameFormNeighborhoodHint": "e.g. Shoreditch",
+  "gameFormVenueLabel": "Venue name",
+  "gameFormVenueHint": "e.g. Hackney Marshes",
+  "gameFormCityLabel": "City *",
+  "gameFormCityHint": "e.g. London",
+  "gameFormMaxPlayers": "Max players: {count}",
+  "@gameFormMaxPlayers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gameFormVisibility": "Visibility",
+  "gameFormPrivateTitle": "Private Game (Requires Approval)",
+  "gameFormPrivateHint": "Hidden from public search. Every join request will require your approval.",
+  "gameFormPublicHint": "Public — anyone can find and join this game.",
+  "gameFormDetails": "Details",
+  "gameFormSchedule": "Schedule",
+  "gameFormLocation": "Location",
+  "gameEditTitleLabel": "Title *",
+  "gameEditTitleHint": "Game title",
+  "gameEditTitleRequired": "Title is required.",
+  "gameEditDuration": "Duration: {minutes}min",
+  "@gameEditDuration": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "gameEditSliderMinutes": "{minutes} min",
+  "@gameEditSliderMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "gameEditAddressLabel": "Address",
+  "gameEditAddressHint": "Selected address",
+  "gameEditCityHint": "City",
+  "gameEditCityRequired": "City is required.",
+  "gameEditNeighborhoodLabel": "Neighborhood",
+  "gameEditVenueLabel": "Venue",
+  "commonBack": "Back",
+  "commonNo": "No",
+  "gamesStatusCompleted": "Completed",
+  "gameDurationMin": "{minutes}min",
+  "gameDurationHr": "{hours}h",
+  "gameDurationHrMin": "{hours}h {minutes}min",
+  "gameDetailRequestDeclined": "Your request to join was declined. You can try again below.",
+  "gameDetailDate": "Date",
+  "gameDetailTime": "Time",
+  "gameDetailDuration": "Duration",
+  "gameDetailAbout": "About this game",
+  "gameDetailOrganiser": "Organiser",
+  "gameDetailPlayers": "Players",
+  "gameDetailResult": "Match Result",
+  "gameDetailTags": "Tags",
+  "gameDetailReport": "Report Game",
+  "gameDetailMapUnavailable": "Map preview unavailable",
+  "gameDetailApproved": "Approved",
+  "gameDetailPendingRequests": "Pending requests",
+  "gameDetailRate": "Rate",
+  "gameDetailApprove": "Approve",
+  "gameDetailKick": "Kick",
+  "gameDetailRatePrompt": "Rate participants below to share how the game went.",
+  "gameDetailChat": "Chat",
+  "gameDetailRateParticipants": "Rate Participants",
+  "gameDetailGameCompleted": "Game Completed",
+  "gameDetailManage": "Manage (Organiser)",
+  "gameDetailGameFull": "Game is Full",
+  "gameDetailRequestToJoin": "Request to Join",
+  "gameDetailLeave": "Leave Game",
+  "gameDetailInvitedBanner": "You're invited to this game",
+  "gameDetailAcceptInvite": "Accept Invitation",
+  "gameDetailDecline": "Decline",
+  "gameDetailPendingBanner": "Your request is pending approval",
+  "gameDetailWithdraw": "Withdraw",
+  "gameDetailInviteFriends": "Invite Friends",
+  "gameDetailNoFriends": "Add friends from their profile to invite them to games.",
+  "gameDetailInvitedChip": "Invited",
+  "gameDetailMergeTitle": "Merge game?",
+  "gameDetailMergeButton": "Merge",
+  "gameDetailCapacityTitle": "Increase capacity?",
+  "gameDetailCapacityBody": "The target game is too full for this merge. Expand its capacity and complete the merge?",
+  "gameDetailForceMerge": "Force merge",
+  "gameDetailMergeSuccess": "Game merged successfully.",
+  "gameDetailMergeSheetTitle": "Merge Game",
+  "gameDetailMergeNone": "No eligible open games found.",
+  "gameDetailInviteFriendsHint": "Send an invite to your approved friends",
+  "gameDetailMergeHint": "Combine this game into another open game",
+  "gameDetailViewSummary": "View Summary / Rate Players",
+  "gameDetailViewSummaryHint": "Game is finished — open the rating flow for participants.",
+  "gameDetailCompleteGame": "Complete Game",
+  "gameDetailCompleteGameHint": "Mark the game as finished and open ratings for participants.",
+  "gameDetailAlreadyCancelled": "Game already cancelled",
+  "gameDetailCancelGame": "Cancel Game",
+  "gameDetailCancelled": "Game cancelled.",
+  "gameDetailCancelConfirmTitle": "Cancel game?",
+  "gameDetailCancelConfirmBody": "This will mark the game as cancelled for all players.",
+  "gameDetailYesCancel": "Yes, cancel",
+  "gameDetailCompleteConfirmTitle": "Complete game?",
+  "gameDetailCompleteConfirmBody": "This marks the game as finished, updates player stats, and unlocks rating for all approved players. This action cannot be undone.",
+  "gameDetailNotYet": "Not yet",
+  "gameDetailMarkCompleted": "Mark completed",
+  "gameDetailPendingRatingsFailed": "Could not load pending ratings. Pull to refresh and try again.",
+  "gameDetailPlayerFallback": "Player",
+  "gameDetailAllRated": "Everyone in this game has been rated.",
+  "gameDetailRateAParticipant": "Rate a participant",
+  "gameDetailWontRatePrompt": "You will not be prompted to rate this game.",
+  "gameDetailDontRate": "Don't rate this game",
+  "gameDetailCancelReasonTitle": "Reason for cancellation",
+  "gameDetailCancelReasonHint": "e.g. Weather, venue issue, not enough players…",
+  "gameDetailCancelGameButton": "Cancel game",
+  "gameDetailPlayerYou": "{name} (You)",
+  "@gameDetailPlayerYou": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "gameDetailScore": "Score: {score}",
+  "@gameDetailScore": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "gameDetailWinner": "Winner: {winner}",
+  "@gameDetailWinner": {
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
+  },
+  "gameDetailInvitedName": "Invited {name}",
+  "@gameDetailInvitedName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "gameDetailRevokedName": "Revoked invite for {name}",
+  "@gameDetailRevokedName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "gameDetailMergeConfirmBody": "Merge '{source}' into '{target}'?\nYour game will be cancelled and players moved to the target.",
+  "@gameDetailMergeConfirmBody": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "gameDetailMergePick": "Pick an open {sport} game in {city}.",
+  "@gameDetailMergePick": {
+    "placeholders": {
+      "sport": {
+        "type": "String"
+      },
+      "city": {
+        "type": "String"
+      }
+    }
+  }
 }

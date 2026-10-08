@@ -10,6 +10,9 @@ const List<String> migratedPaths = <String>[
   'lib/features/onboarding/presentation',
   'lib/shared/widgets',
   'lib/core/constants/skill_level_labels.dart',
+  'lib/features/home',
+  'lib/features/games/presentation',
+  'lib/features/search/presentation',
 ];
 
 Iterable<File> _dartFiles(String path) {
@@ -32,8 +35,9 @@ class StringLiteral {
   final String sourceLineText; // The source line text
   final int sourceStart; // Position in source where the literal starts
   final String source; // The full source for context
+  final int endPos; // Position in source just after the closing quote
 
-  StringLiteral(this.content, this.lineNumber, this.endLine, this.sourceLineText, this.sourceStart, this.source);
+  StringLiteral(this.content, this.lineNumber, this.endLine, this.sourceLineText, this.sourceStart, this.source, this.endPos);
 }
 
 /// Removes interpolation (${...} and $ident) from a string literal.
@@ -121,7 +125,7 @@ List<StringLiteral> _tokenizeAndExtractStrings(String source) {
         if (i < source.length && source[i] == quote) i++;
       }
 
-      literals.add(StringLiteral(content, startLine, lineNumber, getLineText(startLine), startPos, source));
+      literals.add(StringLiteral(content, startLine, lineNumber, getLineText(startLine), startPos, source, i));
       continue;
     }
 
@@ -212,7 +216,7 @@ List<StringLiteral> _tokenizeAndExtractStrings(String source) {
         if (i < source.length && source[i] == quote) i++;
       }
 
-      literals.add(StringLiteral(content, startLine, lineNumber, getLineText(startLine), startPos, source));
+      literals.add(StringLiteral(content, startLine, lineNumber, getLineText(startLine), startPos, source, i));
       continue;
     }
 
@@ -365,8 +369,15 @@ List<String> findHardcodedStrings(String source) {
     }
     codeBefore = codeBefore.trim();
 
+    // Map keys ({'title': x, 'sport': y}) are API field names, not UI text.
+    // A ternary's middle branch (cond ? 'a' : 'b') is preceded by `?`, not `{` or `,`.
+    if (RegExp(r'[{,)]$').hasMatch(codeBefore) &&
+        RegExp(r'^\s*:').hasMatch(lit.source.substring(lit.endPos))) {
+      continue;
+    }
+
     // Check if this is a non-UI context
-    if (_isNonUiContext(codeBefore, lit.content)) {
+    if (_isNonUiContext(codeBefore, noInterp)) {
       continue;
     }
 
@@ -689,6 +700,38 @@ Text('Hi')
       final result = findHardcodedStrings(source);
       // The first literal is also flagged (line 1); Hello must be on line 2.
       expect(result.any((r) => r.startsWith('line 2') && r.contains('Hello')), isTrue);
+    });
+
+    test('map keys are not flagged', () {
+      final result = findHardcodedStrings("final m = {'title': t, 'sport': s};");
+      expect(result, isEmpty);
+    });
+
+    test('map keys on separate lines are not flagged', () {
+      final result =
+          findHardcodedStrings("final m = {\n  'title': t,\n  'maxPlayers': 3,\n};");
+      expect(result, isEmpty);
+    });
+
+    test('conditional map entries are not flagged', () {
+      final result = findHardcodedStrings("final m = {if (ok) 'title': t};");
+      expect(result, isEmpty);
+    });
+
+    test('ternary middle branch is still flagged', () {
+      final result = findHardcodedStrings("Text(a ? 'Open' : 'Closed')");
+      expect(result, isNotEmpty);
+    });
+
+    test('map value literal is still flagged', () {
+      final result = findHardcodedStrings("final m = {'label': 'Hello there'};");
+      expect(result, isNotEmpty);
+    });
+
+    // Interpolation placeholders contain dots and must not look like paths.
+    test('interpolated text without spaces is still flagged', () {
+      final result = findHardcodedStrings("Text('\${count}d')");
+      expect(result, isNotEmpty);
     });
 
     // M5: Numeric line sorting

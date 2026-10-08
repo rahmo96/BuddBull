@@ -535,6 +535,1308 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Get started'**
   String get onboardingFinish;
+
+  /// No description provided for @commonSeeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all'**
+  String get commonSeeAll;
+
+  /// No description provided for @commonBrowseAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse all'**
+  String get commonBrowseAll;
+
+  /// No description provided for @navHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get navHome;
+
+  /// No description provided for @navGames.
+  ///
+  /// In en, this message translates to:
+  /// **'Games'**
+  String get navGames;
+
+  /// No description provided for @navChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get navChat;
+
+  /// No description provided for @navPerformance.
+  ///
+  /// In en, this message translates to:
+  /// **'Performance'**
+  String get navPerformance;
+
+  /// No description provided for @navProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get navProfile;
+
+  /// No description provided for @homeGreetingMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning'**
+  String get homeGreetingMorning;
+
+  /// No description provided for @homeGreetingAfternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon'**
+  String get homeGreetingAfternoon;
+
+  /// No description provided for @homeGreetingEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening'**
+  String get homeGreetingEvening;
+
+  /// No description provided for @homeGreetingWithName.
+  ///
+  /// In en, this message translates to:
+  /// **'{greeting}, {name}!'**
+  String homeGreetingWithName(String greeting, String name);
+
+  /// No description provided for @homeGreetingNoName.
+  ///
+  /// In en, this message translates to:
+  /// **'{greeting}!'**
+  String homeGreetingNoName(String greeting);
+
+  /// No description provided for @homeStatGames.
+  ///
+  /// In en, this message translates to:
+  /// **'Games'**
+  String get homeStatGames;
+
+  /// No description provided for @homeStatRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating'**
+  String get homeStatRating;
+
+  /// No description provided for @homeStatStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak'**
+  String get homeStatStreak;
+
+  /// No description provided for @homeStreakDaysShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}d'**
+  String homeStreakDaysShort(int count);
+
+  /// No description provided for @homeMyUpcomingGames.
+  ///
+  /// In en, this message translates to:
+  /// **'My Upcoming Games'**
+  String get homeMyUpcomingGames;
+
+  /// No description provided for @homeExploreNearYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore Near You'**
+  String get homeExploreNearYou;
+
+  /// No description provided for @homeQuickActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Actions'**
+  String get homeQuickActions;
+
+  /// No description provided for @homeFindGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a Game'**
+  String get homeFindGame;
+
+  /// No description provided for @homeLogSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Session'**
+  String get homeLogSession;
+
+  /// No description provided for @homeCreateGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Game'**
+  String get homeCreateGame;
+
+  /// No description provided for @homeRecentActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Activity'**
+  String get homeRecentActivity;
+
+  /// No description provided for @homeNoRecentSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'No recent sessions'**
+  String get homeNoRecentSessions;
+
+  /// No description provided for @homeLogASession.
+  ///
+  /// In en, this message translates to:
+  /// **'Log a session'**
+  String get homeLogASession;
+
+  /// No description provided for @homeNoUpcomingGames.
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming games'**
+  String get homeNoUpcomingGames;
+
+  /// No description provided for @homeBrowseGames.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse games'**
+  String get homeBrowseGames;
+
+  /// No description provided for @homeNearbyLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load nearby games'**
+  String get homeNearbyLoadFailed;
+
+  /// No description provided for @homeNothingNearby.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing nearby right now'**
+  String get homeNothingNearby;
+
+  /// No description provided for @homeTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Find your squad. Play your game.'**
+  String get homeTagline;
+
+  /// No description provided for @homeNotificationsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get homeNotificationsTooltip;
+
+  /// No description provided for @homeMyCalendarTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'My calendar'**
+  String get homeMyCalendarTooltip;
+
+  /// No description provided for @homeAddGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Game'**
+  String get homeAddGame;
+
+  /// No description provided for @homeLogTraining.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Training'**
+  String get homeLogTraining;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search games, players…'**
+  String get searchHint;
+
+  /// No description provided for @searchCloseTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Close search'**
+  String get searchCloseTooltip;
+
+  /// No description provided for @searchMinChars.
+  ///
+  /// In en, this message translates to:
+  /// **'Type at least 2 characters to search'**
+  String get searchMinChars;
+
+  /// No description provided for @searchNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No results found'**
+  String get searchNoResults;
+
+  /// No description provided for @searchNoResultsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a different sport, city, or player name'**
+  String get searchNoResultsHint;
+
+  /// No description provided for @searchSectionGames.
+  ///
+  /// In en, this message translates to:
+  /// **'Games'**
+  String get searchSectionGames;
+
+  /// No description provided for @searchSectionPlayers.
+  ///
+  /// In en, this message translates to:
+  /// **'Players'**
+  String get searchSectionPlayers;
+
+  /// No description provided for @searchGamesError.
+  ///
+  /// In en, this message translates to:
+  /// **'Games: {error}'**
+  String searchGamesError(String error);
+
+  /// No description provided for @searchPlayersError.
+  ///
+  /// In en, this message translates to:
+  /// **'Players: {error}'**
+  String searchPlayersError(String error);
+
+  /// No description provided for @searchChipNearby.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby games'**
+  String get searchChipNearby;
+
+  /// No description provided for @searchDiscoverTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discover your next game'**
+  String get searchDiscoverTitle;
+
+  /// No description provided for @searchDiscoverSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by sport, city, username, or player name'**
+  String get searchDiscoverSubtitle;
+
+  /// No description provided for @sportFootball.
+  ///
+  /// In en, this message translates to:
+  /// **'Football'**
+  String get sportFootball;
+
+  /// No description provided for @sportBasketball.
+  ///
+  /// In en, this message translates to:
+  /// **'Basketball'**
+  String get sportBasketball;
+
+  /// No description provided for @sportTennis.
+  ///
+  /// In en, this message translates to:
+  /// **'Tennis'**
+  String get sportTennis;
+
+  /// No description provided for @sportVolleyball.
+  ///
+  /// In en, this message translates to:
+  /// **'Volleyball'**
+  String get sportVolleyball;
+
+  /// No description provided for @sportRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get sportRunning;
+
+  /// No description provided for @sportSwimming.
+  ///
+  /// In en, this message translates to:
+  /// **'Swimming'**
+  String get sportSwimming;
+
+  /// No description provided for @sportCycling.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycling'**
+  String get sportCycling;
+
+  /// No description provided for @sportCricket.
+  ///
+  /// In en, this message translates to:
+  /// **'Cricket'**
+  String get sportCricket;
+
+  /// No description provided for @commonAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get commonAll;
+
+  /// No description provided for @commonClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get commonClear;
+
+  /// No description provided for @gamesCreateTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Create game'**
+  String get gamesCreateTooltip;
+
+  /// No description provided for @gamesSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search games, sports, locations…'**
+  String get gamesSearchHint;
+
+  /// No description provided for @gamesFilterTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get gamesFilterTooltip;
+
+  /// No description provided for @gamesFiltersActive.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 filter active} other{{count} filters active}}'**
+  String gamesFiltersActive(int count);
+
+  /// No description provided for @gamesNoneFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No games found'**
+  String get gamesNoneFound;
+
+  /// No description provided for @gamesNoneFoundHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Try adjusting your filters or create a new game.'**
+  String get gamesNoneFoundHint;
+
+  /// No description provided for @gamesCreateAGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a game'**
+  String get gamesCreateAGame;
+
+  /// No description provided for @skillAnyLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Any level'**
+  String get skillAnyLevel;
+
+  /// No description provided for @commonClearAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all'**
+  String get commonClearAll;
+
+  /// No description provided for @commonSport.
+  ///
+  /// In en, this message translates to:
+  /// **'Sport'**
+  String get commonSport;
+
+  /// No description provided for @gamesFilterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter Games'**
+  String get gamesFilterTitle;
+
+  /// No description provided for @gamesFilterNearMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Near me'**
+  String get gamesFilterNearMe;
+
+  /// No description provided for @gamesFilterNearMeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Show games closest to your current location'**
+  String get gamesFilterNearMeHint;
+
+  /// No description provided for @gamesFilterCityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. London'**
+  String get gamesFilterCityHint;
+
+  /// No description provided for @gamesFilterSkillTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Required skill level'**
+  String get gamesFilterSkillTitle;
+
+  /// No description provided for @gamesFilterGettingLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting location…'**
+  String get gamesFilterGettingLocation;
+
+  /// No description provided for @gamesFilterApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply Filters'**
+  String get gamesFilterApply;
+
+  /// No description provided for @gamesPlayersOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{current}/{max} players'**
+  String gamesPlayersOf(int current, int max);
+
+  /// No description provided for @gamesPendingCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pending'**
+  String gamesPendingCount(int count);
+
+  /// No description provided for @gamesJoinGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Join Game'**
+  String get gamesJoinGame;
+
+  /// No description provided for @gamesRoster.
+  ///
+  /// In en, this message translates to:
+  /// **'Roster'**
+  String get gamesRoster;
+
+  /// No description provided for @gamesStatusOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get gamesStatusOpen;
+
+  /// No description provided for @gamesStatusFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Full'**
+  String get gamesStatusFull;
+
+  /// No description provided for @gamesStatusLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get gamesStatusLive;
+
+  /// No description provided for @gamesStatusDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get gamesStatusDone;
+
+  /// No description provided for @gamesStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get gamesStatusCancelled;
+
+  /// No description provided for @gamesFullBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'FULL'**
+  String get gamesFullBadge;
+
+  /// No description provided for @gamesDistanceMeters.
+  ///
+  /// In en, this message translates to:
+  /// **'{meters} m away'**
+  String gamesDistanceMeters(int meters);
+
+  /// No description provided for @gamesDistanceKm.
+  ///
+  /// In en, this message translates to:
+  /// **'{km} km away'**
+  String gamesDistanceKm(String km);
+
+  /// No description provided for @calendarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My Calendar'**
+  String get calendarTitle;
+
+  /// No description provided for @calendarToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get calendarToday;
+
+  /// No description provided for @calendarNoGamesOnDay.
+  ///
+  /// In en, this message translates to:
+  /// **'No games on this day'**
+  String get calendarNoGamesOnDay;
+
+  /// No description provided for @calendarFormatMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get calendarFormatMonth;
+
+  /// No description provided for @calendarFormatTwoWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'2 weeks'**
+  String get calendarFormatTwoWeeks;
+
+  /// No description provided for @calendarFormatWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Week'**
+  String get calendarFormatWeek;
+
+  /// No description provided for @gamesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No games} =1{1 game} other{{count} games}}'**
+  String gamesCount(int count);
+
+  /// No description provided for @commonLocationPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location access is needed to find games near you. Enable it in settings or use city search.'**
+  String get commonLocationPermissionDenied;
+
+  /// No description provided for @commonOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get commonOptional;
+
+  /// No description provided for @commonSaveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get commonSaveChanges;
+
+  /// No description provided for @gameCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Game'**
+  String get gameCreateTitle;
+
+  /// No description provided for @gameCreateButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Game 🎮'**
+  String get gameCreateButton;
+
+  /// No description provided for @gameCreateSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Game created! 🎉'**
+  String get gameCreateSuccess;
+
+  /// No description provided for @gameEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Game'**
+  String get gameEditTitle;
+
+  /// No description provided for @gameEditUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Game updated.'**
+  String get gameEditUpdated;
+
+  /// No description provided for @gameFormSportLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sport *'**
+  String get gameFormSportLabel;
+
+  /// No description provided for @gameFormTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Game title *'**
+  String get gameFormTitleLabel;
+
+  /// No description provided for @gameFormTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Sunday 5-a-side'**
+  String get gameFormTitleHint;
+
+  /// No description provided for @gameFormTitleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Title is required'**
+  String get gameFormTitleRequired;
+
+  /// No description provided for @gameFormDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get gameFormDescriptionLabel;
+
+  /// No description provided for @gameFormDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional details, rules, what to bring…'**
+  String get gameFormDescriptionHint;
+
+  /// No description provided for @gameFormDateTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Date & Time *'**
+  String get gameFormDateTime;
+
+  /// No description provided for @gameFormDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration: {hours}h {minutes}m'**
+  String gameFormDuration(int hours, String minutes);
+
+  /// No description provided for @gameFormDurationSlider.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}min'**
+  String gameFormDurationSlider(int minutes);
+
+  /// No description provided for @gameFormLocationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Location *'**
+  String get gameFormLocationRequired;
+
+  /// No description provided for @gameFormAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Address *'**
+  String get gameFormAddressLabel;
+
+  /// No description provided for @gameFormAddressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Start typing an address...'**
+  String get gameFormAddressHint;
+
+  /// No description provided for @gameFormAddressInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a valid address from suggestions'**
+  String get gameFormAddressInvalid;
+
+  /// No description provided for @gameFormAddressNotVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not verify this address. Please choose another one.'**
+  String get gameFormAddressNotVerified;
+
+  /// No description provided for @gameFormAddressSelectFromList.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a valid address from suggestions.'**
+  String get gameFormAddressSelectFromList;
+
+  /// No description provided for @gameFormNeighborhoodHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Shoreditch'**
+  String get gameFormNeighborhoodHint;
+
+  /// No description provided for @gameFormVenueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Venue name'**
+  String get gameFormVenueLabel;
+
+  /// No description provided for @gameFormVenueHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Hackney Marshes'**
+  String get gameFormVenueHint;
+
+  /// No description provided for @gameFormCityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'City *'**
+  String get gameFormCityLabel;
+
+  /// No description provided for @gameFormCityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. London'**
+  String get gameFormCityHint;
+
+  /// No description provided for @gameFormMaxPlayers.
+  ///
+  /// In en, this message translates to:
+  /// **'Max players: {count}'**
+  String gameFormMaxPlayers(int count);
+
+  /// No description provided for @gameFormVisibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Visibility'**
+  String get gameFormVisibility;
+
+  /// No description provided for @gameFormPrivateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Private Game (Requires Approval)'**
+  String get gameFormPrivateTitle;
+
+  /// No description provided for @gameFormPrivateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden from public search. Every join request will require your approval.'**
+  String get gameFormPrivateHint;
+
+  /// No description provided for @gameFormPublicHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Public — anyone can find and join this game.'**
+  String get gameFormPublicHint;
+
+  /// No description provided for @gameFormDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get gameFormDetails;
+
+  /// No description provided for @gameFormSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get gameFormSchedule;
+
+  /// No description provided for @gameFormLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get gameFormLocation;
+
+  /// No description provided for @gameEditTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Title *'**
+  String get gameEditTitleLabel;
+
+  /// No description provided for @gameEditTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Game title'**
+  String get gameEditTitleHint;
+
+  /// No description provided for @gameEditTitleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Title is required.'**
+  String get gameEditTitleRequired;
+
+  /// No description provided for @gameEditDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration: {minutes}min'**
+  String gameEditDuration(int minutes);
+
+  /// No description provided for @gameEditSliderMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String gameEditSliderMinutes(int minutes);
+
+  /// No description provided for @gameEditAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get gameEditAddressLabel;
+
+  /// No description provided for @gameEditAddressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected address'**
+  String get gameEditAddressHint;
+
+  /// No description provided for @gameEditCityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get gameEditCityHint;
+
+  /// No description provided for @gameEditCityRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'City is required.'**
+  String get gameEditCityRequired;
+
+  /// No description provided for @gameEditNeighborhoodLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Neighborhood'**
+  String get gameEditNeighborhoodLabel;
+
+  /// No description provided for @gameEditVenueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Venue'**
+  String get gameEditVenueLabel;
+
+  /// No description provided for @commonBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get commonBack;
+
+  /// No description provided for @commonNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get commonNo;
+
+  /// No description provided for @gamesStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get gamesStatusCompleted;
+
+  /// No description provided for @gameDurationMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}min'**
+  String gameDurationMin(Object minutes);
+
+  /// No description provided for @gameDurationHr.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h'**
+  String gameDurationHr(Object hours);
+
+  /// No description provided for @gameDurationHrMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h {minutes}min'**
+  String gameDurationHrMin(Object hours, Object minutes);
+
+  /// No description provided for @gameDetailRequestDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request to join was declined. You can try again below.'**
+  String get gameDetailRequestDeclined;
+
+  /// No description provided for @gameDetailDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get gameDetailDate;
+
+  /// No description provided for @gameDetailTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get gameDetailTime;
+
+  /// No description provided for @gameDetailDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get gameDetailDuration;
+
+  /// No description provided for @gameDetailAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About this game'**
+  String get gameDetailAbout;
+
+  /// No description provided for @gameDetailOrganiser.
+  ///
+  /// In en, this message translates to:
+  /// **'Organiser'**
+  String get gameDetailOrganiser;
+
+  /// No description provided for @gameDetailPlayers.
+  ///
+  /// In en, this message translates to:
+  /// **'Players'**
+  String get gameDetailPlayers;
+
+  /// No description provided for @gameDetailResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Match Result'**
+  String get gameDetailResult;
+
+  /// No description provided for @gameDetailTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get gameDetailTags;
+
+  /// No description provided for @gameDetailReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Report Game'**
+  String get gameDetailReport;
+
+  /// No description provided for @gameDetailMapUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Map preview unavailable'**
+  String get gameDetailMapUnavailable;
+
+  /// No description provided for @gameDetailApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get gameDetailApproved;
+
+  /// No description provided for @gameDetailPendingRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending requests'**
+  String get gameDetailPendingRequests;
+
+  /// No description provided for @gameDetailRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate'**
+  String get gameDetailRate;
+
+  /// No description provided for @gameDetailApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get gameDetailApprove;
+
+  /// No description provided for @gameDetailKick.
+  ///
+  /// In en, this message translates to:
+  /// **'Kick'**
+  String get gameDetailKick;
+
+  /// No description provided for @gameDetailRatePrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate participants below to share how the game went.'**
+  String get gameDetailRatePrompt;
+
+  /// No description provided for @gameDetailChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat'**
+  String get gameDetailChat;
+
+  /// No description provided for @gameDetailRateParticipants.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate Participants'**
+  String get gameDetailRateParticipants;
+
+  /// No description provided for @gameDetailGameCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Game Completed'**
+  String get gameDetailGameCompleted;
+
+  /// No description provided for @gameDetailManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage (Organiser)'**
+  String get gameDetailManage;
+
+  /// No description provided for @gameDetailGameFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Game is Full'**
+  String get gameDetailGameFull;
+
+  /// No description provided for @gameDetailRequestToJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Request to Join'**
+  String get gameDetailRequestToJoin;
+
+  /// No description provided for @gameDetailLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave Game'**
+  String get gameDetailLeave;
+
+  /// No description provided for @gameDetailInvitedBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re invited to this game'**
+  String get gameDetailInvitedBanner;
+
+  /// No description provided for @gameDetailAcceptInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept Invitation'**
+  String get gameDetailAcceptInvite;
+
+  /// No description provided for @gameDetailDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get gameDetailDecline;
+
+  /// No description provided for @gameDetailPendingBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request is pending approval'**
+  String get gameDetailPendingBanner;
+
+  /// No description provided for @gameDetailWithdraw.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw'**
+  String get gameDetailWithdraw;
+
+  /// No description provided for @gameDetailInviteFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite Friends'**
+  String get gameDetailInviteFriends;
+
+  /// No description provided for @gameDetailNoFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Add friends from their profile to invite them to games.'**
+  String get gameDetailNoFriends;
+
+  /// No description provided for @gameDetailInvitedChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited'**
+  String get gameDetailInvitedChip;
+
+  /// No description provided for @gameDetailMergeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge game?'**
+  String get gameDetailMergeTitle;
+
+  /// No description provided for @gameDetailMergeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge'**
+  String get gameDetailMergeButton;
+
+  /// No description provided for @gameDetailCapacityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase capacity?'**
+  String get gameDetailCapacityTitle;
+
+  /// No description provided for @gameDetailCapacityBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The target game is too full for this merge. Expand its capacity and complete the merge?'**
+  String get gameDetailCapacityBody;
+
+  /// No description provided for @gameDetailForceMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Force merge'**
+  String get gameDetailForceMerge;
+
+  /// No description provided for @gameDetailMergeSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Game merged successfully.'**
+  String get gameDetailMergeSuccess;
+
+  /// No description provided for @gameDetailMergeSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge Game'**
+  String get gameDetailMergeSheetTitle;
+
+  /// No description provided for @gameDetailMergeNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No eligible open games found.'**
+  String get gameDetailMergeNone;
+
+  /// No description provided for @gameDetailInviteFriendsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Send an invite to your approved friends'**
+  String get gameDetailInviteFriendsHint;
+
+  /// No description provided for @gameDetailMergeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Combine this game into another open game'**
+  String get gameDetailMergeHint;
+
+  /// No description provided for @gameDetailViewSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'View Summary / Rate Players'**
+  String get gameDetailViewSummary;
+
+  /// No description provided for @gameDetailViewSummaryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Game is finished — open the rating flow for participants.'**
+  String get gameDetailViewSummaryHint;
+
+  /// No description provided for @gameDetailCompleteGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete Game'**
+  String get gameDetailCompleteGame;
+
+  /// No description provided for @gameDetailCompleteGameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark the game as finished and open ratings for participants.'**
+  String get gameDetailCompleteGameHint;
+
+  /// No description provided for @gameDetailAlreadyCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Game already cancelled'**
+  String get gameDetailAlreadyCancelled;
+
+  /// No description provided for @gameDetailCancelGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Game'**
+  String get gameDetailCancelGame;
+
+  /// No description provided for @gameDetailCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Game cancelled.'**
+  String get gameDetailCancelled;
+
+  /// No description provided for @gameDetailCancelConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel game?'**
+  String get gameDetailCancelConfirmTitle;
+
+  /// No description provided for @gameDetailCancelConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This will mark the game as cancelled for all players.'**
+  String get gameDetailCancelConfirmBody;
+
+  /// No description provided for @gameDetailYesCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, cancel'**
+  String get gameDetailYesCancel;
+
+  /// No description provided for @gameDetailCompleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete game?'**
+  String get gameDetailCompleteConfirmTitle;
+
+  /// No description provided for @gameDetailCompleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This marks the game as finished, updates player stats, and unlocks rating for all approved players. This action cannot be undone.'**
+  String get gameDetailCompleteConfirmBody;
+
+  /// No description provided for @gameDetailNotYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not yet'**
+  String get gameDetailNotYet;
+
+  /// No description provided for @gameDetailMarkCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark completed'**
+  String get gameDetailMarkCompleted;
+
+  /// No description provided for @gameDetailPendingRatingsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load pending ratings. Pull to refresh and try again.'**
+  String get gameDetailPendingRatingsFailed;
+
+  /// No description provided for @gameDetailPlayerFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Player'**
+  String get gameDetailPlayerFallback;
+
+  /// No description provided for @gameDetailAllRated.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone in this game has been rated.'**
+  String get gameDetailAllRated;
+
+  /// No description provided for @gameDetailRateAParticipant.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate a participant'**
+  String get gameDetailRateAParticipant;
+
+  /// No description provided for @gameDetailWontRatePrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'You will not be prompted to rate this game.'**
+  String get gameDetailWontRatePrompt;
+
+  /// No description provided for @gameDetailDontRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t rate this game'**
+  String get gameDetailDontRate;
+
+  /// No description provided for @gameDetailCancelReasonTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason for cancellation'**
+  String get gameDetailCancelReasonTitle;
+
+  /// No description provided for @gameDetailCancelReasonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Weather, venue issue, not enough players…'**
+  String get gameDetailCancelReasonHint;
+
+  /// No description provided for @gameDetailCancelGameButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel game'**
+  String get gameDetailCancelGameButton;
+
+  /// No description provided for @gameDetailPlayerYou.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (You)'**
+  String gameDetailPlayerYou(String name);
+
+  /// No description provided for @gameDetailScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Score: {score}'**
+  String gameDetailScore(String score);
+
+  /// No description provided for @gameDetailWinner.
+  ///
+  /// In en, this message translates to:
+  /// **'Winner: {winner}'**
+  String gameDetailWinner(String winner);
+
+  /// No description provided for @gameDetailInvitedName.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited {name}'**
+  String gameDetailInvitedName(String name);
+
+  /// No description provided for @gameDetailRevokedName.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoked invite for {name}'**
+  String gameDetailRevokedName(String name);
+
+  /// No description provided for @gameDetailMergeConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge \'{source}\' into \'{target}\'?\nYour game will be cancelled and players moved to the target.'**
+  String gameDetailMergeConfirmBody(String source, String target);
+
+  /// No description provided for @gameDetailMergePick.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick an open {sport} game in {city}.'**
+  String gameDetailMergePick(String sport, String city);
 }
 
 class _AppLocalizationsDelegate

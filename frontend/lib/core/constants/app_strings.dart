@@ -25,10 +25,6 @@ abstract class AppStrings {
   // ── Validation ─────────────────────────────────────────────────
   static const String fieldRequired = 'This field is required.';
 
-  // ── Onboarding (post‑signup) ───────────────────────────────────
-  static const String locationPermissionDenied =
-      'Location access is needed to find games near you. Enable it in settings or use city search.';
-
   // ── Errors ─────────────────────────────────────────────────────
   static const String genericError = 'Something went wrong. Please try again.';
   static const String networkError = 'No internet connection. Check your network.';
@@ -37,11 +33,7 @@ abstract class AppStrings {
   static const String unauthorised = 'You are not authorised to do that.';
 
   // ── Navigation labels ──────────────────────────────────────────
-  static const String navHome = 'Home';
-  static const String navGames = 'Games';
-  static const String navChat = 'Messages';
   static const String navPerformance = 'Performance';
-  static const String navProfile = 'Profile';
 
   AppStrings._();
 }

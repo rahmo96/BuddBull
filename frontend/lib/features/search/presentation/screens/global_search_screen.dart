@@ -6,6 +6,7 @@ import 'package:buddbull/features/games/presentation/widgets/game_card.dart';
 import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
 import 'package:buddbull/features/search/presentation/widgets/search_transition.dart';
 import 'package:buddbull/features/search/providers/global_search_provider.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -93,7 +94,7 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
                           size: 20),
                       color: AppColors.slate,
                       onPressed: _close,
-                      tooltip: 'Close search',
+                      tooltip: context.l10n.searchCloseTooltip,
                     ),
                     Expanded(
                       child: GlobalSearchField(
@@ -132,7 +133,7 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Text(
-            'Type at least 2 characters to search',
+            context.l10n.searchMinChars,
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.textSecondary,
             ),
@@ -174,13 +175,13 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'No results found',
+              Text(
+                context.l10n.searchNoResults,
                 style: AppTextStyles.titleSmall,
               ),
               const SizedBox(height: 6),
               Text(
-                'Try a different sport, city, or player name',
+                context.l10n.searchNoResultsHint,
                 style: AppTextStyles.bodySmall.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -200,7 +201,7 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
           const SizedBox(height: 12),
         ],
         if (state.games.isNotEmpty) ...[
-          _SectionLabel(title: 'Games', count: state.games.length),
+          _SectionLabel(title: context.l10n.searchSectionGames, count: state.games.length),
           const SizedBox(height: 10),
           SizedBox(
             height: 220,
@@ -222,7 +223,7 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
           const SizedBox(height: 24),
         ],
         if (state.users.isNotEmpty) ...[
-          _SectionLabel(title: 'Players', count: state.users.length),
+          _SectionLabel(title: context.l10n.searchSectionPlayers, count: state.users.length),
           const SizedBox(height: 8),
           ...state.users.map((user) => _PlayerResultTile(user: user)),
         ],
@@ -240,10 +241,10 @@ class _PartialSearchNotice extends StatelessWidget {
   Widget build(BuildContext context) {
     final messages = <String>[];
     if (state.gamesError != null && state.games.isEmpty) {
-      messages.add('Games: ${state.gamesError}');
+      messages.add(context.l10n.searchGamesError(state.gamesError!));
     }
     if (state.usersError != null && state.users.isEmpty) {
-      messages.add('Players: ${state.usersError}');
+      messages.add(context.l10n.searchPlayersError(state.usersError!));
     }
     if (messages.isEmpty) return const SizedBox.shrink();
 
@@ -258,7 +259,7 @@ class _PartialSearchNotice extends StatelessWidget {
         ),
       ),
       child: Text(
-        messages.join('\n'),
+        messages.join('\n'), // l10n-ignore: line separator
         style: AppTextStyles.bodySmall.copyWith(
           color: AppColors.textSecondary,
         ),
@@ -272,11 +273,12 @@ class _IdleSearchHints extends StatelessWidget {
 
   final ValueChanged<String> onHintTap;
 
-  static const _hints = [
-    ('Football', Icons.sports_soccer_rounded),
-    ('Basketball', Icons.sports_basketball_rounded),
-    ('Tennis', Icons.sports_tennis_rounded),
-    ('Nearby games', Icons.near_me_rounded),
+  // (search query sent to the backend, icon, localized chip label)
+  static final _hints = <(String, IconData, String Function(AppLocalizations))>[
+    ('Football', Icons.sports_soccer_rounded, (l) => l.sportFootball), // l10n-ignore: search query value
+    ('Basketball', Icons.sports_basketball_rounded, (l) => l.sportBasketball), // l10n-ignore: search query value
+    ('Tennis', Icons.sports_tennis_rounded, (l) => l.sportTennis), // l10n-ignore: search query value
+    ('Nearby games', Icons.near_me_rounded, (l) => l.searchChipNearby), // l10n-ignore: search query value
   ];
 
   @override
@@ -308,14 +310,14 @@ class _IdleSearchHints extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Discover your next game',
+            Text(
+              context.l10n.searchDiscoverTitle,
               style: AppTextStyles.titleMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Search by sport, city, username, or player name',
+              context.l10n.searchDiscoverSubtitle,
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -330,7 +332,7 @@ class _IdleSearchHints extends StatelessWidget {
                   .map(
                     (hint) => ActionChip(
                       avatar: Icon(hint.$2, size: 16, color: AppColors.teal),
-                      label: Text(hint.$1),
+                      label: Text(hint.$3(context.l10n)),
                       labelStyle: AppTextStyles.labelSmall.copyWith(
                         color: AppColors.slate,
                         fontWeight: FontWeight.w500,

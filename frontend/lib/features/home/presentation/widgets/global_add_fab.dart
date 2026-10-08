@@ -2,6 +2,7 @@ import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/home/home_scaffold.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -96,13 +97,13 @@ class _GlobalAddFabState extends State<GlobalAddFab>
                     children: [
                       _MenuAction(
                         icon: Icons.sports_rounded,
-                        label: 'Add Game',
+                        label: context.l10n.homeAddGame,
                         onTap: () => _navigate(Routes.createGame),
                       ),
                       const SizedBox(height: 10),
                       _MenuAction(
                         icon: Icons.fitness_center_rounded,
-                        label: 'Log Training',
+                        label: context.l10n.homeLogTraining,
                         onTap: () => _navigate(Routes.createLog),
                       ),
                     ],

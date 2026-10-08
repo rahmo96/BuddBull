@@ -1,4 +1,3 @@
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/core/storage/shared_preferences_provider.dart';
 import 'package:buddbull/features/home/home_scaffold.dart';
@@ -8,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../helpers/l10n_app.dart';
 import '../helpers/shell_test_overrides.dart';
 import '../helpers/test_bootstrap.dart';
 
@@ -68,7 +68,7 @@ void main() {
             sharedPreferencesProvider.overrideWithValue(prefs),
             ...shellTestOverrides(),
           ],
-          child: MaterialApp.router(routerConfig: router),
+          child: l10nRouterApp(router),
         ),
       );
       await tester.pumpAndSettle();
@@ -77,14 +77,14 @@ void main() {
     testWidgets('starts on home tab probe', (tester) async {
       await pumpShell(tester);
       expect(find.text('PROBE_HOME'), findsOneWidget);
-      expect(find.text(AppStrings.navHome), findsWidgets);
-      expect(find.text(AppStrings.navProfile), findsWidgets);
+      expect(find.text(enL10n.navHome), findsWidgets);
+      expect(find.text(enL10n.navProfile), findsWidgets);
     });
 
     testWidgets('selecting Profile swaps to profile probe widget', (tester) async {
       await pumpShell(tester);
 
-      await tester.tap(find.text(AppStrings.navProfile));
+      await tester.tap(find.text(enL10n.navProfile));
       await tester.pumpAndSettle();
 
       expect(find.text('PROBE_PROFILE'), findsOneWidget);
@@ -93,7 +93,7 @@ void main() {
     testWidgets('selecting Games swaps to games probe widget', (tester) async {
       await pumpShell(tester);
 
-      await tester.tap(find.text(AppStrings.navGames));
+      await tester.tap(find.text(enL10n.navGames));
       await tester.pumpAndSettle();
 
       expect(find.text('PROBE_GAMES'), findsOneWidget);

@@ -37,6 +37,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../helpers/l10n_app.dart';
 import '../../helpers/test_bootstrap.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -159,7 +160,7 @@ Future<void> _pumpDetail(
         gameDetailProvider.overrideWith((ref, _) async => game),
         pendingRatingsProvider.overrideWith((ref) async => pending),
       ],
-      child: const MaterialApp(home: GameDetailScreen(gameId: _gameId)),
+      child: l10nMaterialApp(home: const GameDetailScreen(gameId: _gameId)),
     ),
   );
   // Two pumps: first resolves the FutureProvider, second runs the
@@ -201,7 +202,7 @@ Future<GoRouter> _pumpDetailOverRoute(
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: MaterialApp.router(routerConfig: router),
+      child: l10nRouterApp(router),
     ),
   );
   await tester.pumpAndSettle();
@@ -231,8 +232,8 @@ void main() {
         pending: [_pendingItem()],
       );
 
-      expect(_bbButtonWithLabel('Rate Participants'), findsOneWidget);
-      expect(_bbButtonWithLabel('Leave Game'), findsNothing);
+      expect(_bbButtonWithLabel(enL10n.gameDetailRateParticipants), findsOneWidget);
+      expect(_bbButtonWithLabel(enL10n.gameDetailLeave), findsNothing);
     });
 
     testWidgets('approved viewer on an in_progress game shows "Leave Game"',
@@ -244,8 +245,8 @@ void main() {
       );
 
       // While the game is still in progress there's nothing to rate.
-      expect(_bbButtonWithLabel('Leave Game'), findsOneWidget);
-      expect(_bbButtonWithLabel('Rate Participants'), findsNothing);
+      expect(_bbButtonWithLabel(enL10n.gameDetailLeave), findsOneWidget);
+      expect(_bbButtonWithLabel(enL10n.gameDetailRateParticipants), findsNothing);
     });
 
     testWidgets(
@@ -262,7 +263,7 @@ void main() {
         pending: const [],
       );
 
-      expect(_bbButtonWithLabel('Rate Participants'), findsOneWidget);
+      expect(_bbButtonWithLabel(enL10n.gameDetailRateParticipants), findsOneWidget);
     });
 
     testWidgets('a kicked viewer sees no rate / leave affordance',
@@ -273,8 +274,8 @@ void main() {
         pending: const [],
       );
 
-      expect(_bbButtonWithLabel('Rate Participants'), findsNothing);
-      expect(_bbButtonWithLabel('Leave Game'), findsNothing);
+      expect(_bbButtonWithLabel(enL10n.gameDetailRateParticipants), findsNothing);
+      expect(_bbButtonWithLabel(enL10n.gameDetailLeave), findsNothing);
     });
   });
 
@@ -301,18 +302,18 @@ void main() {
             ),
             pendingRatingsProvider.overrideWith((ref) async => const []),
           ],
-          child: const MaterialApp(home: GameDetailScreen(gameId: _gameId)),
+          child: l10nMaterialApp(home: const GameDetailScreen(gameId: _gameId)),
         ),
       );
       await tester.pump();
       await tester.pump();
 
       expect(
-        _bbButtonWithLabel('Leave Game'),
+        _bbButtonWithLabel(enL10n.gameDetailLeave),
         findsOneWidget,
         reason: 'In-progress games must offer "Leave Game"',
       );
-      expect(_bbButtonWithLabel('Rate Participants'), findsNothing);
+      expect(_bbButtonWithLabel(enL10n.gameDetailRateParticipants), findsNothing);
 
       // Organiser hits "Complete" — push the new state through the driver.
       final element = tester.element(find.byType(GameDetailScreen));
@@ -327,14 +328,14 @@ void main() {
       await tester.pump();
 
       expect(
-        _bbButtonWithLabel('Rate Participants'),
+        _bbButtonWithLabel(enL10n.gameDetailRateParticipants),
         findsOneWidget,
         reason:
             'Once the game completes, every approved player must see "Rate '
             'Participants" — including non-organisers — regardless of the '
             'pending-rating provider state.',
       );
-      expect(_bbButtonWithLabel('Leave Game'), findsNothing);
+      expect(_bbButtonWithLabel(enL10n.gameDetailLeave), findsNothing);
     });
   });
 
@@ -368,7 +369,7 @@ void main() {
       // Sanity check: we landed on the detail screen with the rate CTA,
       // and the host route is hidden behind it.
       expect(find.byType(GameDetailScreen), findsOneWidget);
-      expect(_bbButtonWithLabel('Rate Participants'), findsOneWidget);
+      expect(_bbButtonWithLabel(enL10n.gameDetailRateParticipants), findsOneWidget);
 
       // Drain the queue. The override now resolves to `[]`; the
       // FutureProvider re-runs; the listener inside GameDetailScreen

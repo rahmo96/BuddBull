@@ -3,6 +3,7 @@ import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/games/presentation/widgets/game_card.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:buddbull/shared/widgets/loading_overlay.dart';
 import 'package:flutter/material.dart';
@@ -37,13 +38,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('My Calendar'),
+        title: Text(context.l10n.calendarTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.today_rounded),
             onPressed: () =>
                 setState(() => _focusedDay = DateTime.now()),
-            tooltip: 'Today',
+            tooltip: context.l10n.calendarToday,
           ),
         ],
       ),
@@ -80,8 +81,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       isSameDay(_selectedDay, day),
                   eventLoader: (day) =>
                       _eventsForDay(games, day),
+                  locale: context.l10n.localeName,
+                  availableCalendarFormats: {
+                    CalendarFormat.month: context.l10n.calendarFormatMonth,
+                    CalendarFormat.twoWeeks: context.l10n.calendarFormatTwoWeeks,
+                    CalendarFormat.week: context.l10n.calendarFormatWeek,
+                  },
                   startingDayOfWeek:
-                      StartingDayOfWeek.monday,
+                      context.l10n.localeName == 'he'
+                          ? StartingDayOfWeek.sunday
+                          : StartingDayOfWeek.monday,
                   onDaySelected:
                       (selectedDay, focusedDay) {
                     setState(() {
@@ -169,9 +178,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 child: Row(
                   children: [
                     Text(
-                      selectedGames.isEmpty
-                          ? 'No games'
-                          : '${selectedGames.length} game${selectedGames.length > 1 ? 's' : ''}',
+                      context.l10n.gamesCount(selectedGames.length),
                       style: AppTextStyles.titleSmall
                           .copyWith(
                               color: AppColors.textSecondary),
@@ -227,7 +234,7 @@ class _EmptyDay extends StatelessWidget {
           const Text('📅', style: TextStyle(fontSize: 48)),
           const SizedBox(height: 12),
           Text(
-            'No games on this day',
+            context.l10n.calendarNoGamesOnDay,
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.textSecondary,
             ),

@@ -1,21 +1,23 @@
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/constants/skill_level_labels.dart';
+import 'package:buddbull/core/constants/sport_labels.dart';
 import 'package:buddbull/core/location/location_provider.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const _sports = [
-  'Football', 'Basketball', 'Tennis', 'Running',
-  'Swimming', 'Cycling', 'Volleyball', 'Cricket',
+  'Football', 'Basketball', 'Tennis', 'Running', // l10n-ignore: API/search value
+  'Swimming', 'Cycling', 'Volleyball', 'Cricket', // l10n-ignore: API/search value
 ];
 
 const _skillLevels = [
-  'any', 'beginner', 'intermediate', 'advanced', 'professional',
+  'any', 'beginner', 'intermediate', 'advanced', 'professional', // l10n-ignore: API/search value
 ];
 
 /// Bottom sheet for filtering the games list.
@@ -60,7 +62,7 @@ class _GameFilterSheetState extends ConsumerState<GameFilterSheet> {
 
       if (position == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(AppStrings.locationPermissionDenied)),
+          SnackBar(content: Text(context.l10n.commonLocationPermissionDenied)),
         );
         return;
       }
@@ -76,7 +78,7 @@ class _GameFilterSheetState extends ConsumerState<GameFilterSheet> {
           lat: position.latitude,
           lng: position.longitude,
           radiusKm: radiusKm,
-          sortBy: 'distance',
+          sortBy: 'distance', // l10n-ignore: API/search value
         ),
       );
       return;
@@ -88,7 +90,7 @@ class _GameFilterSheetState extends ConsumerState<GameFilterSheet> {
         sport: _sport,
         city: _cityCtrl.text.trim().isEmpty ? null : _cityCtrl.text.trim(),
         skillLevel: _skillLevel,
-        sortBy: 'scheduledAt',
+        sortBy: 'scheduledAt', // l10n-ignore: API/search value
       ),
     );
   }
@@ -122,7 +124,7 @@ class _GameFilterSheetState extends ConsumerState<GameFilterSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Filter Games', style: AppTextStyles.headlineSmall),
+                Text(context.l10n.gamesFilterTitle, style: AppTextStyles.headlineSmall),
                 TextButton(
                   onPressed: () => setState(() {
                     _sport = null;
@@ -130,19 +132,19 @@ class _GameFilterSheetState extends ConsumerState<GameFilterSheet> {
                     _nearMe = false;
                     _cityCtrl.clear();
                   }),
-                  child: const Text('Clear all'),
+                  child: Text(context.l10n.commonClearAll),
                 ),
               ],
             ),
             const SizedBox(height: 20),
-            const Text('Sport', style: AppTextStyles.labelLarge),
+            Text(context.l10n.commonSport, style: AppTextStyles.labelLarge),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
                 ..._sports.map((s) => _FilterChip(
-                      label: s,
+                      label: sportDisplayName(s, context.l10n),
                       selected: _sport == s,
                       onTap: () =>
                           setState(() => _sport = _sport == s ? null : s),
@@ -152,9 +154,9 @@ class _GameFilterSheetState extends ConsumerState<GameFilterSheet> {
             const SizedBox(height: 20),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Near me', style: AppTextStyles.labelLarge),
-              subtitle: const Text(
-                'Show games closest to your current location',
+              title: Text(context.l10n.gamesFilterNearMe, style: AppTextStyles.labelLarge),
+              subtitle: Text(
+                context.l10n.gamesFilterNearMeHint,
                 style: AppTextStyles.bodySmall,
               ),
               value: _nearMe,
@@ -167,22 +169,20 @@ class _GameFilterSheetState extends ConsumerState<GameFilterSheet> {
             if (!_nearMe) ...[
               const SizedBox(height: 8),
               BbTextField(
-                label: 'City',
-                hint: 'e.g. London',
+                label: context.l10n.profileCityLabel,
+                hint: context.l10n.gamesFilterCityHint,
                 controller: _cityCtrl,
                 prefixIcon: Icons.location_city_rounded,
               ),
             ],
             const SizedBox(height: 20),
-            const Text('Required skill level', style: AppTextStyles.labelLarge),
+            Text(context.l10n.gamesFilterSkillTitle, style: AppTextStyles.labelLarge),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: _skillLevels.map((l) {
-                final label = l == 'any'
-                    ? 'Any level'
-                    : l[0].toUpperCase() + l.substring(1);
+                final label = skillLevelDisplayName(l, context.l10n);
                 return _FilterChip(
                   label: label,
                   selected: (_skillLevel == null && l == 'any') ||
@@ -194,7 +194,9 @@ class _GameFilterSheetState extends ConsumerState<GameFilterSheet> {
             ),
             const SizedBox(height: 28),
             BbButton(
-              label: _isResolvingLocation ? 'Getting location…' : 'Apply Filters',
+              label: _isResolvingLocation
+                  ? context.l10n.gamesFilterGettingLocation
+                  : context.l10n.gamesFilterApply,
               onPressed: _isResolvingLocation ? null : _apply,
             ),
           ],

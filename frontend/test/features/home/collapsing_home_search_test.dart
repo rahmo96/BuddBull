@@ -2,9 +2,11 @@ import 'package:buddbull/features/home/presentation/widgets/collapsing_home_sear
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../helpers/l10n_app.dart';
+
 void main() {
   Widget wrap(Widget child) {
-    return MaterialApp(
+    return l10nMaterialApp(
       home: Scaffold(
         body: SizedBox(
           width: 400,
@@ -26,7 +28,7 @@ void main() {
         ),
       );
 
-      expect(find.text('Search games, players…'), findsOneWidget);
+      expect(find.text(enL10n.searchHint), findsOneWidget);
       expect(find.byIcon(Icons.search_rounded), findsOneWidget);
     });
 
@@ -40,7 +42,7 @@ void main() {
         ),
       );
 
-      expect(find.text('Search games, players…'), findsNothing);
+      expect(find.text(enL10n.searchHint), findsNothing);
       expect(find.byIcon(Icons.search_rounded), findsOneWidget);
     });
 

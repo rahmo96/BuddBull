@@ -1,6 +1,7 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/constants/skill_level_labels.dart';
+import 'package:buddbull/core/constants/sport_labels.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/onboarding/data/onboarding_mock_data.dart';
 import 'package:buddbull/features/onboarding/onboarding_completion.dart';
@@ -173,7 +174,7 @@ class _SportSkillPanel extends StatelessWidget {
               Text(option.emoji, style: const TextStyle(fontSize: 20)),
               const SizedBox(width: 8),
               Text(
-                option.label,
+                sportDisplayName(option.label, context.l10n),
                 style: AppTextStyles.titleSmall.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -259,7 +260,7 @@ class _SportChoiceChip extends StatelessWidget {
               Text(option.emoji, style: const TextStyle(fontSize: 18)),
               const SizedBox(width: 8),
               Text(
-                option.label,
+                sportDisplayName(option.label, context.l10n),
                 style: AppTextStyles.labelLarge.copyWith(
                   color: selected ? option.accent : AppColors.textPrimary,
                   fontWeight: FontWeight.w700,

@@ -237,4 +237,743 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingFinish => 'Get started';
+
+  @override
+  String get commonSeeAll => 'See all';
+
+  @override
+  String get commonBrowseAll => 'Browse all';
+
+  @override
+  String get navHome => 'Home';
+
+  @override
+  String get navGames => 'Games';
+
+  @override
+  String get navChat => 'Messages';
+
+  @override
+  String get navPerformance => 'Performance';
+
+  @override
+  String get navProfile => 'Profile';
+
+  @override
+  String get homeGreetingMorning => 'Good morning';
+
+  @override
+  String get homeGreetingAfternoon => 'Good afternoon';
+
+  @override
+  String get homeGreetingEvening => 'Good evening';
+
+  @override
+  String homeGreetingWithName(String greeting, String name) {
+    return '$greeting, $name!';
+  }
+
+  @override
+  String homeGreetingNoName(String greeting) {
+    return '$greeting!';
+  }
+
+  @override
+  String get homeStatGames => 'Games';
+
+  @override
+  String get homeStatRating => 'Rating';
+
+  @override
+  String get homeStatStreak => 'Streak';
+
+  @override
+  String homeStreakDaysShort(int count) {
+    return '${count}d';
+  }
+
+  @override
+  String get homeMyUpcomingGames => 'My Upcoming Games';
+
+  @override
+  String get homeExploreNearYou => 'Explore Near You';
+
+  @override
+  String get homeQuickActions => 'Quick Actions';
+
+  @override
+  String get homeFindGame => 'Find a Game';
+
+  @override
+  String get homeLogSession => 'Log Session';
+
+  @override
+  String get homeCreateGame => 'Create Game';
+
+  @override
+  String get homeRecentActivity => 'Recent Activity';
+
+  @override
+  String get homeNoRecentSessions => 'No recent sessions';
+
+  @override
+  String get homeLogASession => 'Log a session';
+
+  @override
+  String get homeNoUpcomingGames => 'No upcoming games';
+
+  @override
+  String get homeBrowseGames => 'Browse games';
+
+  @override
+  String get homeNearbyLoadFailed => 'Couldn\'t load nearby games';
+
+  @override
+  String get homeNothingNearby => 'Nothing nearby right now';
+
+  @override
+  String get homeTagline => 'Find your squad. Play your game.';
+
+  @override
+  String get homeNotificationsTooltip => 'Notifications';
+
+  @override
+  String get homeMyCalendarTooltip => 'My calendar';
+
+  @override
+  String get homeAddGame => 'Add Game';
+
+  @override
+  String get homeLogTraining => 'Log Training';
+
+  @override
+  String get searchHint => 'Search games, players…';
+
+  @override
+  String get searchCloseTooltip => 'Close search';
+
+  @override
+  String get searchMinChars => 'Type at least 2 characters to search';
+
+  @override
+  String get searchNoResults => 'No results found';
+
+  @override
+  String get searchNoResultsHint =>
+      'Try a different sport, city, or player name';
+
+  @override
+  String get searchSectionGames => 'Games';
+
+  @override
+  String get searchSectionPlayers => 'Players';
+
+  @override
+  String searchGamesError(String error) {
+    return 'Games: $error';
+  }
+
+  @override
+  String searchPlayersError(String error) {
+    return 'Players: $error';
+  }
+
+  @override
+  String get searchChipNearby => 'Nearby games';
+
+  @override
+  String get searchDiscoverTitle => 'Discover your next game';
+
+  @override
+  String get searchDiscoverSubtitle =>
+      'Search by sport, city, username, or player name';
+
+  @override
+  String get sportFootball => 'Football';
+
+  @override
+  String get sportBasketball => 'Basketball';
+
+  @override
+  String get sportTennis => 'Tennis';
+
+  @override
+  String get sportVolleyball => 'Volleyball';
+
+  @override
+  String get sportRunning => 'Running';
+
+  @override
+  String get sportSwimming => 'Swimming';
+
+  @override
+  String get sportCycling => 'Cycling';
+
+  @override
+  String get sportCricket => 'Cricket';
+
+  @override
+  String get commonAll => 'All';
+
+  @override
+  String get commonClear => 'Clear';
+
+  @override
+  String get gamesCreateTooltip => 'Create game';
+
+  @override
+  String get gamesSearchHint => 'Search games, sports, locations…';
+
+  @override
+  String get gamesFilterTooltip => 'Filter';
+
+  @override
+  String gamesFiltersActive(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count filters active',
+      one: '1 filter active',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gamesNoneFound => 'No games found';
+
+  @override
+  String get gamesNoneFoundHint =>
+      'Try adjusting your filters or create a new game.';
+
+  @override
+  String get gamesCreateAGame => 'Create a game';
+
+  @override
+  String get skillAnyLevel => 'Any level';
+
+  @override
+  String get commonClearAll => 'Clear all';
+
+  @override
+  String get commonSport => 'Sport';
+
+  @override
+  String get gamesFilterTitle => 'Filter Games';
+
+  @override
+  String get gamesFilterNearMe => 'Near me';
+
+  @override
+  String get gamesFilterNearMeHint =>
+      'Show games closest to your current location';
+
+  @override
+  String get gamesFilterCityHint => 'e.g. London';
+
+  @override
+  String get gamesFilterSkillTitle => 'Required skill level';
+
+  @override
+  String get gamesFilterGettingLocation => 'Getting location…';
+
+  @override
+  String get gamesFilterApply => 'Apply Filters';
+
+  @override
+  String gamesPlayersOf(int current, int max) {
+    return '$current/$max players';
+  }
+
+  @override
+  String gamesPendingCount(int count) {
+    return '$count pending';
+  }
+
+  @override
+  String get gamesJoinGame => 'Join Game';
+
+  @override
+  String get gamesRoster => 'Roster';
+
+  @override
+  String get gamesStatusOpen => 'Open';
+
+  @override
+  String get gamesStatusFull => 'Full';
+
+  @override
+  String get gamesStatusLive => 'Live';
+
+  @override
+  String get gamesStatusDone => 'Done';
+
+  @override
+  String get gamesStatusCancelled => 'Cancelled';
+
+  @override
+  String get gamesFullBadge => 'FULL';
+
+  @override
+  String gamesDistanceMeters(int meters) {
+    return '$meters m away';
+  }
+
+  @override
+  String gamesDistanceKm(String km) {
+    return '$km km away';
+  }
+
+  @override
+  String get calendarTitle => 'My Calendar';
+
+  @override
+  String get calendarToday => 'Today';
+
+  @override
+  String get calendarNoGamesOnDay => 'No games on this day';
+
+  @override
+  String get calendarFormatMonth => 'Month';
+
+  @override
+  String get calendarFormatTwoWeeks => '2 weeks';
+
+  @override
+  String get calendarFormatWeek => 'Week';
+
+  @override
+  String gamesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count games',
+      one: '1 game',
+      zero: 'No games',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get commonLocationPermissionDenied =>
+      'Location access is needed to find games near you. Enable it in settings or use city search.';
+
+  @override
+  String get commonOptional => 'Optional';
+
+  @override
+  String get commonSaveChanges => 'Save Changes';
+
+  @override
+  String get gameCreateTitle => 'Create Game';
+
+  @override
+  String get gameCreateButton => 'Create Game 🎮';
+
+  @override
+  String get gameCreateSuccess => 'Game created! 🎉';
+
+  @override
+  String get gameEditTitle => 'Edit Game';
+
+  @override
+  String get gameEditUpdated => 'Game updated.';
+
+  @override
+  String get gameFormSportLabel => 'Sport *';
+
+  @override
+  String get gameFormTitleLabel => 'Game title *';
+
+  @override
+  String get gameFormTitleHint => 'e.g. Sunday 5-a-side';
+
+  @override
+  String get gameFormTitleRequired => 'Title is required';
+
+  @override
+  String get gameFormDescriptionLabel => 'Description';
+
+  @override
+  String get gameFormDescriptionHint =>
+      'Optional details, rules, what to bring…';
+
+  @override
+  String get gameFormDateTime => 'Date & Time *';
+
+  @override
+  String gameFormDuration(int hours, String minutes) {
+    return 'Duration: ${hours}h ${minutes}m';
+  }
+
+  @override
+  String gameFormDurationSlider(int minutes) {
+    return '${minutes}min';
+  }
+
+  @override
+  String get gameFormLocationRequired => 'Location *';
+
+  @override
+  String get gameFormAddressLabel => 'Address *';
+
+  @override
+  String get gameFormAddressHint => 'Start typing an address...';
+
+  @override
+  String get gameFormAddressInvalid =>
+      'Select a valid address from suggestions';
+
+  @override
+  String get gameFormAddressNotVerified =>
+      'Could not verify this address. Please choose another one.';
+
+  @override
+  String get gameFormAddressSelectFromList =>
+      'Please select a valid address from suggestions.';
+
+  @override
+  String get gameFormNeighborhoodHint => 'e.g. Shoreditch';
+
+  @override
+  String get gameFormVenueLabel => 'Venue name';
+
+  @override
+  String get gameFormVenueHint => 'e.g. Hackney Marshes';
+
+  @override
+  String get gameFormCityLabel => 'City *';
+
+  @override
+  String get gameFormCityHint => 'e.g. London';
+
+  @override
+  String gameFormMaxPlayers(int count) {
+    return 'Max players: $count';
+  }
+
+  @override
+  String get gameFormVisibility => 'Visibility';
+
+  @override
+  String get gameFormPrivateTitle => 'Private Game (Requires Approval)';
+
+  @override
+  String get gameFormPrivateHint =>
+      'Hidden from public search. Every join request will require your approval.';
+
+  @override
+  String get gameFormPublicHint =>
+      'Public — anyone can find and join this game.';
+
+  @override
+  String get gameFormDetails => 'Details';
+
+  @override
+  String get gameFormSchedule => 'Schedule';
+
+  @override
+  String get gameFormLocation => 'Location';
+
+  @override
+  String get gameEditTitleLabel => 'Title *';
+
+  @override
+  String get gameEditTitleHint => 'Game title';
+
+  @override
+  String get gameEditTitleRequired => 'Title is required.';
+
+  @override
+  String gameEditDuration(int minutes) {
+    return 'Duration: ${minutes}min';
+  }
+
+  @override
+  String gameEditSliderMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get gameEditAddressLabel => 'Address';
+
+  @override
+  String get gameEditAddressHint => 'Selected address';
+
+  @override
+  String get gameEditCityHint => 'City';
+
+  @override
+  String get gameEditCityRequired => 'City is required.';
+
+  @override
+  String get gameEditNeighborhoodLabel => 'Neighborhood';
+
+  @override
+  String get gameEditVenueLabel => 'Venue';
+
+  @override
+  String get commonBack => 'Back';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
+  String get gamesStatusCompleted => 'Completed';
+
+  @override
+  String gameDurationMin(Object minutes) {
+    return '${minutes}min';
+  }
+
+  @override
+  String gameDurationHr(Object hours) {
+    return '${hours}h';
+  }
+
+  @override
+  String gameDurationHrMin(Object hours, Object minutes) {
+    return '${hours}h ${minutes}min';
+  }
+
+  @override
+  String get gameDetailRequestDeclined =>
+      'Your request to join was declined. You can try again below.';
+
+  @override
+  String get gameDetailDate => 'Date';
+
+  @override
+  String get gameDetailTime => 'Time';
+
+  @override
+  String get gameDetailDuration => 'Duration';
+
+  @override
+  String get gameDetailAbout => 'About this game';
+
+  @override
+  String get gameDetailOrganiser => 'Organiser';
+
+  @override
+  String get gameDetailPlayers => 'Players';
+
+  @override
+  String get gameDetailResult => 'Match Result';
+
+  @override
+  String get gameDetailTags => 'Tags';
+
+  @override
+  String get gameDetailReport => 'Report Game';
+
+  @override
+  String get gameDetailMapUnavailable => 'Map preview unavailable';
+
+  @override
+  String get gameDetailApproved => 'Approved';
+
+  @override
+  String get gameDetailPendingRequests => 'Pending requests';
+
+  @override
+  String get gameDetailRate => 'Rate';
+
+  @override
+  String get gameDetailApprove => 'Approve';
+
+  @override
+  String get gameDetailKick => 'Kick';
+
+  @override
+  String get gameDetailRatePrompt =>
+      'Rate participants below to share how the game went.';
+
+  @override
+  String get gameDetailChat => 'Chat';
+
+  @override
+  String get gameDetailRateParticipants => 'Rate Participants';
+
+  @override
+  String get gameDetailGameCompleted => 'Game Completed';
+
+  @override
+  String get gameDetailManage => 'Manage (Organiser)';
+
+  @override
+  String get gameDetailGameFull => 'Game is Full';
+
+  @override
+  String get gameDetailRequestToJoin => 'Request to Join';
+
+  @override
+  String get gameDetailLeave => 'Leave Game';
+
+  @override
+  String get gameDetailInvitedBanner => 'You\'re invited to this game';
+
+  @override
+  String get gameDetailAcceptInvite => 'Accept Invitation';
+
+  @override
+  String get gameDetailDecline => 'Decline';
+
+  @override
+  String get gameDetailPendingBanner => 'Your request is pending approval';
+
+  @override
+  String get gameDetailWithdraw => 'Withdraw';
+
+  @override
+  String get gameDetailInviteFriends => 'Invite Friends';
+
+  @override
+  String get gameDetailNoFriends =>
+      'Add friends from their profile to invite them to games.';
+
+  @override
+  String get gameDetailInvitedChip => 'Invited';
+
+  @override
+  String get gameDetailMergeTitle => 'Merge game?';
+
+  @override
+  String get gameDetailMergeButton => 'Merge';
+
+  @override
+  String get gameDetailCapacityTitle => 'Increase capacity?';
+
+  @override
+  String get gameDetailCapacityBody =>
+      'The target game is too full for this merge. Expand its capacity and complete the merge?';
+
+  @override
+  String get gameDetailForceMerge => 'Force merge';
+
+  @override
+  String get gameDetailMergeSuccess => 'Game merged successfully.';
+
+  @override
+  String get gameDetailMergeSheetTitle => 'Merge Game';
+
+  @override
+  String get gameDetailMergeNone => 'No eligible open games found.';
+
+  @override
+  String get gameDetailInviteFriendsHint =>
+      'Send an invite to your approved friends';
+
+  @override
+  String get gameDetailMergeHint => 'Combine this game into another open game';
+
+  @override
+  String get gameDetailViewSummary => 'View Summary / Rate Players';
+
+  @override
+  String get gameDetailViewSummaryHint =>
+      'Game is finished — open the rating flow for participants.';
+
+  @override
+  String get gameDetailCompleteGame => 'Complete Game';
+
+  @override
+  String get gameDetailCompleteGameHint =>
+      'Mark the game as finished and open ratings for participants.';
+
+  @override
+  String get gameDetailAlreadyCancelled => 'Game already cancelled';
+
+  @override
+  String get gameDetailCancelGame => 'Cancel Game';
+
+  @override
+  String get gameDetailCancelled => 'Game cancelled.';
+
+  @override
+  String get gameDetailCancelConfirmTitle => 'Cancel game?';
+
+  @override
+  String get gameDetailCancelConfirmBody =>
+      'This will mark the game as cancelled for all players.';
+
+  @override
+  String get gameDetailYesCancel => 'Yes, cancel';
+
+  @override
+  String get gameDetailCompleteConfirmTitle => 'Complete game?';
+
+  @override
+  String get gameDetailCompleteConfirmBody =>
+      'This marks the game as finished, updates player stats, and unlocks rating for all approved players. This action cannot be undone.';
+
+  @override
+  String get gameDetailNotYet => 'Not yet';
+
+  @override
+  String get gameDetailMarkCompleted => 'Mark completed';
+
+  @override
+  String get gameDetailPendingRatingsFailed =>
+      'Could not load pending ratings. Pull to refresh and try again.';
+
+  @override
+  String get gameDetailPlayerFallback => 'Player';
+
+  @override
+  String get gameDetailAllRated => 'Everyone in this game has been rated.';
+
+  @override
+  String get gameDetailRateAParticipant => 'Rate a participant';
+
+  @override
+  String get gameDetailWontRatePrompt =>
+      'You will not be prompted to rate this game.';
+
+  @override
+  String get gameDetailDontRate => 'Don\'t rate this game';
+
+  @override
+  String get gameDetailCancelReasonTitle => 'Reason for cancellation';
+
+  @override
+  String get gameDetailCancelReasonHint =>
+      'e.g. Weather, venue issue, not enough players…';
+
+  @override
+  String get gameDetailCancelGameButton => 'Cancel game';
+
+  @override
+  String gameDetailPlayerYou(String name) {
+    return '$name (You)';
+  }
+
+  @override
+  String gameDetailScore(String score) {
+    return 'Score: $score';
+  }
+
+  @override
+  String gameDetailWinner(String winner) {
+    return 'Winner: $winner';
+  }
+
+  @override
+  String gameDetailInvitedName(String name) {
+    return 'Invited $name';
+  }
+
+  @override
+  String gameDetailRevokedName(String name) {
+    return 'Revoked invite for $name';
+  }
+
+  @override
+  String gameDetailMergeConfirmBody(String source, String target) {
+    return 'Merge \'$source\' into \'$target\'?\nYour game will be cancelled and players moved to the target.';
+  }
+
+  @override
+  String gameDetailMergePick(String sport, String city) {
+    return 'Pick an open $sport game in $city.';
+  }
 }

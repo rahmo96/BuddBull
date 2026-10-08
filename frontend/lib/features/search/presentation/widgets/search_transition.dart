@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/router/app_router.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -24,7 +25,6 @@ class SearchExpandFromBarTransition extends StatelessWidget {
   final Rect? originRect;
   final Widget child;
 
-  static const _hint = 'Search games, players…';
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +132,7 @@ class _GhostSearchPill extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    SearchExpandFromBarTransition._hint,
+                    context.l10n.searchHint,
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: Colors.white.withValues(alpha: 0.9),
                       fontWeight: FontWeight.w500,
@@ -196,7 +196,7 @@ class GlobalSearchField extends StatelessWidget {
         style: AppTextStyles.bodyLarge,
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
-          hintText: 'Search games, players…',
+          hintText: context.l10n.searchHint,
           hintStyle: AppTextStyles.bodyMedium.copyWith(
             color: AppColors.textDisabled,
           ),
