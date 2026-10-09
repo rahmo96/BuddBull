@@ -13,6 +13,8 @@ const List<String> migratedPaths = <String>[
   'lib/features/home',
   'lib/features/games/presentation',
   'lib/features/search/presentation',
+  'lib/features/chat/presentation',
+  'lib/features/notifications/presentation',
 ];
 
 Iterable<File> _dartFiles(String path) {

@@ -969,4 +969,153 @@ class AppLocalizationsHe extends AppLocalizations {
   String gameDetailMergePick(String sport, String city) {
     return 'בחרו משחק $sport פתוח ב$city.';
   }
+
+  @override
+  String get commonDelete => 'מחיקה';
+
+  @override
+  String get commonAccept => 'אישור';
+
+  @override
+  String get commonDecline => 'דחייה';
+
+  @override
+  String get commonApprove => 'אישור';
+
+  @override
+  String get commonReject => 'דחייה';
+
+  @override
+  String get chatTitleFallback => 'צ\'אט';
+
+  @override
+  String get chatNewMessage => 'הודעה חדשה';
+
+  @override
+  String get chatLoadFailed => 'טעינת הצ\'אטים נכשלה';
+
+  @override
+  String get chatNoConversations => 'אין עדיין שיחות';
+
+  @override
+  String get chatNoConversationsHint =>
+      'התחילו שיחה בלחיצה על סמל העריכה למעלה, או פתחו משחק ולחצו על צ\'אט.';
+
+  @override
+  String get chatNoLongerParticipant => 'אינכם משתתפים בצ\'אט הזה יותר.';
+
+  @override
+  String get chatMessageHint => 'הקלידו הודעה...';
+
+  @override
+  String get chatYesterday => 'אתמול';
+
+  @override
+  String get chatNoMessagesYet => 'אין עדיין הודעות';
+
+  @override
+  String get chatEdited => '• נערכה';
+
+  @override
+  String get chatMessageDeleted => 'ההודעה נמחקה';
+
+  @override
+  String get chatReply => 'תגובה';
+
+  @override
+  String get chatCopyText => 'העתקת טקסט';
+
+  @override
+  String get chatUnpin => 'ביטול הצמדה';
+
+  @override
+  String get chatPinMessage => 'הצמדת הודעה';
+
+  @override
+  String get chatPinnedMessage => 'הודעה מוצמדת';
+
+  @override
+  String get notificationsTitle => 'התראות';
+
+  @override
+  String get notificationsMarkAllRead => 'סימון הכול כנקרא';
+
+  @override
+  String get notificationsAllCaughtUp => 'אתם מעודכנים';
+
+  @override
+  String get notificationsAllCaughtUpHint => 'נעדכן אתכם כשיקרה משהו חדש.';
+
+  @override
+  String get notificationsAlreadyRated => 'כבר דירגתם את השחקנים במשחק הזה.';
+
+  @override
+  String get notificationsFriendAccepted => 'בקשת החברות אושרה';
+
+  @override
+  String get notificationsFriendDeclined => 'בקשת החברות נדחתה';
+
+  @override
+  String get notificationsFriendUpdateFailed => 'לא ניתן לעדכן את בקשת החברות';
+
+  @override
+  String get notificationsJoinedGame => 'הצטרפתם למשחק.';
+
+  @override
+  String get notificationsInviteDeclined => 'ההזמנה נדחתה.';
+
+  @override
+  String get notificationsActionFailed => 'הפעולה נכשלה.';
+
+  @override
+  String get notificationsInviteInvalid => 'ההזמנה אינה תקפה יותר.';
+
+  @override
+  String get notificationsPlayerApproved => 'השחקן אושר.';
+
+  @override
+  String get notificationsJoinRejected => 'בקשת ההצטרפות נדחתה.';
+
+  @override
+  String get notificationsRelNow => 'עכשיו';
+
+  @override
+  String chatMembersCount(int count) {
+    return '$count חברים';
+  }
+
+  @override
+  String chatReplyingTo(String name) {
+    return 'משיבים ל$name';
+  }
+
+  @override
+  String notificationsRelMinutes(int count) {
+    return '$count דק׳';
+  }
+
+  @override
+  String notificationsRelHours(int count) {
+    return '$count שע׳';
+  }
+
+  @override
+  String notificationsRelDays(int count) {
+    return '$count ימ׳';
+  }
+
+  @override
+  String notificationsRelWeeks(int count) {
+    return '$count שב׳';
+  }
+
+  @override
+  String chatTypingOne(String names) {
+    return '$names מקליד/ה...';
+  }
+
+  @override
+  String chatTypingMany(String names) {
+    return '$names מקלידים...';
+  }
 }

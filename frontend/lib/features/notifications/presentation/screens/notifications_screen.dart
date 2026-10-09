@@ -6,6 +6,7 @@ import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/notifications/data/notification_model.dart';
 import 'package:buddbull/features/notifications/providers/notification_provider.dart';
 import 'package:buddbull/features/rating/providers/rating_provider.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,7 +41,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(context.l10n.notificationsTitle),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0.5,
@@ -53,7 +54,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             TextButton(
               onPressed: state.isMutating ? null : notifier.markAllAsRead,
               child: Text(
-                'Mark all read',
+                context.l10n.notificationsMarkAllRead,
                 style: TextStyle(
                   color: state.isMutating
                       ? AppColors.textDisabled
@@ -119,32 +120,32 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           onApproveJoinRequest: () => _handleJoinRequestDecision(
             context: context,
             notificationId: n.id,
-            decision: 'approve',
+            decision: 'approve', // l10n-ignore: API/search value
           ),
           onRejectJoinRequest: () => _handleJoinRequestDecision(
             context: context,
             notificationId: n.id,
-            decision: 'reject',
+            decision: 'reject', // l10n-ignore: API/search value
           ),
           onAcceptFriendRequest: () => _handleFriendRequestDecision(
             context: context,
             notificationId: n.id,
-            decision: 'accept',
+            decision: 'accept', // l10n-ignore: API/search value
           ),
           onDeclineFriendRequest: () => _handleFriendRequestDecision(
             context: context,
             notificationId: n.id,
-            decision: 'decline',
+            decision: 'decline', // l10n-ignore: API/search value
           ),
           onAcceptGameInvite: () => _handleGameInviteDecision(
             context: context,
             notificationId: n.id,
-            decision: 'accept',
+            decision: 'accept', // l10n-ignore: API/search value
           ),
           onDeclineGameInvite: () => _handleGameInviteDecision(
             context: context,
             notificationId: n.id,
-            decision: 'decline',
+            decision: 'decline', // l10n-ignore: API/search value
           ),
         );
       },
@@ -174,8 +175,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         if (n.isUnread) unawaited(notifier.markAsRead(n.id));
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("You've already rated the players for this game."),
+            SnackBar(
+              content: Text(context.l10n.notificationsAlreadyRated),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -207,8 +208,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         SnackBar(
           content: Text(
             decision == 'accept'
-                ? 'Friend request accepted'
-                : 'Friend request declined',
+                ? context.l10n.notificationsFriendAccepted
+                : context.l10n.notificationsFriendDeclined,
           ),
           behavior: SnackBarBehavior.floating,
         ),
@@ -217,7 +218,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       final err = ref.read(notificationsProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(err ?? 'Could not update friend request'),
+          content: Text(err ?? context.l10n.notificationsFriendUpdateFailed),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -239,16 +240,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       messenger.showSnackBar(SnackBar(
         content: Text(
           decision == 'accept'
-              ? 'You joined the game.'
-              : 'Invite declined.',
+              ? context.l10n.notificationsJoinedGame
+              : context.l10n.notificationsInviteDeclined,
         ),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ));
     } else {
-      final err = ref.read(notificationsProvider).error ?? 'Action failed.';
-      final message = err.contains('no longer valid')
-          ? 'This invitation is no longer valid.'
+      final err = ref.read(notificationsProvider).error ??
+          context.l10n.notificationsActionFailed;
+      final message = err.contains('no longer valid') // l10n-ignore: backend message match
+          ? context.l10n.notificationsInviteInvalid
           : err;
       messenger.showSnackBar(SnackBar(
         content: Text(message),
@@ -271,13 +273,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     if (ok) {
       messenger.showSnackBar(SnackBar(
         content: Text(decision == 'approve'
-            ? 'Player approved.'
-            : 'Join request rejected.'),
+            ? context.l10n.notificationsPlayerApproved
+            : context.l10n.notificationsJoinRejected),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ));
     } else {
-      final err = ref.read(notificationsProvider).error ?? 'Action failed.';
+      final err = ref.read(notificationsProvider).error ??
+          context.l10n.notificationsActionFailed;
       messenger.showSnackBar(SnackBar(
         content: Text(err),
         behavior: SnackBarBehavior.floating,
@@ -375,7 +378,7 @@ class _NotificationTile extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              _relativeTime(notification.createdAt),
+                              _relativeTime(context.l10n, notification.createdAt),
                               style: AppTextStyles.bodySmall.copyWith(
                                 color: AppColors.textSecondary,
                                 fontSize: 11,
@@ -429,8 +432,8 @@ class _NotificationTile extends StatelessWidget {
                     isMutating: isMutating,
                     onApprove: onAcceptFriendRequest!,
                     onReject: onDeclineFriendRequest!,
-                    approveLabel: 'Accept',
-                    rejectLabel: 'Decline',
+                    approveLabel: context.l10n.commonAccept,
+                    rejectLabel: context.l10n.commonDecline,
                   ),
                 ),
               ],
@@ -442,8 +445,8 @@ class _NotificationTile extends StatelessWidget {
                     isMutating: isMutating,
                     onApprove: onAcceptGameInvite!,
                     onReject: onDeclineGameInvite!,
-                    approveLabel: 'Accept',
-                    rejectLabel: 'Decline',
+                    approveLabel: context.l10n.commonAccept,
+                    rejectLabel: context.l10n.commonDecline,
                   ),
                 ),
               ],
@@ -460,15 +463,15 @@ class _JoinRequestQuickActions extends StatelessWidget {
     required this.isMutating,
     required this.onApprove,
     required this.onReject,
-    this.approveLabel = 'Approve',
-    this.rejectLabel = 'Reject',
+    this.approveLabel,
+    this.rejectLabel,
   });
 
   final bool isMutating;
   final VoidCallback onApprove;
   final VoidCallback onReject;
-  final String approveLabel;
-  final String rejectLabel;
+  final String? approveLabel;
+  final String? rejectLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -478,7 +481,7 @@ class _JoinRequestQuickActions extends StatelessWidget {
           child: FilledButton.tonalIcon(
             onPressed: isMutating ? null : onApprove,
             icon: const Icon(Icons.check_rounded, size: 18),
-            label: Text(approveLabel),
+            label: Text(approveLabel ?? context.l10n.commonApprove),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.success.withValues(alpha: 0.15),
               foregroundColor: AppColors.success,
@@ -494,7 +497,7 @@ class _JoinRequestQuickActions extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: isMutating ? null : onReject,
             icon: const Icon(Icons.close_rounded, size: 18),
-            label: Text(rejectLabel),
+            label: Text(rejectLabel ?? context.l10n.commonReject),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.error,
               side: BorderSide(
@@ -590,13 +593,13 @@ class _EmptyInbox extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              "You're all caught up",
+            Text(
+              context.l10n.notificationsAllCaughtUp,
               style: AppTextStyles.headlineSmall,
             ),
             const SizedBox(height: 8),
             Text(
-              "We'll let you know when something new happens.",
+              context.l10n.notificationsAllCaughtUpHint,
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -610,11 +613,11 @@ class _EmptyInbox extends StatelessWidget {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-String _relativeTime(DateTime t) {
+String _relativeTime(AppLocalizations l10n, DateTime t) {
   final diff = DateTime.now().difference(t);
-  if (diff.inSeconds < 60) return 'now';
-  if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-  if (diff.inHours < 24) return '${diff.inHours}h';
-  if (diff.inDays < 7) return '${diff.inDays}d';
-  return '${diff.inDays ~/ 7}w';
+  if (diff.inSeconds < 60) return l10n.notificationsRelNow;
+  if (diff.inMinutes < 60) return l10n.notificationsRelMinutes(diff.inMinutes);
+  if (diff.inHours < 24) return l10n.notificationsRelHours(diff.inHours);
+  if (diff.inDays < 7) return l10n.notificationsRelDays(diff.inDays);
+  return l10n.notificationsRelWeeks(diff.inDays ~/ 7);
 }

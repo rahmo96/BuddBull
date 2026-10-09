@@ -1837,6 +1837,270 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pick an open {sport} game in {city}.'**
   String gameDetailMergePick(String sport, String city);
+
+  /// No description provided for @commonDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get commonDelete;
+
+  /// No description provided for @commonAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get commonAccept;
+
+  /// No description provided for @commonDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get commonDecline;
+
+  /// No description provided for @commonApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get commonApprove;
+
+  /// No description provided for @commonReject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get commonReject;
+
+  /// No description provided for @chatTitleFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat'**
+  String get chatTitleFallback;
+
+  /// No description provided for @chatNewMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'New message'**
+  String get chatNewMessage;
+
+  /// No description provided for @chatLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load chats'**
+  String get chatLoadFailed;
+
+  /// No description provided for @chatNoConversations.
+  ///
+  /// In en, this message translates to:
+  /// **'No conversations yet'**
+  String get chatNoConversations;
+
+  /// No description provided for @chatNoConversationsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a conversation by tapping the edit icon above or opening a game and tapping Chat.'**
+  String get chatNoConversationsHint;
+
+  /// No description provided for @chatNoLongerParticipant.
+  ///
+  /// In en, this message translates to:
+  /// **'You are no longer a participant in this chat.'**
+  String get chatNoLongerParticipant;
+
+  /// No description provided for @chatMessageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a message...'**
+  String get chatMessageHint;
+
+  /// No description provided for @chatYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get chatYesterday;
+
+  /// No description provided for @chatNoMessagesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet'**
+  String get chatNoMessagesYet;
+
+  /// No description provided for @chatEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'• edited'**
+  String get chatEdited;
+
+  /// No description provided for @chatMessageDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Message deleted'**
+  String get chatMessageDeleted;
+
+  /// No description provided for @chatReply.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get chatReply;
+
+  /// No description provided for @chatCopyText.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy text'**
+  String get chatCopyText;
+
+  /// No description provided for @chatUnpin.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpin'**
+  String get chatUnpin;
+
+  /// No description provided for @chatPinMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin message'**
+  String get chatPinMessage;
+
+  /// No description provided for @chatPinnedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned message'**
+  String get chatPinnedMessage;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsTitle;
+
+  /// No description provided for @notificationsMarkAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all read'**
+  String get notificationsMarkAllRead;
+
+  /// No description provided for @notificationsAllCaughtUp.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all caught up'**
+  String get notificationsAllCaughtUp;
+
+  /// No description provided for @notificationsAllCaughtUpHint.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll let you know when something new happens.'**
+  String get notificationsAllCaughtUpHint;
+
+  /// No description provided for @notificationsAlreadyRated.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve already rated the players for this game.'**
+  String get notificationsAlreadyRated;
+
+  /// No description provided for @notificationsFriendAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend request accepted'**
+  String get notificationsFriendAccepted;
+
+  /// No description provided for @notificationsFriendDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend request declined'**
+  String get notificationsFriendDeclined;
+
+  /// No description provided for @notificationsFriendUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update friend request'**
+  String get notificationsFriendUpdateFailed;
+
+  /// No description provided for @notificationsJoinedGame.
+  ///
+  /// In en, this message translates to:
+  /// **'You joined the game.'**
+  String get notificationsJoinedGame;
+
+  /// No description provided for @notificationsInviteDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite declined.'**
+  String get notificationsInviteDeclined;
+
+  /// No description provided for @notificationsActionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Action failed.'**
+  String get notificationsActionFailed;
+
+  /// No description provided for @notificationsInviteInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'This invitation is no longer valid.'**
+  String get notificationsInviteInvalid;
+
+  /// No description provided for @notificationsPlayerApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Player approved.'**
+  String get notificationsPlayerApproved;
+
+  /// No description provided for @notificationsJoinRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Join request rejected.'**
+  String get notificationsJoinRejected;
+
+  /// No description provided for @notificationsRelNow.
+  ///
+  /// In en, this message translates to:
+  /// **'now'**
+  String get notificationsRelNow;
+
+  /// No description provided for @chatMembersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} members'**
+  String chatMembersCount(int count);
+
+  /// No description provided for @chatReplyingTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Replying to {name}'**
+  String chatReplyingTo(String name);
+
+  /// No description provided for @notificationsRelMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}m'**
+  String notificationsRelMinutes(int count);
+
+  /// No description provided for @notificationsRelHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}h'**
+  String notificationsRelHours(int count);
+
+  /// No description provided for @notificationsRelDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}d'**
+  String notificationsRelDays(int count);
+
+  /// No description provided for @notificationsRelWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}w'**
+  String notificationsRelWeeks(int count);
+
+  /// No description provided for @chatTypingOne.
+  ///
+  /// In en, this message translates to:
+  /// **'{names} is typing...'**
+  String chatTypingOne(String names);
+
+  /// No description provided for @chatTypingMany.
+  ///
+  /// In en, this message translates to:
+  /// **'{names} are typing...'**
+  String chatTypingMany(String names);
 }
 
 class _AppLocalizationsDelegate

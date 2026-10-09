@@ -475,5 +475,105 @@
         "type": "String"
       }
     }
+  },
+  "commonDelete": "Delete",
+  "commonAccept": "Accept",
+  "commonDecline": "Decline",
+  "commonApprove": "Approve",
+  "commonReject": "Reject",
+  "chatTitleFallback": "Chat",
+  "chatNewMessage": "New message",
+  "chatLoadFailed": "Failed to load chats",
+  "chatNoConversations": "No conversations yet",
+  "chatNoConversationsHint": "Start a conversation by tapping the edit icon above or opening a game and tapping Chat.",
+  "chatNoLongerParticipant": "You are no longer a participant in this chat.",
+  "chatMessageHint": "Type a message...",
+  "chatYesterday": "Yesterday",
+  "chatNoMessagesYet": "No messages yet",
+  "chatEdited": "• edited",
+  "chatMessageDeleted": "Message deleted",
+  "chatReply": "Reply",
+  "chatCopyText": "Copy text",
+  "chatUnpin": "Unpin",
+  "chatPinMessage": "Pin message",
+  "chatPinnedMessage": "Pinned message",
+  "notificationsTitle": "Notifications",
+  "notificationsMarkAllRead": "Mark all read",
+  "notificationsAllCaughtUp": "You're all caught up",
+  "notificationsAllCaughtUpHint": "We'll let you know when something new happens.",
+  "notificationsAlreadyRated": "You've already rated the players for this game.",
+  "notificationsFriendAccepted": "Friend request accepted",
+  "notificationsFriendDeclined": "Friend request declined",
+  "notificationsFriendUpdateFailed": "Could not update friend request",
+  "notificationsJoinedGame": "You joined the game.",
+  "notificationsInviteDeclined": "Invite declined.",
+  "notificationsActionFailed": "Action failed.",
+  "notificationsInviteInvalid": "This invitation is no longer valid.",
+  "notificationsPlayerApproved": "Player approved.",
+  "notificationsJoinRejected": "Join request rejected.",
+  "notificationsRelNow": "now",
+  "chatMembersCount": "{count} members",
+  "@chatMembersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chatReplyingTo": "Replying to {name}",
+  "@chatReplyingTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsRelMinutes": "{count}m",
+  "@notificationsRelMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationsRelHours": "{count}h",
+  "@notificationsRelHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationsRelDays": "{count}d",
+  "@notificationsRelDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationsRelWeeks": "{count}w",
+  "@notificationsRelWeeks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chatTypingOne": "{names} is typing...",
+  "@chatTypingOne": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "chatTypingMany": "{names} are typing...",
+  "@chatTypingMany": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
   }
 }

@@ -1,6 +1,7 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/chat/data/models/chat_model.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -57,7 +58,7 @@ class ChatTile extends StatelessWidget {
                       ),
                       if (lastMsg != null)
                         Text(
-                          _formatTime(lastMsg.sentAt),
+                          _formatTime(context, lastMsg.sentAt),
                           style: AppTextStyles.caption.copyWith(
                             color: hasUnread ? AppColors.primary : AppColors.textSecondary,
                           ),
@@ -69,7 +70,7 @@ class ChatTile extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          lastMsg?.content ?? 'No messages yet',
+                          lastMsg?.content ?? context.l10n.chatNoMessagesYet,
                           style: AppTextStyles.caption.copyWith(
                             color: hasUnread ? AppColors.textPrimary : AppColors.textSecondary,
                             fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
@@ -110,11 +111,11 @@ class ChatTile extends StatelessWidget {
     );
   }
 
-  String _formatTime(DateTime dt) {
+  String _formatTime(BuildContext context, DateTime dt) {
     final now = DateTime.now();
     final diff = now.difference(dt);
     if (diff.inDays == 0) return DateFormat.Hm().format(dt);
-    if (diff.inDays == 1) return 'Yesterday';
+    if (diff.inDays == 1) return context.l10n.chatYesterday;
     if (diff.inDays < 7) return DateFormat.EEEE().format(dt);
     return DateFormat.yMd().format(dt);
   }

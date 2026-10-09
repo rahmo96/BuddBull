@@ -976,4 +976,158 @@ class AppLocalizationsEn extends AppLocalizations {
   String gameDetailMergePick(String sport, String city) {
     return 'Pick an open $sport game in $city.';
   }
+
+  @override
+  String get commonDelete => 'Delete';
+
+  @override
+  String get commonAccept => 'Accept';
+
+  @override
+  String get commonDecline => 'Decline';
+
+  @override
+  String get commonApprove => 'Approve';
+
+  @override
+  String get commonReject => 'Reject';
+
+  @override
+  String get chatTitleFallback => 'Chat';
+
+  @override
+  String get chatNewMessage => 'New message';
+
+  @override
+  String get chatLoadFailed => 'Failed to load chats';
+
+  @override
+  String get chatNoConversations => 'No conversations yet';
+
+  @override
+  String get chatNoConversationsHint =>
+      'Start a conversation by tapping the edit icon above or opening a game and tapping Chat.';
+
+  @override
+  String get chatNoLongerParticipant =>
+      'You are no longer a participant in this chat.';
+
+  @override
+  String get chatMessageHint => 'Type a message...';
+
+  @override
+  String get chatYesterday => 'Yesterday';
+
+  @override
+  String get chatNoMessagesYet => 'No messages yet';
+
+  @override
+  String get chatEdited => '• edited';
+
+  @override
+  String get chatMessageDeleted => 'Message deleted';
+
+  @override
+  String get chatReply => 'Reply';
+
+  @override
+  String get chatCopyText => 'Copy text';
+
+  @override
+  String get chatUnpin => 'Unpin';
+
+  @override
+  String get chatPinMessage => 'Pin message';
+
+  @override
+  String get chatPinnedMessage => 'Pinned message';
+
+  @override
+  String get notificationsTitle => 'Notifications';
+
+  @override
+  String get notificationsMarkAllRead => 'Mark all read';
+
+  @override
+  String get notificationsAllCaughtUp => 'You\'re all caught up';
+
+  @override
+  String get notificationsAllCaughtUpHint =>
+      'We\'ll let you know when something new happens.';
+
+  @override
+  String get notificationsAlreadyRated =>
+      'You\'ve already rated the players for this game.';
+
+  @override
+  String get notificationsFriendAccepted => 'Friend request accepted';
+
+  @override
+  String get notificationsFriendDeclined => 'Friend request declined';
+
+  @override
+  String get notificationsFriendUpdateFailed =>
+      'Could not update friend request';
+
+  @override
+  String get notificationsJoinedGame => 'You joined the game.';
+
+  @override
+  String get notificationsInviteDeclined => 'Invite declined.';
+
+  @override
+  String get notificationsActionFailed => 'Action failed.';
+
+  @override
+  String get notificationsInviteInvalid =>
+      'This invitation is no longer valid.';
+
+  @override
+  String get notificationsPlayerApproved => 'Player approved.';
+
+  @override
+  String get notificationsJoinRejected => 'Join request rejected.';
+
+  @override
+  String get notificationsRelNow => 'now';
+
+  @override
+  String chatMembersCount(int count) {
+    return '$count members';
+  }
+
+  @override
+  String chatReplyingTo(String name) {
+    return 'Replying to $name';
+  }
+
+  @override
+  String notificationsRelMinutes(int count) {
+    return '${count}m';
+  }
+
+  @override
+  String notificationsRelHours(int count) {
+    return '${count}h';
+  }
+
+  @override
+  String notificationsRelDays(int count) {
+    return '${count}d';
+  }
+
+  @override
+  String notificationsRelWeeks(int count) {
+    return '${count}w';
+  }
+
+  @override
+  String chatTypingOne(String names) {
+    return '$names is typing...';
+  }
+
+  @override
+  String chatTypingMany(String names) {
+    return '$names are typing...';
+  }
 }

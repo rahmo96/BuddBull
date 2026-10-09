@@ -1,6 +1,7 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/chat/data/models/chat_model.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,7 +31,7 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (message.isDeleted) return _deletedBubble();
+    if (message.isDeleted) return _deletedBubble(context);
 
     return GestureDetector(
       onLongPress: () => _showOptions(context),
@@ -101,7 +102,7 @@ class MessageBubble extends StatelessWidget {
                         if (message.isEdited) ...[
                           const SizedBox(width: 4),
                           Text(
-                            '• edited',
+                            context.l10n.chatEdited,
                             style: AppTextStyles.caption.copyWith(
                               color: AppColors.textSecondary,
                               fontSize: 10,
@@ -194,7 +195,7 @@ class MessageBubble extends StatelessWidget {
     );
   }
 
-  Widget _deletedBubble() {
+  Widget _deletedBubble(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
@@ -213,7 +214,7 @@ class MessageBubble extends StatelessWidget {
                 const Icon(Icons.not_interested, size: 12, color: AppColors.textSecondary),
                 const SizedBox(width: 4),
                 Text(
-                  'Message deleted',
+                  context.l10n.chatMessageDeleted,
                   style: AppTextStyles.caption.copyWith(
                     color: AppColors.textSecondary,
                     fontStyle: FontStyle.italic,
@@ -243,7 +244,7 @@ class MessageBubble extends StatelessWidget {
             if (onReply != null)
               ListTile(
                 leading: const Icon(Icons.reply),
-                title: const Text('Reply'),
+                title: Text(context.l10n.chatReply),
                 onTap: () {
                   Navigator.pop(ctx);
                   onReply!();
@@ -251,7 +252,7 @@ class MessageBubble extends StatelessWidget {
               ),
             ListTile(
               leading: const Icon(Icons.copy),
-              title: const Text('Copy text'),
+              title: Text(context.l10n.chatCopyText),
               onTap: () {
                 Clipboard.setData(ClipboardData(text: message.content));
                 Navigator.pop(ctx);
@@ -260,7 +261,7 @@ class MessageBubble extends StatelessWidget {
             if (onPin != null)
               ListTile(
                 leading: Icon(message.isPinned ? Icons.push_pin_outlined : Icons.push_pin),
-                title: Text(message.isPinned ? 'Unpin' : 'Pin message'),
+                title: Text(message.isPinned ? context.l10n.chatUnpin : context.l10n.chatPinMessage),
                 onTap: () {
                   Navigator.pop(ctx);
                   onPin!();
@@ -269,7 +270,7 @@ class MessageBubble extends StatelessWidget {
             if (isMe && onDelete != null)
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.red),
-                title: const Text('Delete', style: TextStyle(color: Colors.red)),
+                title: Text(context.l10n.commonDelete, style: const TextStyle(color: Colors.red)),
                 onTap: () {
                   Navigator.pop(ctx);
                   onDelete!();
