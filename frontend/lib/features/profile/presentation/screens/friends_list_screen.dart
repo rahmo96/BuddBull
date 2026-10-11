@@ -4,6 +4,7 @@ import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/auth/data/models/user_model.dart';
 import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
 import 'package:buddbull/features/profile/providers/profile_provider.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:buddbull/shared/widgets/loading_overlay.dart';
 import 'package:flutter/material.dart';
@@ -25,19 +26,17 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Unfriend?'),
-        content: Text(
-          'Remove ${friend.fullName} from your friends? You can send a new request later.',
-        ),
+        title: Text(context.l10n.friendsUnfriendTitle),
+        content: Text(context.l10n.friendsUnfriendBody(friend.fullName)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Unfriend'),
+            child: Text(context.l10n.friendsUnfriend),
           ),
         ],
       ),
@@ -51,7 +50,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
       await ref.read(profileProvider.notifier).refresh();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Removed ${friend.fullName} from friends')),
+        SnackBar(content: Text(context.l10n.friendsRemoved(friend.fullName))),
       );
     } catch (e) {
       if (!mounted) return;
@@ -70,7 +69,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Friends'),
+        title: Text(context.l10n.profileFriends),
         backgroundColor: AppColors.surface,
       ),
       body: friendsAsync.when(
@@ -85,7 +84,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(32),
                 child: Text(
-                  'No friends yet.\nVisit someone\'s profile and tap Add Friend.',
+                  context.l10n.friendsEmpty,
                   textAlign: TextAlign.center,
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.textSecondary,
@@ -135,7 +134,7 @@ class _FriendsListScreenState extends ConsumerState<FriendsListScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : Text(
-                            'Unfriend',
+                            context.l10n.friendsUnfriend,
                             style: AppTextStyles.labelMedium.copyWith(
                               color: AppColors.error,
                             ),

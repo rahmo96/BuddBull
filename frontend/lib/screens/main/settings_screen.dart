@@ -1,3 +1,4 @@
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/services/settings_service.dart';
 import 'package:flutter/material.dart';
 
@@ -43,7 +44,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() => _notificationsEnabled = value);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(value ? 'Notifications enabled' : 'Notifications disabled'),
+          content: Text(value ? context.l10n.settingsNotificationsOn : context.l10n.settingsNotificationsOff),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -56,7 +57,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() => _darkMode = value);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(value ? 'Dark mode on' : 'Dark mode off'),
+          content: Text(value ? context.l10n.settingsDarkOn : context.l10n.settingsDarkOff),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -69,7 +70,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() => _activityReminders = value);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(value ? 'Activity reminders on' : 'Activity reminders off'),
+          content: Text(value ? context.l10n.settingsRemindersOn : context.l10n.settingsRemindersOff),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -80,20 +81,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Settings')),
+        appBar: AppBar(title: Text(context.l10n.settingsTitle)),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(context.l10n.settingsTitle)),
       body: ListView(
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
             child: Text(
-              'Notifications',
-              style: TextStyle(
+              context.l10n.settingsNotificationsSection,
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey,
@@ -102,24 +103,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           SwitchListTile(
             secondary: const Icon(Icons.notifications_outlined),
-            title: const Text('Push Notifications'),
-            subtitle: const Text('Receive notifications about activities'),
+            title: Text(context.l10n.settingsPush),
+            subtitle: Text(context.l10n.settingsPushHint),
             value: _notificationsEnabled,
             onChanged: _setNotifications,
           ),
           SwitchListTile(
             secondary: const Icon(Icons.alarm_outlined),
-            title: const Text('Activity Reminders'),
-            subtitle: const Text('Remind me before scheduled activities'),
+            title: Text(context.l10n.settingsReminders),
+            subtitle: Text(context.l10n.settingsRemindersHint),
             value: _activityReminders,
             onChanged: _setActivityReminders,
           ),
           const Divider(height: 24),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: Text(
-              'Appearance',
-              style: TextStyle(
+              context.l10n.settingsAppearance,
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey,
@@ -128,27 +129,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           SwitchListTile(
             secondary: const Icon(Icons.dark_mode_outlined),
-            title: const Text('Dark Mode'),
-            subtitle: const Text('Use dark theme'),
+            title: Text(context.l10n.settingsDarkMode),
+            subtitle: Text(context.l10n.settingsDarkModeHint),
             value: _darkMode,
             onChanged: _setDarkMode,
           ),
           const Divider(height: 24),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: Text(
-              'About',
-              style: TextStyle(
+              context.l10n.settingsAbout,
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey,
               ),
             ),
           ),
-          const ListTile(
-            leading: Icon(Icons.info_outline),
-            title: Text('App Version'),
-            subtitle: Text('1.0.0'),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: Text(context.l10n.settingsAppVersion),
+            subtitle: const Text('1.0.0'),
           ),
         ],
       ),

@@ -61,24 +61,24 @@ class SportChip extends StatelessWidget {
 
   Color _colorForSport(String sport) {
     return switch (sport.toLowerCase()) {
-      'football' || 'soccer' => AppColors.footballBadge,
-      'basketball' => AppColors.basketballBadge,
-      'tennis' => AppColors.tennisBadge,
-      'running' => AppColors.runningBadge,
+      'football' || 'soccer' => AppColors.footballBadge, // l10n-ignore: API/search value
+      'basketball' => AppColors.basketballBadge, // l10n-ignore: API/search value
+      'tennis' => AppColors.tennisBadge, // l10n-ignore: API/search value
+      'running' => AppColors.runningBadge, // l10n-ignore: API/search value
       _ => AppColors.defaultBadge,
     };
   }
 
   String _emojiForSport(String sport) {
     return switch (sport.toLowerCase()) {
-      'football' || 'soccer' => '⚽',
-      'basketball' => '🏀',
-      'tennis' => '🎾',
-      'running' => '🏃',
-      'swimming' => '🏊',
-      'cycling' => '🚴',
-      'volleyball' => '🏐',
-      'cricket' => '🏏',
+      'football' || 'soccer' => '⚽', // l10n-ignore: API/search value
+      'basketball' => '🏀', // l10n-ignore: API/search value
+      'tennis' => '🎾', // l10n-ignore: API/search value
+      'running' => '🏃', // l10n-ignore: API/search value
+      'swimming' => '🏊', // l10n-ignore: API/search value
+      'cycling' => '🚴', // l10n-ignore: API/search value
+      'volleyball' => '🏐', // l10n-ignore: API/search value
+      'cricket' => '🏏', // l10n-ignore: API/search value
       _ => '🏅',
     };
   }

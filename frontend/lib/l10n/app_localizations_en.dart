@@ -1130,4 +1130,546 @@ class AppLocalizationsEn extends AppLocalizations {
   String chatTypingMany(String names) {
     return '$names are typing...';
   }
+
+  @override
+  String get commonEdit => 'Edit';
+
+  @override
+  String get commonAdd => 'Add';
+
+  @override
+  String get commonLocation => 'Location';
+
+  @override
+  String commonMinutes(Object minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get profileEditTitle => 'Edit Profile';
+
+  @override
+  String get profileBioLabel => 'Bio';
+
+  @override
+  String get profileBioHint => 'Tell us a bit about yourself…';
+
+  @override
+  String get profileSportsInterests => 'Sports & Skill Levels';
+
+  @override
+  String get profileAddSport => '+ Add sport';
+
+  @override
+  String get profileRadiusLabel => 'Search radius (km)';
+
+  @override
+  String get profileUpdatePicture => 'Update Profile Picture';
+
+  @override
+  String get profileUploadGallery => 'Upload from gallery';
+
+  @override
+  String get profileChoosePreset => 'Choose preset avatar';
+
+  @override
+  String get profileChangePhoto => 'Change photo or avatar';
+
+  @override
+  String get profilePersonalInfo => 'Personal Info';
+
+  @override
+  String get profileCityHint => 'Start typing a city…';
+
+  @override
+  String get profileAreaHint => 'Start typing an area or street…';
+
+  @override
+  String get profileAddSportTitle => 'Add Sport';
+
+  @override
+  String get profileSkillLevel => 'Skill Level';
+
+  @override
+  String get profileDangerZone => 'Danger Zone';
+
+  @override
+  String get profileDeleteWarning =>
+      'Deleting your account is permanent and cannot be undone.';
+
+  @override
+  String get profileDeleteAccount => 'Delete Account';
+
+  @override
+  String get profileDeleteConfirmTitle => 'Delete account?';
+
+  @override
+  String get profileDeleteConfirmBody =>
+      'All your data will be permanently deleted. This action cannot be undone.';
+
+  @override
+  String get profileDeletePermanently => 'Delete permanently';
+
+  @override
+  String get profileFriends => 'Friends';
+
+  @override
+  String get friendsUnfriendTitle => 'Unfriend?';
+
+  @override
+  String get friendsUnfriend => 'Unfriend';
+
+  @override
+  String get friendsEmpty =>
+      'No friends yet.\nVisit someone\'s profile and tap Add Friend.';
+
+  @override
+  String get profileAdminDashboard => 'Admin Dashboard';
+
+  @override
+  String get profileEditTooltip => 'Edit profile';
+
+  @override
+  String get profileSignOutTooltip => 'Sign out';
+
+  @override
+  String get profileAbout => 'About';
+
+  @override
+  String get profileSports => 'Sports';
+
+  @override
+  String get profileRecentActivity => 'Recent Activity';
+
+  @override
+  String get profileSignOutTitle => 'Sign out?';
+
+  @override
+  String get profileSignOutBody => 'You will need to sign in again.';
+
+  @override
+  String get profileSignOut => 'Sign out';
+
+  @override
+  String get profileWinRate => 'Win Rate %';
+
+  @override
+  String get profileRatingsSummary => 'Ratings Summary';
+
+  @override
+  String get profileRatingOverall => 'Overall';
+
+  @override
+  String get profileRatingReliability => 'Reliability';
+
+  @override
+  String get profileRatingBehavior => 'Behavior';
+
+  @override
+  String get profileUpcomingGames => 'Upcoming Games';
+
+  @override
+  String get profileNoRatings => 'No ratings yet';
+
+  @override
+  String get profileFriendRequestSent => 'Friend request sent';
+
+  @override
+  String get profileNowFriends => 'You are now friends';
+
+  @override
+  String get profileSignInToMessage => 'Please sign in to send a message.';
+
+  @override
+  String get profileCannotMessageSelf => 'You cannot message yourself.';
+
+  @override
+  String get profileMessage => 'Message';
+
+  @override
+  String get profileRequestSent => 'Request sent';
+
+  @override
+  String get profileAddFriend => 'Add Friend';
+
+  @override
+  String get profilePlaceResolveFailed =>
+      'Could not resolve this place. Try another.';
+
+  @override
+  String get profileSelectCityFirst => 'Please select a city first';
+
+  @override
+  String friendsUnfriendBody(String name) {
+    return 'Remove $name from your friends? You can send a new request later.';
+  }
+
+  @override
+  String friendsRemoved(String name) {
+    return 'Removed $name from friends';
+  }
+
+  @override
+  String profileMutualConnections(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mutual connections',
+      one: '1 mutual connection',
+      zero: 'No mutual connections',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String profileRadiusKmBadge(int km) {
+    return '$km km radius';
+  }
+
+  @override
+  String profileRadiusKmValue(int km) {
+    return '$km km';
+  }
+
+  @override
+  String profileCommunityAverageOne(String avg) {
+    return 'Community average $avg from 1 peer rating';
+  }
+
+  @override
+  String profileCommunityAverageMany(String avg, int count) {
+    return 'Community average $avg from $count peer ratings';
+  }
+
+  @override
+  String profileFriendsCount(int count) {
+    return '$count Friends';
+  }
+
+  @override
+  String profileRatingWithCount(int count) {
+    return 'Rating ($count)';
+  }
+
+  @override
+  String get logTypeMatch => 'Match';
+
+  @override
+  String get logTypeTraining => 'Training';
+
+  @override
+  String get logTypeFitness => 'Fitness';
+
+  @override
+  String get outcomeWin => 'Win';
+
+  @override
+  String get outcomeLoss => 'Loss';
+
+  @override
+  String get outcomeDraw => 'Draw';
+
+  @override
+  String get moodGreat => 'Great';
+
+  @override
+  String get moodGood => 'Good';
+
+  @override
+  String get moodOk => 'OK';
+
+  @override
+  String get moodTired => 'Tired';
+
+  @override
+  String get moodInjured => 'Injured';
+
+  @override
+  String get logFormSessionLogged => 'Session logged! 💪';
+
+  @override
+  String get logFormPersonalBestTitle => '🏅 New Personal Best!';
+
+  @override
+  String get logFormPersonalBestBody =>
+      'You beat your previous record! Keep it up! 🎉';
+
+  @override
+  String get logFormAwesome => 'Awesome!';
+
+  @override
+  String get logFormTitle => 'Log a Session';
+
+  @override
+  String get logFormSessionType => 'Session type *';
+
+  @override
+  String get logFormOutcome => 'Outcome';
+
+  @override
+  String get logFormDuration => 'Duration';
+
+  @override
+  String get logFormFeel => 'How did you feel?';
+
+  @override
+  String get logFormNotes => 'Notes';
+
+  @override
+  String get logFormNotesHint => 'What went well? What to improve?';
+
+  @override
+  String get logFormPublic => 'Make this log public';
+
+  @override
+  String get logFormSave => 'Save Session 💪';
+
+  @override
+  String get performanceTotalSessions => 'Total sessions';
+
+  @override
+  String get performanceTotalTime => 'Total time';
+
+  @override
+  String get performanceNoSessions => 'No sessions yet';
+
+  @override
+  String get performanceNoSessionsHint =>
+      'Start logging your training and matches.';
+
+  @override
+  String get performancePersonalBests => 'Personal Bests';
+
+  @override
+  String get performanceBySport => 'By sport';
+
+  @override
+  String get performanceBuildStats => 'Log sessions to build your stats';
+
+  @override
+  String get performanceTabOverview => 'Overview';
+
+  @override
+  String get performanceTabLogs => 'Logs';
+
+  @override
+  String get performanceTabStats => 'Stats';
+
+  @override
+  String get heatmapActivity => 'Activity';
+
+  @override
+  String get heatmapNoActivity => 'No activity';
+
+  @override
+  String get heatmapOneSession => '1 session';
+
+  @override
+  String get heatmapLess => 'Less';
+
+  @override
+  String get heatmapMore => 'More';
+
+  @override
+  String get logCardOnePersonalBest => '1 new personal best!';
+
+  @override
+  String get progressSessionsPerWeek => 'Sessions per week';
+
+  @override
+  String get progressWinRateTrend => 'Win rate trend';
+
+  @override
+  String get progressPreview => 'Your stats preview — log sessions to unlock';
+
+  @override
+  String get streakWarmingUp => 'Warming up';
+
+  @override
+  String get streakActive => 'Active streak';
+
+  @override
+  String get streakPersonalBest => 'Personal best';
+
+  @override
+  String get streakDaySingular => 'day';
+
+  @override
+  String get streakDayPlural => 'days';
+
+  @override
+  String get streakStartToday => 'Log a session today to start your streak';
+
+  @override
+  String get rateTitle => 'Rate Player';
+
+  @override
+  String get rateSportsmanship => 'Sportsmanship';
+
+  @override
+  String get rateSportsmanshipHint =>
+      'Were they fair, respectful, and fun to play with?';
+
+  @override
+  String get rateReliabilityHint =>
+      'Did they show up on time and follow through?';
+
+  @override
+  String get rateCommentHint => 'Leave a comment (optional)...';
+
+  @override
+  String get rateAnonymous => 'Submit anonymously';
+
+  @override
+  String get rateAnonymousHint => 'Your name will not be shown to this player';
+
+  @override
+  String get rateSubmit => 'Submit Rating';
+
+  @override
+  String get rateSubmitted => 'Rating submitted!';
+
+  @override
+  String get reportTargetUser => 'this user';
+
+  @override
+  String get reportTargetGame => 'this game';
+
+  @override
+  String get reportConfirmTitle => 'Confirm Report';
+
+  @override
+  String get reportContinue => 'Continue';
+
+  @override
+  String get reportSubmitTitle => 'Submit Report?';
+
+  @override
+  String get reportGoBack => 'Go Back';
+
+  @override
+  String get reportSubmit => 'Submit';
+
+  @override
+  String get reportSubmitted =>
+      'Report submitted. Admins will review it shortly.';
+
+  @override
+  String get reportDetails => 'Report Details';
+
+  @override
+  String get reportFormTitle => 'Title';
+
+  @override
+  String get reportFormTitleRequired => 'Title is required';
+
+  @override
+  String get reportFormReason => 'Reason';
+
+  @override
+  String get reportFormReasonRequired => 'Reason is required';
+
+  @override
+  String get reportUser => 'Report User';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get settingsNotificationsSection => 'Notifications';
+
+  @override
+  String get settingsPush => 'Push Notifications';
+
+  @override
+  String get settingsPushHint => 'Receive notifications about activities';
+
+  @override
+  String get settingsReminders => 'Activity Reminders';
+
+  @override
+  String get settingsRemindersHint => 'Remind me before scheduled activities';
+
+  @override
+  String get settingsAppearance => 'Appearance';
+
+  @override
+  String get settingsDarkMode => 'Dark Mode';
+
+  @override
+  String get settingsDarkModeHint => 'Use dark theme';
+
+  @override
+  String get settingsAbout => 'About';
+
+  @override
+  String get settingsAppVersion => 'App Version';
+
+  @override
+  String get settingsNotificationsOn => 'Notifications enabled';
+
+  @override
+  String get settingsNotificationsOff => 'Notifications disabled';
+
+  @override
+  String get settingsDarkOn => 'Dark mode on';
+
+  @override
+  String get settingsDarkOff => 'Dark mode off';
+
+  @override
+  String get settingsRemindersOn => 'Activity reminders on';
+
+  @override
+  String get settingsRemindersOff => 'Activity reminders off';
+
+  @override
+  String logFormDurationWithValue(int minutes) {
+    return 'Duration: ${minutes}min';
+  }
+
+  @override
+  String logFormSelfRating(int rating) {
+    return 'How did you perform? $rating/5';
+  }
+
+  @override
+  String performanceTotalTimeHrMin(int hours, int minutes) {
+    return '${hours}h ${minutes}m';
+  }
+
+  @override
+  String heatmapSessions(int count) {
+    return '$count sessions';
+  }
+
+  @override
+  String logCardPersonalBests(int count) {
+    return '$count new personal bests!';
+  }
+
+  @override
+  String progressTooltip(int sessions, int minutes) {
+    return '$sessions sessions\n$minutes min';
+  }
+
+  @override
+  String streakGoalProgress(int current, int goal) {
+    return '$current of $goal-day goal · Keep it going!';
+  }
+
+  @override
+  String streakLongestDays(int count) {
+    return '$count d';
+  }
+
+  @override
+  String reportConfirmBody(String target) {
+    return 'Are you sure you want to report $target? False reports may result in action against your account.';
+  }
+
+  @override
+  String reportSubmitBody(String title) {
+    return 'Your report titled \"$title\" will be sent to admins for review.';
+  }
 }

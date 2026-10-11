@@ -1,6 +1,7 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/performance/data/models/performance_model.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
@@ -9,11 +10,11 @@ class ProgressChart extends StatelessWidget {
   const ProgressChart({
     super.key,
     required this.sessions,
-    this.title = 'Sessions per week',
+    this.title,
   });
 
   final List<WeeklySession> sessions;
-  final String title;
+  final String? title;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +30,7 @@ class ProgressChart extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: AppTextStyles.titleSmall),
+        Text(title ?? context.l10n.progressSessionsPerWeek, style: AppTextStyles.titleSmall),
         const SizedBox(height: 16),
         SizedBox(
           height: 160,
@@ -113,8 +114,10 @@ class ProgressChart extends StatelessWidget {
                   getTooltipColor: (_) => AppColors.grey900,
                   getTooltipItem: (group, _, rod, __) =>
                       BarTooltipItem(
-                    '${rod.toY.toInt()} sessions\n'
-                    '${sessions[group.x].totalMinutes} min',
+                    context.l10n.progressTooltip(
+                      rod.toY.toInt(),
+                      sessions[group.x].totalMinutes,
+                    ),
                     AppTextStyles.labelSmall.copyWith(
                         color: Colors.white),
                   ),
@@ -140,7 +143,7 @@ class WinRateChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (sessions.isEmpty) {
-      return const _EmptyChart(title: 'Win rate trend', variant: _GhostVariant.line);
+      return _EmptyChart(title: context.l10n.progressWinRateTrend, variant: _GhostVariant.line);
     }
 
     final spots = <FlSpot>[];
@@ -155,7 +158,7 @@ class WinRateChart extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Win rate trend', style: AppTextStyles.titleSmall),
+        Text(context.l10n.progressWinRateTrend, style: AppTextStyles.titleSmall),
         const SizedBox(height: 16),
         SizedBox(
           height: 140,
@@ -240,7 +243,7 @@ class WinRateChart extends StatelessWidget {
 
 class _EmptyChart extends StatelessWidget {
   const _EmptyChart({required this.title, this.variant = _GhostVariant.bar});
-  final String title;
+  final String? title;
   final _GhostVariant variant;
 
   @override
@@ -248,10 +251,10 @@ class _EmptyChart extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: AppTextStyles.titleSmall),
+        Text(title ?? context.l10n.progressSessionsPerWeek, style: AppTextStyles.titleSmall),
         const SizedBox(height: 8),
         Text(
-          'Your stats preview — log sessions to unlock',
+          context.l10n.progressPreview,
           style: AppTextStyles.bodySmall.copyWith(
             color: AppColors.textSecondary,
           ),

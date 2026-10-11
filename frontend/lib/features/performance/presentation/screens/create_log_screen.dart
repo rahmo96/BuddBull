@@ -1,6 +1,9 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/constants/log_labels.dart';
+import 'package:buddbull/core/constants/sport_labels.dart';
 import 'package:buddbull/features/performance/providers/performance_provider.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
@@ -11,13 +14,13 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 const _sports = [
-  'Football', 'Basketball', 'Tennis', 'Running',
-  'Swimming', 'Cycling', 'Volleyball', 'Cricket',
+  'Football', 'Basketball', 'Tennis', 'Running', // l10n-ignore: API/search value
+  'Swimming', 'Cycling', 'Volleyball', 'Cricket', // l10n-ignore: API/search value
 ];
 
-const _logTypes = ['match', 'training', 'fitness'];
-const _outcomes = ['win', 'loss', 'draw'];
-const _moods = ['great', 'good', 'ok', 'tired', 'injured'];
+const _logTypes = ['match', 'training', 'fitness']; // l10n-ignore: API/search value
+const _outcomes = ['win', 'loss', 'draw']; // l10n-ignore: API/search value
+const _moods = ['great', 'good', 'ok', 'tired', 'injured']; // l10n-ignore: API/search value
 const _moodEmojis = {'great': '😄', 'good': '🙂', 'ok': '😐', 'tired': '😴', 'injured': '🤕'};
 
 class CreateLogScreen extends ConsumerStatefulWidget {
@@ -34,7 +37,7 @@ class _CreateLogScreenState
   final _notesCtrl = TextEditingController();
 
   String _sport = _sports.first;
-  String _logType = 'training';
+  String _logType = 'training'; // l10n-ignore: API/search value
   String? _outcome;
   String? _mood;
   DateTime _loggedAt = DateTime.now();
@@ -46,12 +49,12 @@ class _CreateLogScreenState
 
   String _moodToBackend(String uiMood) {
     return switch (uiMood) {
-      'great' => 'excellent',
-      'good' => 'good',
-      'ok' => 'neutral',
-      'tired' => 'bad',
-      'injured' => 'terrible',
-      _ => 'neutral',
+      'great' => 'excellent', // l10n-ignore: API/search value
+      'good' => 'good', // l10n-ignore: API/search value
+      'ok' => 'neutral', // l10n-ignore: API/search value
+      'tired' => 'bad', // l10n-ignore: API/search value
+      'injured' => 'terrible', // l10n-ignore: API/search value
+      _ => 'neutral', // l10n-ignore: API/search value
     };
   }
 
@@ -109,7 +112,7 @@ class _CreateLogScreenState
       if (logState.hasPersonalBests) {
         _showPersonalBestDialog();
       } else {
-        showSuccessSnackBar(context, 'Session logged! 💪');
+        showSuccessSnackBar(context, context.l10n.logFormSessionLogged);
         context.pop();
       }
     }
@@ -120,11 +123,8 @@ class _CreateLogScreenState
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        title: const Text('🏅 New Personal Best!'),
-        content: const Text(
-          'You beat your previous record! '
-          'Keep it up! 🎉',
-        ),
+        title: Text(context.l10n.logFormPersonalBestTitle),
+        content: Text(context.l10n.logFormPersonalBestBody),
         actions: [
           FilledButton(
             onPressed: () {
@@ -133,7 +133,7 @@ class _CreateLogScreenState
             },
             style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primary),
-            child: const Text('Awesome!'),
+            child: Text(context.l10n.logFormAwesome),
           ),
         ],
       ),
@@ -155,7 +155,7 @@ class _CreateLogScreenState
       isLoading: state.isSubmitting,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(title: const Text('Log a Session')),
+        appBar: AppBar(title: Text(context.l10n.logFormTitle)),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Form(
@@ -164,7 +164,7 @@ class _CreateLogScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ── Sport ─────────────────────────────────────
-                const _SectionLabel(label: 'Sport *'),
+                _SectionLabel(label: context.l10n.gameFormSportLabel),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -172,7 +172,7 @@ class _CreateLogScreenState
                   children: _sports
                       .map(
                         (s) => _PickerChip(
-                          label: s,
+                          label: sportDisplayName(s, context.l10n),
                           selected: _sport == s,
                           onTap: () =>
                               setState(() => _sport = s),
@@ -183,7 +183,7 @@ class _CreateLogScreenState
                 const SizedBox(height: 20),
 
                 // ── Log type ───────────────────────────────────
-                const _SectionLabel(label: 'Session type *'),
+                _SectionLabel(label: context.l10n.logFormSessionType),
                 const SizedBox(height: 8),
                 Row(
                   spacing: 10,
@@ -196,7 +196,7 @@ class _CreateLogScreenState
                     return Expanded(
                       child: _TypeCard(
                         icon: icons[t]!,
-                        label: t[0].toUpperCase() + t.substring(1),
+                        label: logTypeDisplayName(t, context.l10n),
                         selected: _logType == t,
                         onTap: () => setState(() {
                           _logType = t;
@@ -209,7 +209,7 @@ class _CreateLogScreenState
                 const SizedBox(height: 20),
 
                 // ── Date ───────────────────────────────────────
-                const _SectionLabel(label: 'Date'),
+                _SectionLabel(label: context.l10n.gameDetailDate),
                 const SizedBox(height: 8),
                 GestureDetector(
                   onTap: _pickDate,
@@ -239,7 +239,7 @@ class _CreateLogScreenState
 
                 // ── Outcome (match only) ───────────────────────
                 if (_logType == 'match') ...[
-                  const _SectionLabel(label: 'Outcome'),
+                  _SectionLabel(label: context.l10n.logFormOutcome),
                   const SizedBox(height: 8),
                   Row(
                     spacing: 10,
@@ -278,8 +278,7 @@ class _CreateLogScreenState
                                         fontSize: 22)),
                                 const SizedBox(height: 4),
                                 Text(
-                                  o[0].toUpperCase() +
-                                      o.substring(1),
+                                  outcomeDisplayName(o, context.l10n),
                                   style: AppTextStyles.labelMedium
                                       .copyWith(
                                     color: _outcome == o
@@ -299,8 +298,9 @@ class _CreateLogScreenState
 
                 // ── Duration ───────────────────────────────────
                 _SectionLabel(
-                    label:
-                        'Duration${_durationMinutes != null ? ': ${_durationMinutes}min' : ''}'),
+                    label: _durationMinutes != null
+                        ? context.l10n.logFormDurationWithValue(_durationMinutes!)
+                        : context.l10n.logFormDuration),
                 Slider(
                   value:
                       (_durationMinutes ?? 60).toDouble(),
@@ -309,7 +309,7 @@ class _CreateLogScreenState
                   divisions: 47,
                   activeColor: AppColors.primary,
                   inactiveColor: AppColors.grey300,
-                  label: '$_durationMinutes min',
+                  label: context.l10n.commonMinutes(_durationMinutes ?? 60),
                   onChanged: (v) => setState(
                       () => _durationMinutes = v.round()),
                 ),
@@ -317,7 +317,7 @@ class _CreateLogScreenState
 
                 // ── Self rating ────────────────────────────────
                 _SectionLabel(
-                    label: 'How did you perform? $_selfRating/5'),
+                    label: context.l10n.logFormSelfRating(_selfRating)),
                 Slider(
                   value: _selfRating.toDouble(),
                   min: 1,
@@ -332,7 +332,7 @@ class _CreateLogScreenState
                 const SizedBox(height: 20),
 
                 // ── Mood ───────────────────────────────────────
-                const _SectionLabel(label: 'How did you feel?'),
+                _SectionLabel(label: context.l10n.logFormFeel),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment:
@@ -365,7 +365,7 @@ class _CreateLogScreenState
                                 style: const TextStyle(
                                     fontSize: 22)),
                             const SizedBox(height: 2),
-                            Text(m,
+                            Text(moodDisplayName(m, context.l10n),
                                 style: AppTextStyles
                                     .labelSmall),
                           ],
@@ -378,8 +378,8 @@ class _CreateLogScreenState
 
                 // ── Notes ──────────────────────────────────────
                 BbTextField(
-                  label: 'Notes',
-                  hint: 'What went well? What to improve?',
+                  label: context.l10n.logFormNotes,
+                  hint: context.l10n.logFormNotesHint,
                   controller: _notesCtrl,
                   maxLines: 3,
                   minLines: 2,
@@ -402,9 +402,9 @@ class _CreateLogScreenState
                           size: 18,
                           color: AppColors.textSecondary),
                       const SizedBox(width: 10),
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Make this log public',
+                          context.l10n.logFormPublic,
                           style: AppTextStyles.bodyMedium,
                         ),
                       ),
@@ -420,7 +420,7 @@ class _CreateLogScreenState
                 const SizedBox(height: 32),
 
                 BbButton(
-                  label: 'Save Session 💪',
+                  label: context.l10n.logFormSave,
                   onPressed: _submit,
                   isLoading: state.isSubmitting,
                 ),

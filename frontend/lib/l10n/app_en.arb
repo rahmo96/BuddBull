@@ -575,5 +575,312 @@
         "type": "String"
       }
     }
+  },
+  "commonEdit": "Edit",
+  "commonAdd": "Add",
+  "commonLocation": "Location",
+  "commonMinutes": "{minutes} min",
+  "profileEditTitle": "Edit Profile",
+  "profileBioLabel": "Bio",
+  "profileBioHint": "Tell us a bit about yourself…",
+  "profileSportsInterests": "Sports & Skill Levels",
+  "profileAddSport": "+ Add sport",
+  "profileRadiusLabel": "Search radius (km)",
+  "profileUpdatePicture": "Update Profile Picture",
+  "profileUploadGallery": "Upload from gallery",
+  "profileChoosePreset": "Choose preset avatar",
+  "profileChangePhoto": "Change photo or avatar",
+  "profilePersonalInfo": "Personal Info",
+  "profileCityHint": "Start typing a city…",
+  "profileAreaHint": "Start typing an area or street…",
+  "profileAddSportTitle": "Add Sport",
+  "profileSkillLevel": "Skill Level",
+  "profileDangerZone": "Danger Zone",
+  "profileDeleteWarning": "Deleting your account is permanent and cannot be undone.",
+  "profileDeleteAccount": "Delete Account",
+  "profileDeleteConfirmTitle": "Delete account?",
+  "profileDeleteConfirmBody": "All your data will be permanently deleted. This action cannot be undone.",
+  "profileDeletePermanently": "Delete permanently",
+  "profileFriends": "Friends",
+  "friendsUnfriendTitle": "Unfriend?",
+  "friendsUnfriend": "Unfriend",
+  "friendsEmpty": "No friends yet.\nVisit someone's profile and tap Add Friend.",
+  "profileAdminDashboard": "Admin Dashboard",
+  "profileEditTooltip": "Edit profile",
+  "profileSignOutTooltip": "Sign out",
+  "profileAbout": "About",
+  "profileSports": "Sports",
+  "profileRecentActivity": "Recent Activity",
+  "profileSignOutTitle": "Sign out?",
+  "profileSignOutBody": "You will need to sign in again.",
+  "profileSignOut": "Sign out",
+  "profileWinRate": "Win Rate %",
+  "profileRatingsSummary": "Ratings Summary",
+  "profileRatingOverall": "Overall",
+  "profileRatingReliability": "Reliability",
+  "profileRatingBehavior": "Behavior",
+  "profileUpcomingGames": "Upcoming Games",
+  "profileNoRatings": "No ratings yet",
+  "profileFriendRequestSent": "Friend request sent",
+  "profileNowFriends": "You are now friends",
+  "profileSignInToMessage": "Please sign in to send a message.",
+  "profileCannotMessageSelf": "You cannot message yourself.",
+  "profileMessage": "Message",
+  "profileRequestSent": "Request sent",
+  "profileAddFriend": "Add Friend",
+  "profilePlaceResolveFailed": "Could not resolve this place. Try another.",
+  "profileSelectCityFirst": "Please select a city first",
+  "friendsUnfriendBody": "Remove {name} from your friends? You can send a new request later.",
+  "@friendsUnfriendBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "friendsRemoved": "Removed {name} from friends",
+  "@friendsRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileMutualConnections": "{count, plural, =0{No mutual connections} =1{1 mutual connection} other{{count} mutual connections}}",
+  "@profileMutualConnections": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileRadiusKmBadge": "{km} km radius",
+  "@profileRadiusKmBadge": {
+    "placeholders": {
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "profileRadiusKmValue": "{km} km",
+  "@profileRadiusKmValue": {
+    "placeholders": {
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "profileCommunityAverageOne": "Community average {avg} from 1 peer rating",
+  "@profileCommunityAverageOne": {
+    "placeholders": {
+      "avg": {
+        "type": "String"
+      }
+    }
+  },
+  "profileCommunityAverageMany": "Community average {avg} from {count} peer ratings",
+  "@profileCommunityAverageMany": {
+    "placeholders": {
+      "avg": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileFriendsCount": "{count} Friends",
+  "@profileFriendsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileRatingWithCount": "Rating ({count})",
+  "@profileRatingWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "logTypeMatch": "Match",
+  "logTypeTraining": "Training",
+  "logTypeFitness": "Fitness",
+  "outcomeWin": "Win",
+  "outcomeLoss": "Loss",
+  "outcomeDraw": "Draw",
+  "moodGreat": "Great",
+  "moodGood": "Good",
+  "moodOk": "OK",
+  "moodTired": "Tired",
+  "moodInjured": "Injured",
+  "logFormSessionLogged": "Session logged! 💪",
+  "logFormPersonalBestTitle": "🏅 New Personal Best!",
+  "logFormPersonalBestBody": "You beat your previous record! Keep it up! 🎉",
+  "logFormAwesome": "Awesome!",
+  "logFormTitle": "Log a Session",
+  "logFormSessionType": "Session type *",
+  "logFormOutcome": "Outcome",
+  "logFormDuration": "Duration",
+  "logFormFeel": "How did you feel?",
+  "logFormNotes": "Notes",
+  "logFormNotesHint": "What went well? What to improve?",
+  "logFormPublic": "Make this log public",
+  "logFormSave": "Save Session 💪",
+  "performanceTotalSessions": "Total sessions",
+  "performanceTotalTime": "Total time",
+  "performanceNoSessions": "No sessions yet",
+  "performanceNoSessionsHint": "Start logging your training and matches.",
+  "performancePersonalBests": "Personal Bests",
+  "performanceBySport": "By sport",
+  "performanceBuildStats": "Log sessions to build your stats",
+  "performanceTabOverview": "Overview",
+  "performanceTabLogs": "Logs",
+  "performanceTabStats": "Stats",
+  "heatmapActivity": "Activity",
+  "heatmapNoActivity": "No activity",
+  "heatmapOneSession": "1 session",
+  "heatmapLess": "Less",
+  "heatmapMore": "More",
+  "logCardOnePersonalBest": "1 new personal best!",
+  "progressSessionsPerWeek": "Sessions per week",
+  "progressWinRateTrend": "Win rate trend",
+  "progressPreview": "Your stats preview — log sessions to unlock",
+  "streakWarmingUp": "Warming up",
+  "streakActive": "Active streak",
+  "streakPersonalBest": "Personal best",
+  "streakDaySingular": "day",
+  "streakDayPlural": "days",
+  "streakStartToday": "Log a session today to start your streak",
+  "rateTitle": "Rate Player",
+  "rateSportsmanship": "Sportsmanship",
+  "rateSportsmanshipHint": "Were they fair, respectful, and fun to play with?",
+  "rateReliabilityHint": "Did they show up on time and follow through?",
+  "rateCommentHint": "Leave a comment (optional)...",
+  "rateAnonymous": "Submit anonymously",
+  "rateAnonymousHint": "Your name will not be shown to this player",
+  "rateSubmit": "Submit Rating",
+  "rateSubmitted": "Rating submitted!",
+  "reportTargetUser": "this user",
+  "reportTargetGame": "this game",
+  "reportConfirmTitle": "Confirm Report",
+  "reportContinue": "Continue",
+  "reportSubmitTitle": "Submit Report?",
+  "reportGoBack": "Go Back",
+  "reportSubmit": "Submit",
+  "reportSubmitted": "Report submitted. Admins will review it shortly.",
+  "reportDetails": "Report Details",
+  "reportFormTitle": "Title",
+  "reportFormTitleRequired": "Title is required",
+  "reportFormReason": "Reason",
+  "reportFormReasonRequired": "Reason is required",
+  "reportUser": "Report User",
+  "settingsTitle": "Settings",
+  "settingsNotificationsSection": "Notifications",
+  "settingsPush": "Push Notifications",
+  "settingsPushHint": "Receive notifications about activities",
+  "settingsReminders": "Activity Reminders",
+  "settingsRemindersHint": "Remind me before scheduled activities",
+  "settingsAppearance": "Appearance",
+  "settingsDarkMode": "Dark Mode",
+  "settingsDarkModeHint": "Use dark theme",
+  "settingsAbout": "About",
+  "settingsAppVersion": "App Version",
+  "settingsNotificationsOn": "Notifications enabled",
+  "settingsNotificationsOff": "Notifications disabled",
+  "settingsDarkOn": "Dark mode on",
+  "settingsDarkOff": "Dark mode off",
+  "settingsRemindersOn": "Activity reminders on",
+  "settingsRemindersOff": "Activity reminders off",
+  "logFormDurationWithValue": "Duration: {minutes}min",
+  "@logFormDurationWithValue": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "logFormSelfRating": "How did you perform? {rating}/5",
+  "@logFormSelfRating": {
+    "placeholders": {
+      "rating": {
+        "type": "int"
+      }
+    }
+  },
+  "performanceTotalTimeHrMin": "{hours}h {minutes}m",
+  "@performanceTotalTimeHrMin": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "heatmapSessions": "{count} sessions",
+  "@heatmapSessions": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "logCardPersonalBests": "{count} new personal bests!",
+  "@logCardPersonalBests": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "progressTooltip": "{sessions} sessions\n{minutes} min",
+  "@progressTooltip": {
+    "placeholders": {
+      "sessions": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "streakGoalProgress": "{current} of {goal}-day goal · Keep it going!",
+  "@streakGoalProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "goal": {
+        "type": "int"
+      }
+    }
+  },
+  "streakLongestDays": "{count} d",
+  "@streakLongestDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reportConfirmBody": "Are you sure you want to report {target}? False reports may result in action against your account.",
+  "@reportConfirmBody": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "reportSubmitBody": "Your report titled \"{title}\" will be sent to admins for review.",
+  "@reportSubmitBody": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
   }
 }

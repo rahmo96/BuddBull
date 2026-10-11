@@ -1,5 +1,4 @@
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/home/home_scaffold.dart';
 import 'package:buddbull/features/performance/presentation/widgets/activity_heatmap.dart';
@@ -7,6 +6,7 @@ import 'package:buddbull/features/performance/presentation/widgets/log_card.dart
 import 'package:buddbull/features/performance/presentation/widgets/progress_chart.dart';
 import 'package:buddbull/features/performance/presentation/widgets/streak_banner.dart';
 import 'package:buddbull/features/performance/providers/performance_provider.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:buddbull/shared/widgets/loading_overlay.dart';
 import 'package:flutter/material.dart';
@@ -45,7 +45,7 @@ class _PerformanceScreenState
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxScrolled) => [
           SliverAppBar(
-            title: const Text(AppStrings.navPerformance),
+            title: Text(context.l10n.navPerformance),
             floating: true,
             pinned: true,
             actions: [
@@ -53,7 +53,7 @@ class _PerformanceScreenState
                 icon: const Icon(Icons.add_circle_outline_rounded),
                 onPressed: () =>
                     context.push('/performance/log/create'),
-                tooltip: 'Log a session',
+                tooltip: context.l10n.homeLogASession,
               ),
             ],
             bottom: TabBar(
@@ -71,10 +71,10 @@ class _PerformanceScreenState
               unselectedLabelStyle: AppTextStyles.labelLarge.copyWith(
                 fontWeight: FontWeight.w500,
               ),
-              tabs: const [
-                Tab(text: 'Overview'),
-                Tab(text: 'Logs'),
-                Tab(text: 'Stats'),
+              tabs: [
+                Tab(text: context.l10n.performanceTabOverview),
+                Tab(text: context.l10n.performanceTabLogs),
+                Tab(text: context.l10n.performanceTabStats),
               ],
             ),
           ),
@@ -139,15 +139,15 @@ class _OverviewTab extends ConsumerWidget {
                     child: _SummaryTile(
                       icon: Icons.sports_rounded,
                       value: '${stats.totalSessions}',
-                      label: 'Total sessions',
+                      label: context.l10n.performanceTotalSessions,
                       color: AppColors.primary,
                     ),
                   ),
                   Expanded(
                     child: _SummaryTile(
                       icon: Icons.timer_outlined,
-                      value: _formatMinutes(stats.totalMinutes),
-                      label: 'Total time',
+                      value: _formatMinutes(context, stats.totalMinutes),
+                      label: context.l10n.performanceTotalTime,
                       color: AppColors.info,
                     ),
                   ),
@@ -191,9 +191,12 @@ class _OverviewTab extends ConsumerWidget {
     );
   }
 
-  String _formatMinutes(int minutes) {
+  String _formatMinutes(BuildContext context, int minutes) {
     final h = minutes ~/ 60;
-    return h >= 10 ? '${h}h' : '${h}h ${minutes % 60}m';
+    final l10n = context.l10n;
+    return h >= 10
+        ? l10n.gameDurationHr(h)
+        : l10n.performanceTotalTimeHrMin(h, minutes % 60);
   }
 }
 
@@ -231,11 +234,11 @@ class _LogsTab extends ConsumerWidget {
                   const Text('📊',
                       style: TextStyle(fontSize: 52)),
                   const SizedBox(height: 16),
-                  const Text('No sessions yet',
+                  Text(context.l10n.performanceNoSessions,
                       style: AppTextStyles.headlineSmall),
                   const SizedBox(height: 8),
                   Text(
-                    'Start logging your training and matches.',
+                    context.l10n.performanceNoSessionsHint,
                     style: AppTextStyles.bodyMedium.copyWith(
                         color: AppColors.textSecondary),
                     textAlign: TextAlign.center,
@@ -246,7 +249,7 @@ class _LogsTab extends ConsumerWidget {
                         .push('/performance/log/create'),
                     icon: const Icon(Icons.add_rounded,
                         size: 18),
-                    label: const Text('Log a session'),
+                    label: Text(context.l10n.homeLogASession),
                     style: FilledButton.styleFrom(
                         backgroundColor: AppColors.primary),
                   ),
@@ -312,7 +315,7 @@ class _StatsTab extends ConsumerWidget {
           children: [
             // ── Personal bests ────────────────────────────
             if (stats.personalBests.isNotEmpty) ...[
-              const Text('Personal Bests',
+              Text(context.l10n.performancePersonalBests,
                   style: AppTextStyles.titleMedium),
               const SizedBox(height: 12),
               ...stats.personalBests.map(
@@ -323,7 +326,7 @@ class _StatsTab extends ConsumerWidget {
 
             // ── Sport breakdown ───────────────────────────
             if (stats.sportBreakdown.isNotEmpty) ...[
-              const Text('By sport', style: AppTextStyles.titleMedium),
+              Text(context.l10n.performanceBySport, style: AppTextStyles.titleMedium),
               const SizedBox(height: 12),
               _Card(
                 child: _SportBreakdown(
@@ -337,7 +340,7 @@ class _StatsTab extends ConsumerWidget {
                 stats.sportBreakdown.isEmpty)
               Center(
                 child: Text(
-                  'Log sessions to build your stats',
+                  context.l10n.performanceBuildStats,
                   style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.textSecondary),
                 ),
@@ -438,7 +441,7 @@ class _SportBreakdown extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('By sport', style: AppTextStyles.titleSmall),
+        Text(context.l10n.performanceBySport, style: AppTextStyles.titleSmall),
         const SizedBox(height: 12),
         ...sorted.map((entry) {
           final fraction = total > 0 ? entry.value / total : 0.0;

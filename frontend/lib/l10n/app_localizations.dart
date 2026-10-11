@@ -2101,6 +2101,978 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{names} are typing...'**
   String chatTypingMany(String names);
+
+  /// No description provided for @commonEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get commonEdit;
+
+  /// No description provided for @commonAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get commonAdd;
+
+  /// No description provided for @commonLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get commonLocation;
+
+  /// No description provided for @commonMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String commonMinutes(Object minutes);
+
+  /// No description provided for @profileEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Profile'**
+  String get profileEditTitle;
+
+  /// No description provided for @profileBioLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Bio'**
+  String get profileBioLabel;
+
+  /// No description provided for @profileBioHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us a bit about yourself…'**
+  String get profileBioHint;
+
+  /// No description provided for @profileSportsInterests.
+  ///
+  /// In en, this message translates to:
+  /// **'Sports & Skill Levels'**
+  String get profileSportsInterests;
+
+  /// No description provided for @profileAddSport.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Add sport'**
+  String get profileAddSport;
+
+  /// No description provided for @profileRadiusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Search radius (km)'**
+  String get profileRadiusLabel;
+
+  /// No description provided for @profileUpdatePicture.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Profile Picture'**
+  String get profileUpdatePicture;
+
+  /// No description provided for @profileUploadGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload from gallery'**
+  String get profileUploadGallery;
+
+  /// No description provided for @profileChoosePreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose preset avatar'**
+  String get profileChoosePreset;
+
+  /// No description provided for @profileChangePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Change photo or avatar'**
+  String get profileChangePhoto;
+
+  /// No description provided for @profilePersonalInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Info'**
+  String get profilePersonalInfo;
+
+  /// No description provided for @profileCityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Start typing a city…'**
+  String get profileCityHint;
+
+  /// No description provided for @profileAreaHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Start typing an area or street…'**
+  String get profileAreaHint;
+
+  /// No description provided for @profileAddSportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Sport'**
+  String get profileAddSportTitle;
+
+  /// No description provided for @profileSkillLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Skill Level'**
+  String get profileSkillLevel;
+
+  /// No description provided for @profileDangerZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Danger Zone'**
+  String get profileDangerZone;
+
+  /// No description provided for @profileDeleteWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting your account is permanent and cannot be undone.'**
+  String get profileDeleteWarning;
+
+  /// No description provided for @profileDeleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get profileDeleteAccount;
+
+  /// No description provided for @profileDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account?'**
+  String get profileDeleteConfirmTitle;
+
+  /// No description provided for @profileDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'All your data will be permanently deleted. This action cannot be undone.'**
+  String get profileDeleteConfirmBody;
+
+  /// No description provided for @profileDeletePermanently.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete permanently'**
+  String get profileDeletePermanently;
+
+  /// No description provided for @profileFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends'**
+  String get profileFriends;
+
+  /// No description provided for @friendsUnfriendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfriend?'**
+  String get friendsUnfriendTitle;
+
+  /// No description provided for @friendsUnfriend.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfriend'**
+  String get friendsUnfriend;
+
+  /// No description provided for @friendsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No friends yet.\nVisit someone\'s profile and tap Add Friend.'**
+  String get friendsEmpty;
+
+  /// No description provided for @profileAdminDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin Dashboard'**
+  String get profileAdminDashboard;
+
+  /// No description provided for @profileEditTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit profile'**
+  String get profileEditTooltip;
+
+  /// No description provided for @profileSignOutTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get profileSignOutTooltip;
+
+  /// No description provided for @profileAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get profileAbout;
+
+  /// No description provided for @profileSports.
+  ///
+  /// In en, this message translates to:
+  /// **'Sports'**
+  String get profileSports;
+
+  /// No description provided for @profileRecentActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Activity'**
+  String get profileRecentActivity;
+
+  /// No description provided for @profileSignOutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out?'**
+  String get profileSignOutTitle;
+
+  /// No description provided for @profileSignOutBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You will need to sign in again.'**
+  String get profileSignOutBody;
+
+  /// No description provided for @profileSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get profileSignOut;
+
+  /// No description provided for @profileWinRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Win Rate %'**
+  String get profileWinRate;
+
+  /// No description provided for @profileRatingsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Ratings Summary'**
+  String get profileRatingsSummary;
+
+  /// No description provided for @profileRatingOverall.
+  ///
+  /// In en, this message translates to:
+  /// **'Overall'**
+  String get profileRatingOverall;
+
+  /// No description provided for @profileRatingReliability.
+  ///
+  /// In en, this message translates to:
+  /// **'Reliability'**
+  String get profileRatingReliability;
+
+  /// No description provided for @profileRatingBehavior.
+  ///
+  /// In en, this message translates to:
+  /// **'Behavior'**
+  String get profileRatingBehavior;
+
+  /// No description provided for @profileUpcomingGames.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming Games'**
+  String get profileUpcomingGames;
+
+  /// No description provided for @profileNoRatings.
+  ///
+  /// In en, this message translates to:
+  /// **'No ratings yet'**
+  String get profileNoRatings;
+
+  /// No description provided for @profileFriendRequestSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend request sent'**
+  String get profileFriendRequestSent;
+
+  /// No description provided for @profileNowFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'You are now friends'**
+  String get profileNowFriends;
+
+  /// No description provided for @profileSignInToMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in to send a message.'**
+  String get profileSignInToMessage;
+
+  /// No description provided for @profileCannotMessageSelf.
+  ///
+  /// In en, this message translates to:
+  /// **'You cannot message yourself.'**
+  String get profileCannotMessageSelf;
+
+  /// No description provided for @profileMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get profileMessage;
+
+  /// No description provided for @profileRequestSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Request sent'**
+  String get profileRequestSent;
+
+  /// No description provided for @profileAddFriend.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Friend'**
+  String get profileAddFriend;
+
+  /// No description provided for @profilePlaceResolveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not resolve this place. Try another.'**
+  String get profilePlaceResolveFailed;
+
+  /// No description provided for @profileSelectCityFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a city first'**
+  String get profileSelectCityFirst;
+
+  /// No description provided for @friendsUnfriendBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name} from your friends? You can send a new request later.'**
+  String friendsUnfriendBody(String name);
+
+  /// No description provided for @friendsRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed {name} from friends'**
+  String friendsRemoved(String name);
+
+  /// No description provided for @profileMutualConnections.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No mutual connections} =1{1 mutual connection} other{{count} mutual connections}}'**
+  String profileMutualConnections(int count);
+
+  /// No description provided for @profileRadiusKmBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'{km} km radius'**
+  String profileRadiusKmBadge(int km);
+
+  /// No description provided for @profileRadiusKmValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{km} km'**
+  String profileRadiusKmValue(int km);
+
+  /// No description provided for @profileCommunityAverageOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Community average {avg} from 1 peer rating'**
+  String profileCommunityAverageOne(String avg);
+
+  /// No description provided for @profileCommunityAverageMany.
+  ///
+  /// In en, this message translates to:
+  /// **'Community average {avg} from {count} peer ratings'**
+  String profileCommunityAverageMany(String avg, int count);
+
+  /// No description provided for @profileFriendsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Friends'**
+  String profileFriendsCount(int count);
+
+  /// No description provided for @profileRatingWithCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating ({count})'**
+  String profileRatingWithCount(int count);
+
+  /// No description provided for @logTypeMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Match'**
+  String get logTypeMatch;
+
+  /// No description provided for @logTypeTraining.
+  ///
+  /// In en, this message translates to:
+  /// **'Training'**
+  String get logTypeTraining;
+
+  /// No description provided for @logTypeFitness.
+  ///
+  /// In en, this message translates to:
+  /// **'Fitness'**
+  String get logTypeFitness;
+
+  /// No description provided for @outcomeWin.
+  ///
+  /// In en, this message translates to:
+  /// **'Win'**
+  String get outcomeWin;
+
+  /// No description provided for @outcomeLoss.
+  ///
+  /// In en, this message translates to:
+  /// **'Loss'**
+  String get outcomeLoss;
+
+  /// No description provided for @outcomeDraw.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw'**
+  String get outcomeDraw;
+
+  /// No description provided for @moodGreat.
+  ///
+  /// In en, this message translates to:
+  /// **'Great'**
+  String get moodGreat;
+
+  /// No description provided for @moodGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Good'**
+  String get moodGood;
+
+  /// No description provided for @moodOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get moodOk;
+
+  /// No description provided for @moodTired.
+  ///
+  /// In en, this message translates to:
+  /// **'Tired'**
+  String get moodTired;
+
+  /// No description provided for @moodInjured.
+  ///
+  /// In en, this message translates to:
+  /// **'Injured'**
+  String get moodInjured;
+
+  /// No description provided for @logFormSessionLogged.
+  ///
+  /// In en, this message translates to:
+  /// **'Session logged! 💪'**
+  String get logFormSessionLogged;
+
+  /// No description provided for @logFormPersonalBestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'🏅 New Personal Best!'**
+  String get logFormPersonalBestTitle;
+
+  /// No description provided for @logFormPersonalBestBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You beat your previous record! Keep it up! 🎉'**
+  String get logFormPersonalBestBody;
+
+  /// No description provided for @logFormAwesome.
+  ///
+  /// In en, this message translates to:
+  /// **'Awesome!'**
+  String get logFormAwesome;
+
+  /// No description provided for @logFormTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Log a Session'**
+  String get logFormTitle;
+
+  /// No description provided for @logFormSessionType.
+  ///
+  /// In en, this message translates to:
+  /// **'Session type *'**
+  String get logFormSessionType;
+
+  /// No description provided for @logFormOutcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Outcome'**
+  String get logFormOutcome;
+
+  /// No description provided for @logFormDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get logFormDuration;
+
+  /// No description provided for @logFormFeel.
+  ///
+  /// In en, this message translates to:
+  /// **'How did you feel?'**
+  String get logFormFeel;
+
+  /// No description provided for @logFormNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get logFormNotes;
+
+  /// No description provided for @logFormNotesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What went well? What to improve?'**
+  String get logFormNotesHint;
+
+  /// No description provided for @logFormPublic.
+  ///
+  /// In en, this message translates to:
+  /// **'Make this log public'**
+  String get logFormPublic;
+
+  /// No description provided for @logFormSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Session 💪'**
+  String get logFormSave;
+
+  /// No description provided for @performanceTotalSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Total sessions'**
+  String get performanceTotalSessions;
+
+  /// No description provided for @performanceTotalTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Total time'**
+  String get performanceTotalTime;
+
+  /// No description provided for @performanceNoSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'No sessions yet'**
+  String get performanceNoSessions;
+
+  /// No description provided for @performanceNoSessionsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Start logging your training and matches.'**
+  String get performanceNoSessionsHint;
+
+  /// No description provided for @performancePersonalBests.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Bests'**
+  String get performancePersonalBests;
+
+  /// No description provided for @performanceBySport.
+  ///
+  /// In en, this message translates to:
+  /// **'By sport'**
+  String get performanceBySport;
+
+  /// No description provided for @performanceBuildStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Log sessions to build your stats'**
+  String get performanceBuildStats;
+
+  /// No description provided for @performanceTabOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get performanceTabOverview;
+
+  /// No description provided for @performanceTabLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs'**
+  String get performanceTabLogs;
+
+  /// No description provided for @performanceTabStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Stats'**
+  String get performanceTabStats;
+
+  /// No description provided for @heatmapActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get heatmapActivity;
+
+  /// No description provided for @heatmapNoActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'No activity'**
+  String get heatmapNoActivity;
+
+  /// No description provided for @heatmapOneSession.
+  ///
+  /// In en, this message translates to:
+  /// **'1 session'**
+  String get heatmapOneSession;
+
+  /// No description provided for @heatmapLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Less'**
+  String get heatmapLess;
+
+  /// No description provided for @heatmapMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get heatmapMore;
+
+  /// No description provided for @logCardOnePersonalBest.
+  ///
+  /// In en, this message translates to:
+  /// **'1 new personal best!'**
+  String get logCardOnePersonalBest;
+
+  /// No description provided for @progressSessionsPerWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Sessions per week'**
+  String get progressSessionsPerWeek;
+
+  /// No description provided for @progressWinRateTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Win rate trend'**
+  String get progressWinRateTrend;
+
+  /// No description provided for @progressPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Your stats preview — log sessions to unlock'**
+  String get progressPreview;
+
+  /// No description provided for @streakWarmingUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Warming up'**
+  String get streakWarmingUp;
+
+  /// No description provided for @streakActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active streak'**
+  String get streakActive;
+
+  /// No description provided for @streakPersonalBest.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal best'**
+  String get streakPersonalBest;
+
+  /// No description provided for @streakDaySingular.
+  ///
+  /// In en, this message translates to:
+  /// **'day'**
+  String get streakDaySingular;
+
+  /// No description provided for @streakDayPlural.
+  ///
+  /// In en, this message translates to:
+  /// **'days'**
+  String get streakDayPlural;
+
+  /// No description provided for @streakStartToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Log a session today to start your streak'**
+  String get streakStartToday;
+
+  /// No description provided for @rateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate Player'**
+  String get rateTitle;
+
+  /// No description provided for @rateSportsmanship.
+  ///
+  /// In en, this message translates to:
+  /// **'Sportsmanship'**
+  String get rateSportsmanship;
+
+  /// No description provided for @rateSportsmanshipHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Were they fair, respectful, and fun to play with?'**
+  String get rateSportsmanshipHint;
+
+  /// No description provided for @rateReliabilityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Did they show up on time and follow through?'**
+  String get rateReliabilityHint;
+
+  /// No description provided for @rateCommentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave a comment (optional)...'**
+  String get rateCommentHint;
+
+  /// No description provided for @rateAnonymous.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit anonymously'**
+  String get rateAnonymous;
+
+  /// No description provided for @rateAnonymousHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name will not be shown to this player'**
+  String get rateAnonymousHint;
+
+  /// No description provided for @rateSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Rating'**
+  String get rateSubmit;
+
+  /// No description provided for @rateSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating submitted!'**
+  String get rateSubmitted;
+
+  /// No description provided for @reportTargetUser.
+  ///
+  /// In en, this message translates to:
+  /// **'this user'**
+  String get reportTargetUser;
+
+  /// No description provided for @reportTargetGame.
+  ///
+  /// In en, this message translates to:
+  /// **'this game'**
+  String get reportTargetGame;
+
+  /// No description provided for @reportConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Report'**
+  String get reportConfirmTitle;
+
+  /// No description provided for @reportContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get reportContinue;
+
+  /// No description provided for @reportSubmitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Report?'**
+  String get reportSubmitTitle;
+
+  /// No description provided for @reportGoBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Go Back'**
+  String get reportGoBack;
+
+  /// No description provided for @reportSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit'**
+  String get reportSubmit;
+
+  /// No description provided for @reportSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Report submitted. Admins will review it shortly.'**
+  String get reportSubmitted;
+
+  /// No description provided for @reportDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Report Details'**
+  String get reportDetails;
+
+  /// No description provided for @reportFormTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get reportFormTitle;
+
+  /// No description provided for @reportFormTitleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Title is required'**
+  String get reportFormTitleRequired;
+
+  /// No description provided for @reportFormReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get reportFormReason;
+
+  /// No description provided for @reportFormReasonRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason is required'**
+  String get reportFormReasonRequired;
+
+  /// No description provided for @reportUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Report User'**
+  String get reportUser;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsNotificationsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get settingsNotificationsSection;
+
+  /// No description provided for @settingsPush.
+  ///
+  /// In en, this message translates to:
+  /// **'Push Notifications'**
+  String get settingsPush;
+
+  /// No description provided for @settingsPushHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive notifications about activities'**
+  String get settingsPushHint;
+
+  /// No description provided for @settingsReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity Reminders'**
+  String get settingsReminders;
+
+  /// No description provided for @settingsRemindersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me before scheduled activities'**
+  String get settingsRemindersHint;
+
+  /// No description provided for @settingsAppearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settingsAppearance;
+
+  /// No description provided for @settingsDarkMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark Mode'**
+  String get settingsDarkMode;
+
+  /// No description provided for @settingsDarkModeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use dark theme'**
+  String get settingsDarkModeHint;
+
+  /// No description provided for @settingsAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get settingsAbout;
+
+  /// No description provided for @settingsAppVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'App Version'**
+  String get settingsAppVersion;
+
+  /// No description provided for @settingsNotificationsOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications enabled'**
+  String get settingsNotificationsOn;
+
+  /// No description provided for @settingsNotificationsOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications disabled'**
+  String get settingsNotificationsOff;
+
+  /// No description provided for @settingsDarkOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark mode on'**
+  String get settingsDarkOn;
+
+  /// No description provided for @settingsDarkOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark mode off'**
+  String get settingsDarkOff;
+
+  /// No description provided for @settingsRemindersOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity reminders on'**
+  String get settingsRemindersOn;
+
+  /// No description provided for @settingsRemindersOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity reminders off'**
+  String get settingsRemindersOff;
+
+  /// No description provided for @logFormDurationWithValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration: {minutes}min'**
+  String logFormDurationWithValue(int minutes);
+
+  /// No description provided for @logFormSelfRating.
+  ///
+  /// In en, this message translates to:
+  /// **'How did you perform? {rating}/5'**
+  String logFormSelfRating(int rating);
+
+  /// No description provided for @performanceTotalTimeHrMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h {minutes}m'**
+  String performanceTotalTimeHrMin(int hours, int minutes);
+
+  /// No description provided for @heatmapSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} sessions'**
+  String heatmapSessions(int count);
+
+  /// No description provided for @logCardPersonalBests.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} new personal bests!'**
+  String logCardPersonalBests(int count);
+
+  /// No description provided for @progressTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'{sessions} sessions\n{minutes} min'**
+  String progressTooltip(int sessions, int minutes);
+
+  /// No description provided for @streakGoalProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {goal}-day goal · Keep it going!'**
+  String streakGoalProgress(int current, int goal);
+
+  /// No description provided for @streakLongestDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} d'**
+  String streakLongestDays(int count);
+
+  /// No description provided for @reportConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to report {target}? False reports may result in action against your account.'**
+  String reportConfirmBody(String target);
+
+  /// No description provided for @reportSubmitBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your report titled \"{title}\" will be sent to admins for review.'**
+  String reportSubmitBody(String title);
 }
 
 class _AppLocalizationsDelegate

@@ -1118,4 +1118,546 @@ class AppLocalizationsHe extends AppLocalizations {
   String chatTypingMany(String names) {
     return '$names מקלידים...';
   }
+
+  @override
+  String get commonEdit => 'עריכה';
+
+  @override
+  String get commonAdd => 'הוספה';
+
+  @override
+  String get commonLocation => 'מיקום';
+
+  @override
+  String commonMinutes(Object minutes) {
+    return '$minutes דק׳';
+  }
+
+  @override
+  String get profileEditTitle => 'עריכת פרופיל';
+
+  @override
+  String get profileBioLabel => 'אודות';
+
+  @override
+  String get profileBioHint => 'ספרו לנו קצת על עצמכם…';
+
+  @override
+  String get profileSportsInterests => 'ענפי ספורט ורמות';
+
+  @override
+  String get profileAddSport => '+ הוספת ענף';
+
+  @override
+  String get profileRadiusLabel => 'רדיוס חיפוש (ק״מ)';
+
+  @override
+  String get profileUpdatePicture => 'עדכון תמונת פרופיל';
+
+  @override
+  String get profileUploadGallery => 'העלאה מהגלריה';
+
+  @override
+  String get profileChoosePreset => 'בחירת אווטאר מוכן';
+
+  @override
+  String get profileChangePhoto => 'שינוי תמונה או אווטאר';
+
+  @override
+  String get profilePersonalInfo => 'פרטים אישיים';
+
+  @override
+  String get profileCityHint => 'התחילו להקליד עיר…';
+
+  @override
+  String get profileAreaHint => 'התחילו להקליד אזור או רחוב…';
+
+  @override
+  String get profileAddSportTitle => 'הוספת ענף ספורט';
+
+  @override
+  String get profileSkillLevel => 'רמת מיומנות';
+
+  @override
+  String get profileDangerZone => 'אזור מסוכן';
+
+  @override
+  String get profileDeleteWarning =>
+      'מחיקת החשבון היא סופית ואי אפשר לבטל אותה.';
+
+  @override
+  String get profileDeleteAccount => 'מחיקת חשבון';
+
+  @override
+  String get profileDeleteConfirmTitle => 'למחוק את החשבון?';
+
+  @override
+  String get profileDeleteConfirmBody =>
+      'כל הנתונים שלכם יימחקו לצמיתות. אי אפשר לבטל פעולה זו.';
+
+  @override
+  String get profileDeletePermanently => 'מחיקה לצמיתות';
+
+  @override
+  String get profileFriends => 'חברים';
+
+  @override
+  String get friendsUnfriendTitle => 'להסיר מהחברים?';
+
+  @override
+  String get friendsUnfriend => 'הסרה מהחברים';
+
+  @override
+  String get friendsEmpty =>
+      'עדיין אין חברים.\nבקרו בפרופיל של מישהו ולחצו על הוספת חבר.';
+
+  @override
+  String get profileAdminDashboard => 'לוח ניהול';
+
+  @override
+  String get profileEditTooltip => 'עריכת פרופיל';
+
+  @override
+  String get profileSignOutTooltip => 'התנתקות';
+
+  @override
+  String get profileAbout => 'אודות';
+
+  @override
+  String get profileSports => 'ענפי ספורט';
+
+  @override
+  String get profileRecentActivity => 'פעילות אחרונה';
+
+  @override
+  String get profileSignOutTitle => 'להתנתק?';
+
+  @override
+  String get profileSignOutBody => 'תצטרכו להתחבר שוב.';
+
+  @override
+  String get profileSignOut => 'התנתקות';
+
+  @override
+  String get profileWinRate => 'אחוז ניצחונות';
+
+  @override
+  String get profileRatingsSummary => 'סיכום דירוגים';
+
+  @override
+  String get profileRatingOverall => 'כללי';
+
+  @override
+  String get profileRatingReliability => 'אמינות';
+
+  @override
+  String get profileRatingBehavior => 'התנהגות';
+
+  @override
+  String get profileUpcomingGames => 'משחקים קרובים';
+
+  @override
+  String get profileNoRatings => 'אין עדיין דירוגים';
+
+  @override
+  String get profileFriendRequestSent => 'בקשת החברות נשלחה';
+
+  @override
+  String get profileNowFriends => 'אתם עכשיו חברים';
+
+  @override
+  String get profileSignInToMessage => 'יש להתחבר כדי לשלוח הודעה.';
+
+  @override
+  String get profileCannotMessageSelf => 'אי אפשר לשלוח הודעה לעצמכם.';
+
+  @override
+  String get profileMessage => 'הודעה';
+
+  @override
+  String get profileRequestSent => 'הבקשה נשלחה';
+
+  @override
+  String get profileAddFriend => 'הוספת חבר';
+
+  @override
+  String get profilePlaceResolveFailed =>
+      'לא ניתן לזהות את המקום. נסו מקום אחר.';
+
+  @override
+  String get profileSelectCityFirst => 'יש לבחור עיר קודם';
+
+  @override
+  String friendsUnfriendBody(String name) {
+    return 'להסיר את $name מהחברים? אפשר לשלוח בקשה חדשה בהמשך.';
+  }
+
+  @override
+  String friendsRemoved(String name) {
+    return '$name הוסר/ה מהחברים';
+  }
+
+  @override
+  String profileMutualConnections(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count חברים משותפים',
+      two: 'שני חברים משותפים',
+      one: 'חבר משותף אחד',
+      zero: 'אין חברים משותפים',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String profileRadiusKmBadge(int km) {
+    return 'רדיוס $km ק״מ';
+  }
+
+  @override
+  String profileRadiusKmValue(int km) {
+    return '$km ק״מ';
+  }
+
+  @override
+  String profileCommunityAverageOne(String avg) {
+    return 'ממוצע הקהילה $avg מתוך דירוג עמית אחד';
+  }
+
+  @override
+  String profileCommunityAverageMany(String avg, int count) {
+    return 'ממוצע הקהילה $avg מתוך $count דירוגי עמיתים';
+  }
+
+  @override
+  String profileFriendsCount(int count) {
+    return '$count חברים';
+  }
+
+  @override
+  String profileRatingWithCount(int count) {
+    return 'דירוג ($count)';
+  }
+
+  @override
+  String get logTypeMatch => 'משחק';
+
+  @override
+  String get logTypeTraining => 'אימון';
+
+  @override
+  String get logTypeFitness => 'כושר';
+
+  @override
+  String get outcomeWin => 'ניצחון';
+
+  @override
+  String get outcomeLoss => 'הפסד';
+
+  @override
+  String get outcomeDraw => 'תיקו';
+
+  @override
+  String get moodGreat => 'מצוין';
+
+  @override
+  String get moodGood => 'טוב';
+
+  @override
+  String get moodOk => 'בסדר';
+
+  @override
+  String get moodTired => 'עייף/ה';
+
+  @override
+  String get moodInjured => 'פצוע/ה';
+
+  @override
+  String get logFormSessionLogged => 'האימון תועד! 💪';
+
+  @override
+  String get logFormPersonalBestTitle => '🏅 שיא אישי חדש!';
+
+  @override
+  String get logFormPersonalBestBody =>
+      'שברתם את השיא הקודם שלכם! המשיכו כך! 🎉';
+
+  @override
+  String get logFormAwesome => 'מעולה!';
+
+  @override
+  String get logFormTitle => 'תיעוד אימון';
+
+  @override
+  String get logFormSessionType => 'סוג האימון *';
+
+  @override
+  String get logFormOutcome => 'תוצאה';
+
+  @override
+  String get logFormDuration => 'משך';
+
+  @override
+  String get logFormFeel => 'איך הרגשתם?';
+
+  @override
+  String get logFormNotes => 'הערות';
+
+  @override
+  String get logFormNotesHint => 'מה הלך טוב? מה אפשר לשפר?';
+
+  @override
+  String get logFormPublic => 'הפיכת התיעוד לציבורי';
+
+  @override
+  String get logFormSave => 'שמירת האימון 💪';
+
+  @override
+  String get performanceTotalSessions => 'סה״כ אימונים';
+
+  @override
+  String get performanceTotalTime => 'זמן כולל';
+
+  @override
+  String get performanceNoSessions => 'אין עדיין אימונים';
+
+  @override
+  String get performanceNoSessionsHint =>
+      'התחילו לתעד את האימונים והמשחקים שלכם.';
+
+  @override
+  String get performancePersonalBests => 'שיאים אישיים';
+
+  @override
+  String get performanceBySport => 'לפי ענף';
+
+  @override
+  String get performanceBuildStats => 'תעדו אימונים כדי לבנות סטטיסטיקות';
+
+  @override
+  String get performanceTabOverview => 'סקירה';
+
+  @override
+  String get performanceTabLogs => 'תיעודים';
+
+  @override
+  String get performanceTabStats => 'סטטיסטיקות';
+
+  @override
+  String get heatmapActivity => 'פעילות';
+
+  @override
+  String get heatmapNoActivity => 'אין פעילות';
+
+  @override
+  String get heatmapOneSession => 'אימון אחד';
+
+  @override
+  String get heatmapLess => 'פחות';
+
+  @override
+  String get heatmapMore => 'יותר';
+
+  @override
+  String get logCardOnePersonalBest => 'שיא אישי חדש אחד!';
+
+  @override
+  String get progressSessionsPerWeek => 'אימונים בשבוע';
+
+  @override
+  String get progressWinRateTrend => 'מגמת אחוזי הניצחון';
+
+  @override
+  String get progressPreview =>
+      'תצוגה מקדימה של הסטטיסטיקות — תעדו אימונים כדי לפתוח';
+
+  @override
+  String get streakWarmingUp => 'בחימום';
+
+  @override
+  String get streakActive => 'רצף פעיל';
+
+  @override
+  String get streakPersonalBest => 'שיא אישי';
+
+  @override
+  String get streakDaySingular => 'יום';
+
+  @override
+  String get streakDayPlural => 'ימים';
+
+  @override
+  String get streakStartToday => 'תעדו אימון היום כדי להתחיל רצף';
+
+  @override
+  String get rateTitle => 'דירוג שחקן';
+
+  @override
+  String get rateSportsmanship => 'רוח ספורטיבית';
+
+  @override
+  String get rateSportsmanshipHint =>
+      'האם היו הוגנים, מכבדים ומהנים לשחק איתם?';
+
+  @override
+  String get rateReliabilityHint => 'האם הגיעו בזמן ועמדו במילה שלהם?';
+
+  @override
+  String get rateCommentHint => 'השאירו תגובה (אופציונלי)...';
+
+  @override
+  String get rateAnonymous => 'שליחה אנונימית';
+
+  @override
+  String get rateAnonymousHint => 'שמכם לא יוצג לשחקן הזה';
+
+  @override
+  String get rateSubmit => 'שליחת הדירוג';
+
+  @override
+  String get rateSubmitted => 'הדירוג נשלח!';
+
+  @override
+  String get reportTargetUser => 'משתמש זה';
+
+  @override
+  String get reportTargetGame => 'משחק זה';
+
+  @override
+  String get reportConfirmTitle => 'אישור הדיווח';
+
+  @override
+  String get reportContinue => 'המשך';
+
+  @override
+  String get reportSubmitTitle => 'לשלוח את הדיווח?';
+
+  @override
+  String get reportGoBack => 'חזרה';
+
+  @override
+  String get reportSubmit => 'שליחה';
+
+  @override
+  String get reportSubmitted => 'הדיווח נשלח. מנהלי המערכת יבדקו אותו בקרוב.';
+
+  @override
+  String get reportDetails => 'פרטי הדיווח';
+
+  @override
+  String get reportFormTitle => 'כותרת';
+
+  @override
+  String get reportFormTitleRequired => 'יש להזין כותרת';
+
+  @override
+  String get reportFormReason => 'סיבה';
+
+  @override
+  String get reportFormReasonRequired => 'יש להזין סיבה';
+
+  @override
+  String get reportUser => 'דיווח על משתמש';
+
+  @override
+  String get settingsTitle => 'הגדרות';
+
+  @override
+  String get settingsNotificationsSection => 'התראות';
+
+  @override
+  String get settingsPush => 'התראות פוש';
+
+  @override
+  String get settingsPushHint => 'קבלת התראות על פעילויות';
+
+  @override
+  String get settingsReminders => 'תזכורות לפעילויות';
+
+  @override
+  String get settingsRemindersHint => 'תזכורת לפני פעילויות מתוכננות';
+
+  @override
+  String get settingsAppearance => 'מראה';
+
+  @override
+  String get settingsDarkMode => 'מצב כהה';
+
+  @override
+  String get settingsDarkModeHint => 'שימוש בערכת נושא כהה';
+
+  @override
+  String get settingsAbout => 'אודות';
+
+  @override
+  String get settingsAppVersion => 'גרסת האפליקציה';
+
+  @override
+  String get settingsNotificationsOn => 'ההתראות הופעלו';
+
+  @override
+  String get settingsNotificationsOff => 'ההתראות כובו';
+
+  @override
+  String get settingsDarkOn => 'מצב כהה פועל';
+
+  @override
+  String get settingsDarkOff => 'מצב כהה כבוי';
+
+  @override
+  String get settingsRemindersOn => 'תזכורות הופעלו';
+
+  @override
+  String get settingsRemindersOff => 'תזכורות כובו';
+
+  @override
+  String logFormDurationWithValue(int minutes) {
+    return 'משך: $minutes דק׳';
+  }
+
+  @override
+  String logFormSelfRating(int rating) {
+    return 'איך הייתם? $rating/5';
+  }
+
+  @override
+  String performanceTotalTimeHrMin(int hours, int minutes) {
+    return '$hours שע׳ $minutes דק׳';
+  }
+
+  @override
+  String heatmapSessions(int count) {
+    return '$count אימונים';
+  }
+
+  @override
+  String logCardPersonalBests(int count) {
+    return '$count שיאים אישיים חדשים!';
+  }
+
+  @override
+  String progressTooltip(int sessions, int minutes) {
+    return '$sessions אימונים\n$minutes דק׳';
+  }
+
+  @override
+  String streakGoalProgress(int current, int goal) {
+    return '$current מתוך יעד של $goal ימים · המשיכו כך!';
+  }
+
+  @override
+  String streakLongestDays(int count) {
+    return '$count ימים';
+  }
+
+  @override
+  String reportConfirmBody(String target) {
+    return 'בטוחים שברצונכם לדווח על $target? דיווחי שווא עלולים להוביל לפעולה נגד החשבון שלכם.';
+  }
+
+  @override
+  String reportSubmitBody(String title) {
+    return 'הדיווח שלכם בשם \"$title\" יישלח לבדיקת מנהלי המערכת.';
+  }
 }
