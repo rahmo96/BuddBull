@@ -70,10 +70,10 @@ class GameSportWallpaper extends StatelessWidget {
 
 Color _sportColor(String sport) {
   return switch (sport.toLowerCase()) {
-    'football' || 'soccer' => AppColors.footballBadge,
-    'basketball' => AppColors.basketballBadge,
-    'tennis' => AppColors.tennisBadge,
-    'running' => AppColors.runningBadge,
+    'football' || 'soccer' => AppColors.footballBadge, // l10n-ignore: API/search value
+    'basketball' => AppColors.basketballBadge, // l10n-ignore: API/search value
+    'tennis' => AppColors.tennisBadge, // l10n-ignore: API/search value
+    'running' => AppColors.runningBadge, // l10n-ignore: API/search value
     _ => AppColors.defaultBadge,
   };
 }

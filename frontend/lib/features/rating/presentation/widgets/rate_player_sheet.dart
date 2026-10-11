@@ -3,6 +3,7 @@ import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
 import 'package:buddbull/features/rating/presentation/widgets/rating_stars.dart';
 import 'package:buddbull/features/rating/providers/rating_provider.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -68,7 +69,7 @@ class _RatePlayerSheetState extends ConsumerState<RatePlayerSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Rate Player', style: AppTextStyles.titleLarge),
+                    Text(context.l10n.rateTitle, style: AppTextStyles.titleLarge),
                     Text(
                       widget.rateeDisplayName,
                       style: AppTextStyles.bodySmall
@@ -85,12 +86,12 @@ class _RatePlayerSheetState extends ConsumerState<RatePlayerSheet> {
           const SizedBox(height: 24),
 
           // ── Reliability score ────────────────────────────────────
-          Text('Reliability',
+          Text(context.l10n.profileRatingReliability,
               style: AppTextStyles.bodyMedium
                   .copyWith(fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           Text(
-            'Did they show up on time and follow through?',
+            context.l10n.rateReliabilityHint,
             style:
                 AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
           ),
@@ -104,12 +105,12 @@ class _RatePlayerSheetState extends ConsumerState<RatePlayerSheet> {
           const SizedBox(height: 20),
 
           // ── Behavior score ────────────────────────────────────────
-          Text('Sportsmanship',
+          Text(context.l10n.rateSportsmanship,
               style: AppTextStyles.bodyMedium
                   .copyWith(fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           Text(
-            'Were they fair, respectful, and fun to play with?',
+            context.l10n.rateSportsmanshipHint,
             style:
                 AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
           ),
@@ -128,7 +129,7 @@ class _RatePlayerSheetState extends ConsumerState<RatePlayerSheet> {
             maxLines: 3,
             maxLength: 500,
             decoration: InputDecoration(
-              hintText: 'Leave a comment (optional)...',
+              hintText: context.l10n.rateCommentHint,
               hintStyle: AppTextStyles.bodySmall
                   .copyWith(color: AppColors.textSecondary),
               border:
@@ -151,10 +152,10 @@ class _RatePlayerSheetState extends ConsumerState<RatePlayerSheet> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Submit anonymously',
+                  Text(context.l10n.rateAnonymous,
                       style: AppTextStyles.bodySmall),
                   Text(
-                    'Your name will not be shown to this player',
+                    context.l10n.rateAnonymousHint,
                     style: AppTextStyles.caption
                         .copyWith(color: AppColors.textSecondary),
                   ),
@@ -176,7 +177,7 @@ class _RatePlayerSheetState extends ConsumerState<RatePlayerSheet> {
 
           // ── Submit button ─────────────────────────────────────────
           BbButton(
-            label: 'Submit Rating',
+            label: context.l10n.rateSubmit,
             isLoading: rateState.isLoading,
             onPressed: (_reliability == 0 || _behavior == 0) ? null : _submit,
           ),
@@ -185,7 +186,7 @@ class _RatePlayerSheetState extends ConsumerState<RatePlayerSheet> {
             child: TextButton(
               onPressed: _isDismissing || rateState.isLoading ? null : _dismissEntireGame,
               child: Text(
-                "Don't rate this game",
+                context.l10n.gameDetailDontRate,
                 style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
               ),
             ),
@@ -202,8 +203,8 @@ class _RatePlayerSheetState extends ConsumerState<RatePlayerSheet> {
       if (!mounted) return;
       Navigator.pop(context, false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('You will not be prompted to rate this game.'),
+        SnackBar(
+          content: Text(context.l10n.gameDetailWontRatePrompt),
         ),
       );
     } catch (e) {
@@ -233,8 +234,8 @@ class _RatePlayerSheetState extends ConsumerState<RatePlayerSheet> {
       ref.invalidate(gameDetailProvider(widget.gameId));
       Navigator.pop(context, true);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Rating submitted!'),
+        SnackBar(
+            content: Text(context.l10n.rateSubmitted),
             backgroundColor: AppColors.success),
       );
     }

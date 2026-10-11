@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_assets.dart';
 import 'package:buddbull/core/constants/app_colors.dart';
+import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/games/presentation/widgets/game_card.dart';
@@ -13,6 +14,7 @@ import 'package:buddbull/features/profile/presentation/widgets/stats_card.dart';
 import 'package:buddbull/features/rating/data/models/rating_model.dart';
 import 'package:buddbull/features/rating/providers/rating_provider.dart';
 import 'package:buddbull/features/search/presentation/widgets/search_transition.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -27,12 +29,13 @@ class HomeScreen extends ConsumerWidget {
     final pendingAsync = ref.watch(pendingRatingsProvider);
     final statsAsync = ref.watch(performanceStatsProvider);
 
+    final l10n = context.l10n;
     final hour = DateTime.now().hour;
     final greeting = hour < 12
-        ? 'Good morning'
+        ? l10n.homeGreetingMorning
         : hour < 17
-            ? 'Good afternoon'
-            : 'Good evening';
+            ? l10n.homeGreetingAfternoon
+            : l10n.homeGreetingEvening;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -80,7 +83,7 @@ class HomeScreen extends ConsumerWidget {
                         Expanded(
                           child: StatsCard(
                             value: user!.stats!.gamesPlayed.toString(),
-                            label: 'Games',
+                            label: context.l10n.homeStatGames,
                             icon: Icons.sports_soccer_rounded,
                             accentColor: AppColors.metricGamesAccent,
                             backgroundColor: AppColors.metricGamesBg,
@@ -89,7 +92,7 @@ class HomeScreen extends ConsumerWidget {
                         Expanded(
                           child: StatsCard(
                             value: user.stats!.averageRating.toStringAsFixed(1),
-                            label: 'Rating',
+                            label: context.l10n.homeStatRating,
                             icon: Icons.star_rounded,
                             accentColor: AppColors.metricRatingAccent,
                             backgroundColor: AppColors.metricRatingBg,
@@ -97,8 +100,8 @@ class HomeScreen extends ConsumerWidget {
                         ),
                         Expanded(
                           child: StatsCard(
-                            value: '${user.stats!.currentStreak}d',
-                            label: 'Streak',
+                            value: context.l10n.homeStreakDaysShort(user.stats!.currentStreak),
+                            label: context.l10n.homeStatStreak,
                             icon: Icons.local_fire_department_rounded,
                             accentColor: AppColors.metricStreakAccent,
                             backgroundColor: AppColors.metricStreakBg,
@@ -125,8 +128,8 @@ class HomeScreen extends ConsumerWidget {
 
                   // ── My Upcoming Games ─────────────────────
                   _SectionHeader(
-                    title: 'My Upcoming Games',
-                    actionLabel: 'See all',
+                    title: context.l10n.homeMyUpcomingGames,
+                    actionLabel: context.l10n.commonSeeAll,
                     onAction: () => context.go('/games'),
                   ),
                   const SizedBox(height: 10),
@@ -139,8 +142,8 @@ class HomeScreen extends ConsumerWidget {
 
                   // ── Explore Near You ──────────────────────
                   _SectionHeader(
-                    title: 'Explore Near You',
-                    actionLabel: 'Browse all',
+                    title: context.l10n.homeExploreNearYou,
+                    actionLabel: context.l10n.commonBrowseAll,
                     onAction: () => context.go('/games'),
                   ),
                   const SizedBox(height: 10),
@@ -152,7 +155,7 @@ class HomeScreen extends ConsumerWidget {
                   const SizedBox(height: 20),
 
                   // ── Quick actions ─────────────────────────
-                  const _SectionHeader(title: 'Quick Actions'),
+                  _SectionHeader(title: context.l10n.homeQuickActions),
                   const SizedBox(height: 10),
                   Row(
                     spacing: 10,
@@ -160,7 +163,7 @@ class HomeScreen extends ConsumerWidget {
                       Expanded(
                         child: _QuickActionCard(
                           icon: Icons.search_rounded,
-                          label: 'Find a Game',
+                          label: context.l10n.homeFindGame,
                           color: AppColors.primary,
                           onTap: () => context.go('/games'),
                         ),
@@ -168,7 +171,7 @@ class HomeScreen extends ConsumerWidget {
                       Expanded(
                         child: _QuickActionCard(
                           icon: Icons.add_rounded,
-                          label: 'Log Session',
+                          label: context.l10n.homeLogSession,
                           color: AppColors.success,
                           onTap: () => context
                               .push('/performance/log/create'),
@@ -177,7 +180,7 @@ class HomeScreen extends ConsumerWidget {
                       Expanded(
                         child: _QuickActionCard(
                           icon: Icons.sports_score_rounded,
-                          label: 'Create Game',
+                          label: context.l10n.homeCreateGame,
                           color: AppColors.secondary,
                           onTap: () => context.push('/games/create'),
                         ),
@@ -191,8 +194,8 @@ class HomeScreen extends ConsumerWidget {
 
                   // ── Recent activity ───────────────────────
                   _SectionHeader(
-                    title: 'Recent Activity',
-                    actionLabel: 'See all',
+                    title: context.l10n.homeRecentActivity,
+                    actionLabel: context.l10n.commonSeeAll,
                     onAction: () => context.go('/performance'),
                   ),
                   const SizedBox(height: 10),
@@ -204,8 +207,8 @@ class HomeScreen extends ConsumerWidget {
                           if (logs.isEmpty) {
                             return _EmptySection(
                               emoji: '📊',
-                              message: 'No recent sessions',
-                              actionLabel: 'Log a session',
+                              message: context.l10n.homeNoRecentSessions,
+                              actionLabel: context.l10n.homeLogASession,
                               onAction: () => context.push(
                                   '/performance/log/create'),
                             );
@@ -308,8 +311,8 @@ class _UpcomingMineStrip extends ConsumerWidget {
       loading: _UpcomingShimmer.new,
       error: (_, __) => _EmptySection(
         emoji: '📅',
-        message: 'No upcoming games',
-        actionLabel: 'Browse games',
+        message: context.l10n.homeNoUpcomingGames,
+        actionLabel: context.l10n.homeBrowseGames,
         onAction: onSeeAll,
       ),
       data: (games) {
@@ -334,8 +337,8 @@ class _UpcomingMineStrip extends ConsumerWidget {
         if (shortlist.isEmpty) {
           return _EmptySection(
             emoji: '📅',
-            message: 'No upcoming games',
-            actionLabel: 'Browse games',
+            message: context.l10n.homeNoUpcomingGames,
+            actionLabel: context.l10n.homeBrowseGames,
             onAction: onSeeAll,
           );
         }
@@ -387,8 +390,8 @@ class _ExploreStrip extends ConsumerWidget {
       loading: _UpcomingShimmer.new,
       error: (_, __) => _EmptySection(
         emoji: '🔍',
-        message: "Couldn't load nearby games",
-        actionLabel: 'Browse all',
+        message: context.l10n.homeNearbyLoadFailed,
+        actionLabel: context.l10n.commonBrowseAll,
         onAction: onBrowse,
       ),
       data: (games) {
@@ -408,8 +411,8 @@ class _ExploreStrip extends ConsumerWidget {
         if (filtered.isEmpty) {
           return _EmptySection(
             emoji: '🔍',
-            message: 'Nothing nearby right now',
-            actionLabel: 'Browse all',
+            message: context.l10n.homeNothingNearby,
+            actionLabel: context.l10n.commonBrowseAll,
             onAction: onBrowse,
           );
         }
@@ -601,9 +604,9 @@ class _OutcomeIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       switch (outcome) {
-        'win' => '🏆',
-        'loss' => '❌',
-        'draw' => '🤝',
+        'win' => '🏆', // l10n-ignore: API/search value
+        'loss' => '❌', // l10n-ignore: API/search value
+        'draw' => '🤝', // l10n-ignore: API/search value
         _ => '',
       },
       style: const TextStyle(fontSize: 18),
@@ -613,12 +616,12 @@ class _OutcomeIcon extends StatelessWidget {
 
 String _sportEmoji(String sport) {
   return switch (sport.toLowerCase()) {
-    'football' || 'soccer' => '⚽',
-    'basketball' => '🏀',
-    'tennis' => '🎾',
-    'running' => '🏃',
-    'swimming' => '🏊',
-    'cycling' => '🚴',
+    'football' || 'soccer' => '⚽', // l10n-ignore: API/search value
+    'basketball' => '🏀', // l10n-ignore: API/search value
+    'tennis' => '🎾', // l10n-ignore: API/search value
+    'running' => '🏃', // l10n-ignore: API/search value
+    'swimming' => '🏊', // l10n-ignore: API/search value
+    'cycling' => '🚴', // l10n-ignore: API/search value
     _ => '🏅',
   };
 }
@@ -649,9 +652,10 @@ class _HomeHeaderFlexibleSpace extends StatelessWidget {
                 (settings.maxExtent - settings.minExtent))
             .clamp(0.0, 1.0);
 
-    final collapsedTitle = firstName ?? 'BuddBull';
-    final expandedTitle =
-        firstName != null ? '$greeting, $firstName!' : '$greeting!';
+    final collapsedTitle = firstName ?? AppStrings.appName;
+    final expandedTitle = firstName != null
+        ? context.l10n.homeGreetingWithName(greeting, firstName!)
+        : context.l10n.homeGreetingNoName(greeting);
     final t = Curves.easeOutCubic.transform(expandRatio.clamp(0.0, 1.0));
     final showExpandedActions = t > 0.55;
 
@@ -702,16 +706,16 @@ class _HomeHeaderFlexibleSpace extends StatelessWidget {
                 child: Stack(
                   children: [
                     if (showExpandedActions)
-                      Positioned(
+                      PositionedDirectional(
                         top: 0,
-                        right: 0,
+                        end: 0,
                         child: HomeHeaderActions(
                           onCalendarTap: onCalendarTap,
                           notificationBell: notificationBell,
                         ),
                       ),
                     Padding(
-                      padding: EdgeInsets.fromLTRB(
+                      padding: EdgeInsetsDirectional.fromSTEB(
                         20,
                         8,
                         showExpandedActions ? 88 : 20,
@@ -722,7 +726,7 @@ class _HomeHeaderFlexibleSpace extends StatelessWidget {
                           Opacity(
                             opacity: expandRatio,
                             child: Align(
-                              alignment: Alignment.bottomLeft,
+                              alignment: AlignmentDirectional.bottomStart,
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -731,6 +735,7 @@ class _HomeHeaderFlexibleSpace extends StatelessWidget {
                                     expandedTitle,
                                     style: const TextStyle(
                                       fontFamily: 'Inter',
+                                      fontFamilyFallback: ['Heebo'],
                                       fontSize: 26,
                                       fontWeight: FontWeight.w800,
                                       color: Colors.white,
@@ -740,9 +745,10 @@ class _HomeHeaderFlexibleSpace extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
-                                    'Find your squad. Play your game.',
+                                    context.l10n.homeTagline,
                                     style: TextStyle(
                                       fontFamily: 'Inter',
+                                      fontFamilyFallback: const ['Heebo'],
                                       fontSize: 14,
                                       color:
                                           Colors.white.withValues(alpha: 0.82),
@@ -755,11 +761,12 @@ class _HomeHeaderFlexibleSpace extends StatelessWidget {
                           Opacity(
                             opacity: 1 - expandRatio,
                             child: Align(
-                              alignment: Alignment.centerLeft,
+                              alignment: AlignmentDirectional.centerStart,
                               child: Text(
                                 collapsedTitle,
                                 style: const TextStyle(
                                   fontFamily: 'Inter',
+                                  fontFamilyFallback: ['Heebo'],
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
@@ -807,7 +814,7 @@ class _NotificationBellAction extends ConsumerWidget {
     final unread = ref.watch(unreadNotificationCountProvider);
     return IconButton(
       onPressed: onTap,
-      tooltip: 'Notifications',
+      tooltip: context.l10n.homeNotificationsTooltip,
       icon: Badge.count(
         count: unread,
         isLabelVisible: unread > 0,

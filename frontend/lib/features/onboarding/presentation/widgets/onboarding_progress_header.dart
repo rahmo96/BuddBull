@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 /// Thin progress strip for the two-step post-signup flow.
@@ -24,7 +25,7 @@ class OnboardingProgressHeader extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Step $step of $totalSteps',
+                context.l10n.onboardingStepOf(step, totalSteps),
                 style: AppTextStyles.labelMedium.copyWith(
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w600,

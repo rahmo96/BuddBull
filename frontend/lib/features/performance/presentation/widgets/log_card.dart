@@ -1,6 +1,8 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/constants/log_labels.dart';
 import 'package:buddbull/features/performance/data/models/performance_model.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 /// A card displaying a single performance log entry.
@@ -92,12 +94,12 @@ class LogCard extends StatelessWidget {
                     children: [
                       _MetaChip(
                         icon: Icons.category_outlined,
-                        label: _logTypeLabel(log.logType),
+                        label: logTypeDisplayName(log.logType, context.l10n),
                       ),
                       if (log.durationMinutes != null)
                         _MetaChip(
                           icon: Icons.timer_outlined,
-                          label: '${log.durationMinutes}min',
+                          label: context.l10n.gameDurationMin(log.durationMinutes!),
                         ),
                       if (log.selfRating != null)
                         _MetaChip(
@@ -107,13 +109,13 @@ class LogCard extends StatelessWidget {
                       if (log.mood != null)
                         _MetaChip(
                           icon: Icons.mood_rounded,
-                          label: log.mood!,
+                          label: moodDisplayName(log.mood!, context.l10n),
                         ),
                       if (log.streakAtLog > 0)
                         _MetaChip(
                           icon: Icons
                               .local_fire_department_rounded,
-                          label: '${log.streakAtLog}d',
+                          label: context.l10n.homeStreakDaysShort(log.streakAtLog),
                           color: AppColors.error,
                         ),
                     ],
@@ -139,7 +141,9 @@ class LogCard extends StatelessWidget {
                                   TextStyle(fontSize: 14)),
                           const SizedBox(width: 6),
                           Text(
-                            '${log.newPersonalBests.length} new personal best${log.newPersonalBests.length > 1 ? 's' : ''}!',
+                            log.newPersonalBests.length == 1
+                                ? context.l10n.logCardOnePersonalBest
+                                : context.l10n.logCardPersonalBests(log.newPersonalBests.length),
                             style: AppTextStyles.labelMedium
                                 .copyWith(
                               color: AppColors.secondaryDark,
@@ -179,12 +183,6 @@ class LogCard extends StatelessWidget {
     return AppColors.secondary;
   }
 
-  String _logTypeLabel(String type) => switch (type) {
-        'match' => 'Match',
-        'training' => 'Training',
-        'fitness' => 'Fitness',
-        _ => type,
-      };
 }
 
 class _SportEmoji extends StatelessWidget {
@@ -208,12 +206,12 @@ class _SportEmoji extends StatelessWidget {
   }
 
   String _emoji(String s) => switch (s.toLowerCase()) {
-        'football' || 'soccer' => '⚽',
-        'basketball' => '🏀',
-        'tennis' => '🎾',
-        'running' => '🏃',
-        'swimming' => '🏊',
-        'cycling' => '🚴',
+        'football' || 'soccer' => '⚽', // l10n-ignore: API/search value
+        'basketball' => '🏀', // l10n-ignore: API/search value
+        'tennis' => '🎾', // l10n-ignore: API/search value
+        'running' => '🏃', // l10n-ignore: API/search value
+        'swimming' => '🏊', // l10n-ignore: API/search value
+        'cycling' => '🚴', // l10n-ignore: API/search value
         _ => '🏅',
       };
 }
@@ -225,9 +223,9 @@ class _OutcomeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, emoji) = switch (outcome) {
-      'win' => (AppColors.success, '🏆 Win'),
-      'loss' => (AppColors.error, '❌ Loss'),
-      'draw' => (AppColors.warning, '🤝 Draw'),
+      'win' => (AppColors.success, '🏆 ${context.l10n.outcomeWin}'), // l10n-ignore: API/search value
+      'loss' => (AppColors.error, '❌ ${context.l10n.outcomeLoss}'), // l10n-ignore: API/search value
+      'draw' => (AppColors.warning, '🤝 ${context.l10n.outcomeDraw}'), // l10n-ignore: API/search value
       _ => (AppColors.grey500, outcome),
     };
 

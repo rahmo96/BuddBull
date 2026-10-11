@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 /// Minimal read-only row for a saved location value with an edit action.
@@ -9,13 +10,13 @@ class LocationSelectedRow extends StatelessWidget {
     required this.icon,
     required this.value,
     required this.onEdit,
-    this.editTooltip = 'Edit',
+    this.editTooltip,
   });
 
   final IconData icon;
   final String value;
   final VoidCallback onEdit;
-  final String editTooltip;
+  final String? editTooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +47,7 @@ class LocationSelectedRow extends StatelessWidget {
               ),
               IconButton(
                 onPressed: onEdit,
-                tooltip: editTooltip,
+                tooltip: editTooltip ?? context.l10n.commonEdit,
                 visualDensity: VisualDensity.compact,
                 icon: const Icon(
                   Icons.edit_outlined,

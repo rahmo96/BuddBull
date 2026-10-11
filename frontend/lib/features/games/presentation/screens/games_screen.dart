@@ -1,12 +1,13 @@
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/constants/sport_labels.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/games/presentation/widgets/game_card.dart';
 import 'package:buddbull/features/games/presentation/widgets/game_filter_sheet.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
 import 'package:buddbull/features/home/home_scaffold.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,8 +15,8 @@ import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 
 const _sports = [
-  'Football', 'Basketball', 'Tennis', 'Running',
-  'Swimming', 'Cycling', 'Volleyball', 'Cricket',
+  'Football', 'Basketball', 'Tennis', 'Running', // l10n-ignore: API/search value
+  'Swimming', 'Cycling', 'Volleyball', 'Cricket', // l10n-ignore: API/search value
 ];
 
 class GamesScreen extends ConsumerStatefulWidget {
@@ -75,7 +76,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(AppStrings.navGames),
+        title: Text(context.l10n.navGames),
         backgroundColor: AppColors.background,
         elevation: 0,
         actions: [
@@ -83,7 +84,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
             IconButton(
               icon: const Icon(Icons.add_circle_outline_rounded),
               onPressed: () => context.push('/games/create'),
-              tooltip: 'Create game',
+              tooltip: context.l10n.gamesCreateTooltip,
             ),
         ],
       ),
@@ -103,7 +104,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
                       searchState.params.copyWith(city: q.isEmpty ? null : q),
                     ),
                 decoration: InputDecoration(
-                  hintText: 'Search games, sports, locations…',
+                  hintText: context.l10n.gamesSearchHint,
                   hintStyle: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.textDisabled,
                   ),
@@ -119,7 +120,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
                       child: const Icon(Icons.tune_rounded),
                     ),
                     onPressed: _openFilters,
-                    tooltip: 'Filter',
+                    tooltip: context.l10n.gamesFilterTooltip,
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
@@ -146,7 +147,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
                   final isActive =
                       searchState.params.sport == null;
                   return _SportFilterChip(
-                    label: 'All',
+                    label: context.l10n.commonAll,
                     emoji: '🏆',
                     selected: isActive,
                     onTap: () => ref
@@ -158,7 +159,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
                 final selected =
                     searchState.params.sport == sport;
                 return _SportFilterChip(
-                  label: sport,
+                  label: sportDisplayName(sport, context.l10n),
                   emoji: _sportEmoji(sport),
                   selected: selected,
                   onTap: () => ref
@@ -179,7 +180,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
               child: Row(
                 children: [
                   Text(
-                    '$activeFilters filter${activeFilters > 1 ? 's' : ''} active',
+                    context.l10n.gamesFiltersActive(activeFilters),
                     style: AppTextStyles.bodySmall.copyWith(
                         color: AppColors.primary),
                   ),
@@ -192,7 +193,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
                           .clearFilters();
                     },
                     child: Text(
-                      'Clear',
+                      context.l10n.commonClear,
                       style: AppTextStyles.labelSmall.copyWith(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w600,
@@ -348,11 +349,11 @@ class _EmptyGames extends StatelessWidget {
           children: [
             const Text('⚽', style: TextStyle(fontSize: 56)),
             const SizedBox(height: 16),
-            const Text('No games found',
+            Text(context.l10n.gamesNoneFound,
                 style: AppTextStyles.headlineSmall),
             const SizedBox(height: 8),
             Text(
-              'Try adjusting your filters or create a new game.',
+              context.l10n.gamesNoneFoundHint,
               style: AppTextStyles.bodyMedium.copyWith(
                   color: AppColors.textSecondary),
               textAlign: TextAlign.center,
@@ -362,7 +363,7 @@ class _EmptyGames extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onCreateTap,
                 icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Create a game'),
+                label: Text(context.l10n.gamesCreateAGame),
                 style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primary),
               ),
@@ -399,14 +400,14 @@ class _ShimmerList extends StatelessWidget {
 
 String _sportEmoji(String sport) {
   return switch (sport.toLowerCase()) {
-    'football' => '⚽',
-    'basketball' => '🏀',
-    'tennis' => '🎾',
-    'running' => '🏃',
-    'swimming' => '🏊',
-    'cycling' => '🚴',
-    'volleyball' => '🏐',
-    'cricket' => '🏏',
+    'football' => '⚽', // l10n-ignore: API/search value
+    'basketball' => '🏀', // l10n-ignore: API/search value
+    'tennis' => '🎾', // l10n-ignore: API/search value
+    'running' => '🏃', // l10n-ignore: API/search value
+    'swimming' => '🏊', // l10n-ignore: API/search value
+    'cycling' => '🚴', // l10n-ignore: API/search value
+    'volleyball' => '🏐', // l10n-ignore: API/search value
+    'cricket' => '🏏', // l10n-ignore: API/search value
     _ => '🏅',
   };
 }

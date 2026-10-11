@@ -4,6 +4,7 @@ import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/games/data/game_repository.dart';
 import 'package:buddbull/features/profile/presentation/widgets/location_selected_row.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:flutter/material.dart';
@@ -16,14 +17,14 @@ class CityAutocompleteField extends ConsumerStatefulWidget {
     super.key,
     required this.selectedCity,
     required this.onCitySelected,
-    this.label = 'City',
-    this.hint = 'Start typing a city…',
+    this.label,
+    this.hint,
   });
 
   final String? selectedCity;
   final ValueChanged<String> onCitySelected;
-  final String label;
-  final String hint;
+  final String? label;
+  final String? hint;
 
   @override
   ConsumerState<CityAutocompleteField> createState() =>
@@ -104,7 +105,7 @@ class _CityAutocompleteFieldState extends ConsumerState<CityAutocompleteField> {
       try {
         final suggestions = await ref
             .read(gameRepositoryProvider)
-            .autocompleteAddress(query, types: '(cities)');
+            .autocompleteAddress(query, types: '(cities)'); // l10n-ignore: API/search value
         if (!mounted || id != _requestId) return;
         setState(() => _suggestions = suggestions);
       } catch (_) {
@@ -133,7 +134,7 @@ class _CityAutocompleteFieldState extends ConsumerState<CityAutocompleteField> {
       widget.onCitySelected(location.city);
     } catch (e) {
       if (!mounted) return;
-      showErrorSnackBar(context, 'Could not resolve this place. Try another.');
+      showErrorSnackBar(context, context.l10n.profilePlaceResolveFailed);
     } finally {
       if (mounted) setState(() => _isResolving = false);
     }
@@ -146,15 +147,15 @@ class _CityAutocompleteFieldState extends ConsumerState<CityAutocompleteField> {
       children: [
         if (_hasValue)
           Align(
-            alignment: Alignment.centerRight,
+            alignment: AlignmentDirectional.centerEnd,
             child: TextButton(
               onPressed: _exitEditing,
-              child: const Text('Cancel'),
+              child: Text(context.l10n.commonCancel),
             ),
           ),
         BbTextField(
-          label: widget.label,
-          hint: widget.hint,
+          label: (widget.label ?? context.l10n.profileCityLabel),
+          hint: (widget.hint ?? context.l10n.profileCityHint),
           controller: _searchCtrl,
           prefixIcon: Icons.search_rounded,
           autofocus: _isEditing,
@@ -180,7 +181,7 @@ class _CityAutocompleteFieldState extends ConsumerState<CityAutocompleteField> {
       key: const ValueKey('city-view'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label, style: AppTextStyles.labelLarge),
+        Text((widget.label ?? context.l10n.profileCityLabel), style: AppTextStyles.labelLarge),
         const SizedBox(height: 6),
         LocationSelectedRow(
           icon: Icons.location_city_rounded,

@@ -1,6 +1,7 @@
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/constants/skill_level_labels.dart';
+import 'package:buddbull/core/constants/sport_labels.dart';
 import 'package:buddbull/features/auth/data/models/user_model.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/onboarding/data/onboarding_mock_data.dart';
@@ -10,6 +11,7 @@ import 'package:buddbull/features/profile/presentation/widgets/neighborhood_auto
 import 'package:buddbull/features/profile/presentation/widgets/sport_chip.dart';
 import 'package:buddbull/features/profile/presentation/widgets/travel_radius_slider.dart';
 import 'package:buddbull/features/profile/providers/profile_provider.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
@@ -42,22 +44,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   bool _initialized = false;
 
   static const List<String> _availableSports = [
-    'Football',
-    'Basketball',
-    'Tennis',
-    'Running',
-    'Swimming',
-    'Cycling',
-    'Volleyball',
-    'Cricket',
+    'Football', // l10n-ignore: API/search value
+    'Basketball', // l10n-ignore: API/search value
+    'Tennis', // l10n-ignore: API/search value
+    'Running', // l10n-ignore: API/search value
+    'Swimming', // l10n-ignore: API/search value
+    'Cycling', // l10n-ignore: API/search value
+    'Volleyball', // l10n-ignore: API/search value
+    'Cricket', // l10n-ignore: API/search value
   ];
 
   static const List<String> _skillLevels = [
-    'beginner',
-    'amateur',
-    'intermediate',
-    'advanced',
-    'professional',
+    'beginner', // l10n-ignore: API/search value
+    'amateur', // l10n-ignore: API/search value
+    'intermediate', // l10n-ignore: API/search value
+    'advanced', // l10n-ignore: API/search value
+    'professional', // l10n-ignore: API/search value
   ];
 
   @override
@@ -95,7 +97,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _setPresetAvatar(String avatarId) async {
     await ref.read(profileProvider.notifier).updateProfile({
-      'profilePicture': 'avatar:$avatarId',
+      'profilePicture': 'avatar:$avatarId', // l10n-ignore: API/search value
     });
   }
 
@@ -115,21 +117,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Update Profile Picture', style: AppTextStyles.titleMedium),
+                Text(context.l10n.profileUpdatePicture, style: AppTextStyles.titleMedium),
                 const SizedBox(height: 12),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.photo_library_rounded),
-                  title: const Text('Upload from gallery'),
+                  title: Text(context.l10n.profileUploadGallery),
                   onTap: () async {
                     Navigator.pop(ctx);
                     await _pickImage();
                   },
                 ),
-                const ListTile(
+                ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.emoji_emotions_outlined),
-                  title: Text('Choose preset avatar'),
+                  leading: const Icon(Icons.emoji_emotions_outlined),
+                  title: Text(context.l10n.profileChoosePreset),
                 ),
                 const SizedBox(height: 10),
                 SizedBox(
@@ -219,11 +221,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: const Text(AppStrings.editProfile),
+          title: Text(context.l10n.profileEditTitle),
           actions: [
             TextButton(
               onPressed: profileState.isSaving ? null : _save,
-              child: const Text(AppStrings.saveChanges),
+              child: Text(context.l10n.commonSaveChanges),
             ),
           ],
         ),
@@ -244,9 +246,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             '${user.firstName[0]}${user.lastName[0]}',
                         radius: 52,
                       ),
-                      Positioned(
+                      PositionedDirectional(
                         bottom: 0,
-                        right: 0,
+                        end: 0,
                         child: GestureDetector(
                           onTap: _pickImage,
                           child: Container(
@@ -269,32 +271,32 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 Center(
                   child: TextButton(
                     onPressed: _showAvatarOptionsSheet,
-                    child: const Text('Change photo or avatar'),
+                    child: Text(context.l10n.profileChangePhoto),
                   ),
                 ),
                 const SizedBox(height: 24),
 
                 // ── Name ─────────────────────────────────────────
-                const _SectionHeader(title: 'Personal Info'),
+                _SectionHeader(title: context.l10n.profilePersonalInfo),
                 const SizedBox(height: 12),
                 Row(
                   spacing: 12,
                   children: [
                     Expanded(
                       child: BbTextField(
-                        label: AppStrings.firstNameLabel,
+                        label: context.l10n.authFirstNameLabel,
                         controller: _firstNameCtrl,
                         validator: (v) => (v?.trim().isEmpty ?? true)
-                            ? AppStrings.fieldRequired
+                            ? context.l10n.validationFieldRequired
                             : null,
                       ),
                     ),
                     Expanded(
                       child: BbTextField(
-                        label: AppStrings.lastNameLabel,
+                        label: context.l10n.authLastNameLabel,
                         controller: _lastNameCtrl,
                         validator: (v) => (v?.trim().isEmpty ?? true)
-                            ? AppStrings.fieldRequired
+                            ? context.l10n.validationFieldRequired
                             : null,
                       ),
                     ),
@@ -304,8 +306,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
                 // ── Bio ───────────────────────────────────────────
                 BbTextField(
-                  label: AppStrings.bioLabel,
-                  hint: AppStrings.bioHint,
+                  label: context.l10n.profileBioLabel,
+                  hint: context.l10n.profileBioHint,
                   controller: _bioCtrl,
                   maxLines: 3,
                   minLines: 3,
@@ -314,12 +316,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 const SizedBox(height: 28),
 
                 // ── Location ──────────────────────────────────────
-                const _SectionHeader(title: 'Location'),
+                _SectionHeader(title: context.l10n.commonLocation),
                 const SizedBox(height: 12),
                 CityAutocompleteField(
                   selectedCity: _selectedCity,
-                  label: AppStrings.cityLabel,
-                  hint: 'Start typing a city…',
+                  label: context.l10n.profileCityLabel,
+                  hint: context.l10n.profileCityHint,
                   onCitySelected: (city) => setState(() {
                     _selectedCity = city;
                     _selectedNeighborhood = null;
@@ -330,8 +332,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   key: ValueKey(_selectedCity ?? ''),
                   selectedCity: _selectedCity,
                   selectedNeighborhood: _selectedNeighborhood,
-                  label: AppStrings.neighborhoodLabel,
-                  hint: 'Start typing an area or street…',
+                  label: context.l10n.profileNeighborhoodLabel,
+                  hint: context.l10n.profileAreaHint,
                   onNeighborhoodSelected: (neighborhood) =>
                       setState(() => _selectedNeighborhood = neighborhood),
                 ),
@@ -343,7 +345,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 const SizedBox(height: 28),
 
                 // ── Sports ────────────────────────────────────────
-                const _SectionHeader(title: AppStrings.sportsInterests),
+                _SectionHeader(title: context.l10n.profileSportsInterests),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
@@ -374,7 +376,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
                 // ── Save ──────────────────────────────────────────
                 BbButton(
-                  label: AppStrings.saveChanges,
+                  label: context.l10n.commonSaveChanges,
                   onPressed: _save,
                   isLoading: profileState.isSaving,
                 ),
@@ -437,7 +439,7 @@ class _AddSportButton extends StatelessWidget {
             const Icon(Icons.add_rounded, size: 16, color: AppColors.primary),
             const SizedBox(width: 4),
             Text(
-              AppStrings.addSport,
+              context.l10n.profileAddSport,
               style: AppTextStyles.labelMedium.copyWith(
                 color: AppColors.primary,
               ),
@@ -450,32 +452,33 @@ class _AddSportButton extends StatelessWidget {
 
   void _showAddDialog(BuildContext context) {
     String? selectedSport;
-    String selectedLevel = 'beginner';
+    String selectedLevel = 'beginner'; // l10n-ignore: API/search value
 
     showDialog<void>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) => AlertDialog(
-          title: const Text('Add Sport'),
+          title: Text(context.l10n.profileAddSportTitle),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: 'Sport'),
+                decoration: InputDecoration(labelText: context.l10n.commonSport),
                 items: sports
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                    .map((s) => DropdownMenuItem(
+                        value: s,
+                        child: Text(sportDisplayName(s, context.l10n))))
                     .toList(),
                 onChanged: (v) => setState(() => selectedSport = v),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: selectedLevel,
-                decoration: const InputDecoration(labelText: 'Skill Level'),
+                decoration: InputDecoration(labelText: context.l10n.profileSkillLevel),
                 items: skillLevels
                     .map((s) => DropdownMenuItem(
                           value: s,
-                          child:
-                              Text(s[0].toUpperCase() + s.substring(1)),
+                          child: Text(skillLevelDisplayName(s, context.l10n)),
                         ))
                     .toList(),
                 onChanged: (v) =>
@@ -486,7 +489,7 @@ class _AddSportButton extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.commonCancel),
             ),
             FilledButton(
               onPressed: selectedSport == null
@@ -497,7 +500,7 @@ class _AddSportButton extends StatelessWidget {
                     },
               style: FilledButton.styleFrom(
                   backgroundColor: AppColors.primary),
-              child: const Text('Add'),
+              child: Text(context.l10n.commonAdd),
             ),
           ],
         ),
@@ -521,21 +524,21 @@ class _DangerZone extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Danger Zone',
+            context.l10n.profileDangerZone,
             style: AppTextStyles.titleSmall.copyWith(
               color: AppColors.error,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Deleting your account is permanent and cannot be undone.',
+            context.l10n.profileDeleteWarning,
             style: AppTextStyles.bodySmall.copyWith(
               color: AppColors.error,
             ),
           ),
           const SizedBox(height: 12),
           BbButton(
-            label: 'Delete Account',
+            label: context.l10n.profileDeleteAccount,
             onPressed: () => _confirmDelete(context, ref),
             variant: BbButtonVariant.danger,
             height: 44,
@@ -549,15 +552,12 @@ class _DangerZone extends ConsumerWidget {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete account?'),
-        content: const Text(
-          'All your data will be permanently deleted. '
-          'This action cannot be undone.',
-        ),
+        title: Text(context.l10n.profileDeleteConfirmTitle),
+        content: Text(context.l10n.profileDeleteConfirmBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () {
@@ -566,7 +566,7 @@ class _DangerZone extends ConsumerWidget {
               ref.read(authProvider.notifier).logout();
             },
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete permanently'),
+            child: Text(context.l10n.profileDeletePermanently),
           ),
         ],
       ),

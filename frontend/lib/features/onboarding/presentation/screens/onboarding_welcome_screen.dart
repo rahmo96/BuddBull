@@ -1,12 +1,13 @@
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/constants/skill_level_labels.dart';
+import 'package:buddbull/core/constants/sport_labels.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/features/onboarding/data/onboarding_mock_data.dart';
 import 'package:buddbull/features/onboarding/onboarding_completion.dart';
 import 'package:buddbull/features/onboarding/presentation/widgets/onboarding_progress_header.dart';
 import 'package:buddbull/features/onboarding/providers/onboarding_draft_provider.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,7 +40,7 @@ class OnboardingWelcomeScreen extends ConsumerWidget {
                 children: [
                   const OnboardingProgressHeader(step: 1, totalSteps: 3),
                   Text(
-                    AppStrings.onboardingWelcomeMessage,
+                    context.l10n.onboardingWelcomeMessage,
                     style: AppTextStyles.headlineMedium.copyWith(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w800,
@@ -48,7 +49,7 @@ class OnboardingWelcomeScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 28),
                   Text(
-                    AppStrings.onboardingSportsSection,
+                    context.l10n.onboardingSportsSection,
                     style: AppTextStyles.titleSmall.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.textSecondary,
@@ -74,7 +75,7 @@ class OnboardingWelcomeScreen extends ConsumerWidget {
                   if (draft.sportSkillLevels.isNotEmpty) ...[
                     const SizedBox(height: 28),
                     Text(
-                      AppStrings.onboardingSkillPerSport,
+                      context.l10n.onboardingSkillPerSport,
                       style: AppTextStyles.titleSmall.copyWith(
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
@@ -103,7 +104,7 @@ class OnboardingWelcomeScreen extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: BbButton(
-                          label: AppStrings.onboardingSkip,
+                          label: context.l10n.onboardingSkip,
                           onPressed: () async {
                             await completePostSignupOnboarding(ref);
                             if (context.mounted) {
@@ -118,7 +119,7 @@ class OnboardingWelcomeScreen extends ConsumerWidget {
                       Expanded(
                         flex: 2,
                         child: BbButton(
-                          label: AppStrings.onboardingNext,
+                          label: context.l10n.onboardingNext,
                           onPressed: () =>
                               context.push(Routes.onboardingLocation),
                           height: 50,
@@ -173,7 +174,7 @@ class _SportSkillPanel extends StatelessWidget {
               Text(option.emoji, style: const TextStyle(fontSize: 20)),
               const SizedBox(width: 8),
               Text(
-                option.label,
+                sportDisplayName(option.label, context.l10n),
                 style: AppTextStyles.titleSmall.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -187,7 +188,7 @@ class _SportSkillPanel extends StatelessWidget {
             children: [
               for (final level in OnboardingMockData.skillLevelsOrdered)
                 ChoiceChip(
-                  label: Text(skillLevelDisplayName(level)),
+                  label: Text(skillLevelDisplayName(level, context.l10n)),
                   selected: skillLevel == level,
                   onSelected: (_) => onSkillSelected(level),
                   selectedColor: option.accent.withValues(alpha: 0.2),
@@ -259,7 +260,7 @@ class _SportChoiceChip extends StatelessWidget {
               Text(option.emoji, style: const TextStyle(fontSize: 18)),
               const SizedBox(width: 8),
               Text(
-                option.label,
+                sportDisplayName(option.label, context.l10n),
                 style: AppTextStyles.labelLarge.copyWith(
                   color: selected ? option.accent : AppColors.textPrimary,
                   fontWeight: FontWeight.w700,

@@ -1,4 +1,3 @@
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/router/app_router.dart';
 import 'package:buddbull/core/storage/shared_preferences_provider.dart';
 import 'package:buddbull/features/auth/presentation/screens/login_screen.dart';
@@ -9,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../helpers/auth_router.dart';
+import '../helpers/l10n_app.dart';
 import '../helpers/test_bootstrap.dart';
 
 void main() {
@@ -16,7 +16,10 @@ void main() {
     await initTestFirebaseAndBinding();
   });
 
-  Future<void> pumpRegister(WidgetTester tester) async {
+  Future<void> pumpRegister(
+    WidgetTester tester, {
+    Locale locale = const Locale('en'),
+  }) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final router = authTestRouter(initialLocation: Routes.register);
@@ -25,7 +28,7 @@ void main() {
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
         ],
-        child: MaterialApp.router(routerConfig: router),
+        child: l10nRouterApp(router, locale: locale),
       ),
     );
     await tester.pump();
@@ -34,23 +37,23 @@ void main() {
 
   Future<void> fillValidRegistrationForm(WidgetTester tester) async {
     await tester.enterText(
-        textFieldBelowLabel(AppStrings.firstNameLabel), 'Alex');
+        textFieldBelowLabel(enL10n.authFirstNameLabel), 'Alex');
     await tester.enterText(
-        textFieldBelowLabel(AppStrings.lastNameLabel), 'Rivera');
+        textFieldBelowLabel(enL10n.authLastNameLabel), 'Rivera');
     await tester.enterText(
-        textFieldBelowLabel(AppStrings.usernameLabel), 'alexriver');
+        textFieldBelowLabel(enL10n.authUsernameLabel), 'alexriver');
     await tester.enterText(
-        textFieldBelowLabel(AppStrings.emailLabel), 'alex@example.com');
+        textFieldBelowLabel(enL10n.authEmailLabel), 'alex@example.com');
     await tester.enterText(
-        textFieldBelowLabel(AppStrings.passwordLabel), 'password01');
+        textFieldBelowLabel(enL10n.authPasswordLabel), 'password01');
     await tester.enterText(
-        textFieldBelowLabel(AppStrings.confirmPasswordLabel), 'password01');
+        textFieldBelowLabel(enL10n.authConfirmPasswordLabel), 'password01');
   }
 
   Finder createAccountBbButtonFinder() {
     return find.byWidgetPredicate(
       (w) =>
-          w is BbButton && (w.label == AppStrings.registerButton),
+          w is BbButton && (w.label == enL10n.authRegisterButton),
     );
   }
 
@@ -63,7 +66,7 @@ void main() {
       await tester.tap(createAccountBbButtonFinder());
       await tester.pumpAndSettle();
 
-      expect(find.text(AppStrings.fieldRequired), findsWidgets);
+      expect(find.text(enL10n.validationFieldRequired), findsWidgets);
     });
 
     testWidgets(
@@ -76,18 +79,26 @@ void main() {
       await tester.tap(createAccountBbButtonFinder());
       await tester.pumpAndSettle();
 
-      expect(find.text(AppStrings.acceptTerms), findsOneWidget);
+      expect(find.text(enL10n.validationAcceptTerms), findsOneWidget);
+    });
+
+    testWidgets('renders Hebrew copy and RTL when locale is he', (tester) async {
+      await pumpRegister(tester, locale: const Locale('he'));
+
+      expect(find.text(heL10n.authRegisterSubtitle), findsOneWidget);
+      final ctx = tester.element(find.text(heL10n.authRegisterSubtitle));
+      expect(Directionality.of(ctx), TextDirection.rtl);
     });
 
     testWidgets('should expose sign-in shortcut back to login', (tester) async {
       await pumpRegister(tester);
 
-      await tester.ensureVisible(find.text(AppStrings.signInLink));
-      await tester.tap(find.text(AppStrings.signInLink));
+      await tester.ensureVisible(find.text(enL10n.authSignInLink));
+      await tester.tap(find.text(enL10n.authSignInLink));
       await tester.pumpAndSettle();
 
       expect(find.byType(LoginScreen), findsOneWidget);
-      expect(find.text(AppStrings.loginButton), findsOneWidget);
+      expect(find.text(enL10n.authLoginButton), findsOneWidget);
     });
   });
 }

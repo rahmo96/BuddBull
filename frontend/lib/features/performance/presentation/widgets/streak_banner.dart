@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 /// Gamified streak tracker with linear progress and warming-up state.
@@ -45,14 +46,14 @@ class StreakBanner extends StatelessWidget {
                           Container(
                             width: 8,
                             height: 8,
-                            margin: const EdgeInsets.only(right: 8),
+                            margin: const EdgeInsetsDirectional.only(end: 8),
                             decoration: const BoxDecoration(
                               color: AppColors.warning,
                               shape: BoxShape.circle,
                             ),
                           ),
                         Text(
-                          isWarmingUp ? 'Warming up' : 'Active streak',
+                          isWarmingUp ? context.l10n.streakWarmingUp : context.l10n.streakActive,
                           style: AppTextStyles.labelMedium.copyWith(
                             color: isActive
                                 ? Colors.white.withValues(alpha: 0.9)
@@ -70,6 +71,7 @@ class StreakBanner extends StatelessWidget {
                           '$currentStreak',
                           style: TextStyle(
                             fontFamily: 'Inter',
+                            fontFamilyFallback: const ['Heebo'],
                             fontSize: 40,
                             fontWeight: FontWeight.w800,
                             color: isActive
@@ -80,11 +82,12 @@ class StreakBanner extends StatelessWidget {
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.only(left: 6, bottom: 6),
+                          padding: const EdgeInsetsDirectional.only(start: 6, bottom: 6),
                           child: Text(
-                            currentStreak == 1 ? 'day' : 'days',
+                            currentStreak == 1 ? context.l10n.streakDaySingular : context.l10n.streakDayPlural,
                             style: TextStyle(
                               fontFamily: 'Inter',
+                              fontFamilyFallback: const ['Heebo'],
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
                               color: isActive
@@ -102,7 +105,7 @@ class StreakBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'Personal best',
+                    context.l10n.streakPersonalBest,
                     style: AppTextStyles.labelSmall.copyWith(
                       color: isActive
                           ? Colors.white.withValues(alpha: 0.75)
@@ -111,9 +114,10 @@ class StreakBanner extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '$longestStreak d',
+                    context.l10n.streakLongestDays(longestStreak),
                     style: TextStyle(
                       fontFamily: 'Inter',
+                      fontFamilyFallback: const ['Heebo'],
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: isActive ? Colors.white : AppColors.textPrimary,
@@ -140,8 +144,8 @@ class StreakBanner extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             isWarmingUp
-                ? 'Log a session today to start your streak'
-                : '$currentStreak of $goalLabel-day goal · Keep it going!',
+                ? context.l10n.streakStartToday
+                : context.l10n.streakGoalProgress(currentStreak, goalLabel),
             style: AppTextStyles.bodySmall.copyWith(
               color: isActive
                   ? Colors.white.withValues(alpha: 0.8)

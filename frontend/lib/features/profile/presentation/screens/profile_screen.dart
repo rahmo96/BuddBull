@@ -1,5 +1,4 @@
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/core/error/app_exception.dart';
 import 'package:buddbull/core/router/app_router.dart';
@@ -9,12 +8,14 @@ import 'package:buddbull/features/chat/data/models/chat_model.dart';
 import 'package:buddbull/features/chat/providers/chat_provider.dart';
 import 'package:buddbull/features/home/home_scaffold.dart';
 import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
+import 'package:buddbull/features/profile/presentation/widgets/language_sheet.dart';
 import 'package:buddbull/features/profile/presentation/widgets/sport_chip.dart';
 import 'package:buddbull/features/profile/presentation/widgets/stats_card.dart';
 import 'package:buddbull/features/profile/providers/profile_provider.dart';
 import 'package:buddbull/features/rating/presentation/widgets/rating_stars.dart';
 import 'package:buddbull/features/reports/data/report_repository.dart';
 import 'package:buddbull/features/reports/presentation/widgets/report_flow.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:buddbull/shared/widgets/loading_overlay.dart';
 import 'package:flutter/material.dart';
@@ -62,18 +63,21 @@ class ProfileScreen extends ConsumerWidget {
                   IconButton(
                     icon: const Icon(Icons.admin_panel_settings_outlined, color: Colors.white),
                     onPressed: () => context.push(Routes.adminDashboard),
-                    tooltip: 'Admin Dashboard',
+                    tooltip: context.l10n.profileAdminDashboard,
                   ),
                 IconButton(
                   icon: const Icon(Icons.edit_outlined, color: Colors.white),
                   onPressed: () => context.push(Routes.editProfile),
-                  tooltip: 'Edit profile',
+                  tooltip: context.l10n.profileEditTooltip,
                 ),
                 IconButton(
-                  icon:
-                      const Icon(Icons.logout_rounded, color: Colors.white),
+                  // logout_rounded has no matchTextDirection; mirror it manually.
+                  icon: Transform.flip(
+                    flipX: Directionality.of(context) == TextDirection.rtl,
+                    child: const Icon(Icons.logout_rounded, color: Colors.white),
+                  ),
                   onPressed: () => _confirmLogout(context, ref),
-                  tooltip: 'Sign out',
+                  tooltip: context.l10n.profileSignOutTooltip,
                 ),
               ],
               flexibleSpace: FlexibleSpaceBar(
@@ -96,6 +100,7 @@ class ProfileScreen extends ConsumerWidget {
                           user.fullName,
                           style: const TextStyle(
                             fontFamily: 'Inter',
+                            fontFamilyFallback: ['Heebo'],
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
@@ -105,6 +110,7 @@ class ProfileScreen extends ConsumerWidget {
                           '@${user.username}',
                           style: TextStyle(
                             fontFamily: 'Inter',
+                            fontFamilyFallback: const ['Heebo'],
                             fontSize: 14,
                             color: Colors.white.withValues(alpha: 0.8),
                           ),
@@ -153,15 +159,13 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                       ),
                       title: Text(
-                        AppStrings.friends,
+                        context.l10n.profileFriends,
                         style: AppTextStyles.bodyMedium.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       subtitle: Text(
-                        user.friendsCount == 1
-                            ? '1 mutual connection'
-                            : '${user.friendsCount} mutual connections',
+                        context.l10n.profileMutualConnections(user.friendsCount),
                         style: AppTextStyles.bodySmall.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -172,6 +176,22 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
+                ),
+              ),
+            ),
+
+            // ── Language ──────────────────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 0),
+                child: Material(
+                  color: AppColors.surface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: AppColors.grey200),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: const LanguageTile(),
                 ),
               ),
             ),
@@ -187,7 +207,7 @@ class ProfileScreen extends ConsumerWidget {
                       Expanded(
                         child: StatsCard(
                           value: user.stats!.gamesPlayed.toString(),
-                          label: AppStrings.gamesPlayed,
+                          label: context.l10n.homeStatGames,
                           icon: Icons.sports_soccer_rounded,
                           accentColor: AppColors.metricGamesAccent,
                           backgroundColor: AppColors.metricGamesBg,
@@ -197,7 +217,7 @@ class ProfileScreen extends ConsumerWidget {
                         child: StatsCard(
                           value:
                               user.stats!.averageRating.toStringAsFixed(1),
-                          label: AppStrings.rating,
+                          label: context.l10n.homeStatRating,
                           icon: Icons.star_rounded,
                           accentColor: AppColors.metricRatingAccent,
                           backgroundColor: AppColors.metricRatingBg,
@@ -205,8 +225,8 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                       Expanded(
                         child: StatsCard(
-                          value: '${user.stats!.currentStreak}d',
-                          label: AppStrings.streakDays,
+                          value: context.l10n.homeStreakDaysShort(user.stats!.currentStreak),
+                          label: context.l10n.homeStatStreak,
                           icon: Icons.local_fire_department_rounded,
                           accentColor: AppColors.metricStreakAccent,
                           backgroundColor: AppColors.metricStreakBg,
@@ -221,7 +241,7 @@ class ProfileScreen extends ConsumerWidget {
             if (user.bio != null && user.bio!.isNotEmpty)
               SliverToBoxAdapter(
                 child: _SectionCard(
-                  title: 'About',
+                  title: context.l10n.profileAbout,
                   child: Text(
                     user.bio!,
                     style: AppTextStyles.bodyMedium,
@@ -233,7 +253,7 @@ class ProfileScreen extends ConsumerWidget {
             if (user.location?.city != null)
               SliverToBoxAdapter(
                 child: _SectionCard(
-                  title: 'Location',
+                  title: context.l10n.commonLocation,
                   child: Row(
                     children: [
                       const Icon(Icons.location_on_rounded,
@@ -257,7 +277,7 @@ class ProfileScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          '${user.location?.radiusKm ?? 10} km radius',
+                          context.l10n.profileRadiusKmBadge(user.location?.radiusKm ?? 10),
                           style: AppTextStyles.labelSmall.copyWith(
                             color: AppColors.info,
                           ),
@@ -272,7 +292,7 @@ class ProfileScreen extends ConsumerWidget {
             if (user.sportsInterests.isNotEmpty)
               SliverToBoxAdapter(
                 child: _SectionCard(
-                  title: AppStrings.sportsInterests,
+                  title: context.l10n.profileSportsInterests,
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -286,7 +306,7 @@ class ProfileScreen extends ConsumerWidget {
             if (user.performanceSummary?.recentActivity.isNotEmpty ?? false)
               SliverToBoxAdapter(
                 child: _SectionCard(
-                  title: 'Recent Activity',
+                  title: context.l10n.profileRecentActivity,
                   child: _ActivityFeed(
                     items: user.performanceSummary!.recentActivity,
                   ),
@@ -306,12 +326,12 @@ class ProfileScreen extends ConsumerWidget {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Sign out?'),
-        content: const Text('You will need to sign in again.'),
+        title: Text(context.l10n.profileSignOutTitle),
+        content: Text(context.l10n.profileSignOutBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () {
@@ -319,7 +339,7 @@ class ProfileScreen extends ConsumerWidget {
               ref.read(authProvider.notifier).logout();
             },
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Sign out'),
+            child: Text(context.l10n.profileSignOutTooltip),
           ),
         ],
       ),
@@ -372,6 +392,7 @@ class _PublicProfileView extends ConsumerWidget {
                           user.fullName,
                           style: const TextStyle(
                             fontFamily: 'Inter',
+                            fontFamilyFallback: ['Heebo'],
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
@@ -418,7 +439,7 @@ class _PublicProfileView extends ConsumerWidget {
                       Expanded(
                         child: StatsCard(
                           value: user.stats!.gamesPlayed.toString(),
-                          label: AppStrings.gamesPlayed,
+                          label: context.l10n.homeStatGames,
                           icon: Icons.sports_soccer_rounded,
                           accentColor: AppColors.metricGamesAccent,
                           backgroundColor: AppColors.metricGamesBg,
@@ -428,8 +449,8 @@ class _PublicProfileView extends ConsumerWidget {
                         child: StatsCard(
                           value: user.stats!.averageRating.toStringAsFixed(1),
                           label: user.stats!.totalRatings > 0
-                              ? '${AppStrings.rating} (${user.stats!.totalRatings})'
-                              : AppStrings.rating,
+                              ? context.l10n.profileRatingWithCount(user.stats!.totalRatings)
+                              : context.l10n.homeStatRating,
                           icon: Icons.star_rounded,
                           accentColor: AppColors.metricRatingAccent,
                           backgroundColor: AppColors.metricRatingBg,
@@ -438,7 +459,7 @@ class _PublicProfileView extends ConsumerWidget {
                       Expanded(
                         child: StatsCard(
                           value: _winRate(user).toStringAsFixed(0),
-                          label: 'Win Rate %',
+                          label: context.l10n.profileWinRate,
                           icon: Icons.emoji_events_outlined,
                           accentColor: AppColors.success,
                           backgroundColor: AppColors.successLight,
@@ -453,7 +474,12 @@ class _PublicProfileView extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                   child: Text(
-                    'Community average ${user.stats!.averageRating.toStringAsFixed(1)} from ${user.stats!.totalRatings} peer ${user.stats!.totalRatings == 1 ? 'rating' : 'ratings'}',
+                    user.stats!.totalRatings == 1
+                        ? context.l10n.profileCommunityAverageOne(
+                            user.stats!.averageRating.toStringAsFixed(1))
+                        : context.l10n.profileCommunityAverageMany(
+                            user.stats!.averageRating.toStringAsFixed(1),
+                            user.stats!.totalRatings),
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -464,14 +490,14 @@ class _PublicProfileView extends ConsumerWidget {
             if (user.bio != null)
               SliverToBoxAdapter(
                 child: _SectionCard(
-                  title: 'About',
+                  title: context.l10n.profileAbout,
                   child: Text(user.bio!, style: AppTextStyles.bodyMedium),
                 ),
               ),
             if (user.sportsInterests.isNotEmpty)
               SliverToBoxAdapter(
                 child: _SectionCard(
-                  title: 'Sports',
+                  title: context.l10n.profileSports,
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -484,26 +510,26 @@ class _PublicProfileView extends ConsumerWidget {
             if (user.performanceSummary != null)
               SliverToBoxAdapter(
                 child: _SectionCard(
-                  title: 'Ratings Summary',
+                  title: context.l10n.profileRatingsSummary,
                   child: Row(
                     children: [
                       Expanded(
                         child: _Metric(
-                          label: 'Overall',
+                          label: context.l10n.profileRatingOverall,
                           value: user.performanceSummary!.ratings.avgComposite
                               .toStringAsFixed(1),
                         ),
                       ),
                       Expanded(
                         child: _Metric(
-                          label: 'Reliability',
+                          label: context.l10n.profileRatingReliability,
                           value: user.performanceSummary!.ratings.avgReliability
                               .toStringAsFixed(1),
                         ),
                       ),
                       Expanded(
                         child: _Metric(
-                          label: 'Behavior',
+                          label: context.l10n.profileRatingBehavior,
                           value: user.performanceSummary!.ratings.avgBehavior
                               .toStringAsFixed(1),
                         ),
@@ -515,7 +541,7 @@ class _PublicProfileView extends ConsumerWidget {
             if (user.performanceSummary?.recentActivity.isNotEmpty ?? false)
               SliverToBoxAdapter(
                 child: _SectionCard(
-                  title: 'Recent Activity',
+                  title: context.l10n.profileRecentActivity,
                   child: _ActivityFeed(
                     items: user.performanceSummary!.recentActivity,
                   ),
@@ -524,7 +550,7 @@ class _PublicProfileView extends ConsumerWidget {
             if (user.performanceSummary?.upcomingGames.isNotEmpty ?? false)
               SliverToBoxAdapter(
                 child: _SectionCard(
-                  title: 'Upcoming Games',
+                  title: context.l10n.profileUpcomingGames,
                   child: _UpcomingGamesList(
                     games: user.performanceSummary!.upcomingGames,
                   ),
@@ -582,7 +608,7 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
   @override
   void initState() {
     super.initState();
-    _status = widget.isFriend ? 'friends' : widget.friendRequestStatus;
+    _status = widget.isFriend ? 'friends' : widget.friendRequestStatus; // l10n-ignore: API/search value
     _friendsCount = widget.initialFriendsCount;
   }
 
@@ -606,8 +632,8 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
     try {
       await ref.read(profileProvider.notifier).sendFriendRequest(widget.userId);
       if (!mounted) return;
-      setState(() => _status = 'pending_sent');
-      _snack('Friend request sent');
+      setState(() => _status = 'pending_sent'); // l10n-ignore: API/search value
+      _snack(context.l10n.profileFriendRequestSent);
     } catch (e) {
       _snack(_errorMessage(e));
     } finally {
@@ -626,11 +652,11 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
           .acceptFriendRequest(requestId);
       if (!mounted) return;
       setState(() {
-        _status = 'friends';
+        _status = 'friends'; // l10n-ignore: API/search value
         if (count != null) _friendsCount = count;
       });
       ref.invalidate(publicProfileProvider(widget.userId));
-      _snack('You are now friends');
+      _snack(context.l10n.profileNowFriends);
     } catch (e) {
       _snack(_errorMessage(e));
     } finally {
@@ -646,9 +672,9 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
     try {
       await ref.read(profileProvider.notifier).declineFriendRequest(requestId);
       if (!mounted) return;
-      setState(() => _status = 'none');
+      setState(() => _status = 'none'); // l10n-ignore: API/search value
       ref.invalidate(publicProfileProvider(widget.userId));
-      _snack('Friend request declined');
+      _snack(context.l10n.notificationsFriendDeclined);
     } catch (e) {
       _snack(_errorMessage(e));
     } finally {
@@ -659,11 +685,11 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
   Future<void> _openMessage() async {
     final me = ref.read(currentUserProvider);
     if (me == null) {
-      _snack('Please sign in to send a message.');
+      _snack(context.l10n.profileSignInToMessage);
       return;
     }
     if (me.id == widget.userId) {
-      _snack('You cannot message yourself.');
+      _snack(context.l10n.profileCannotMessageSelf);
       return;
     }
     if (_messageLoading) return;
@@ -713,7 +739,7 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.chat_bubble_outline, size: 18),
-          label: const Text('Message'),
+          label: Text(context.l10n.profileMessage),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.primary,
             side: const BorderSide(color: AppColors.primary),
@@ -724,7 +750,7 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
         return OutlinedButton.icon(
           onPressed: null,
           icon: const Icon(Icons.hourglass_top_rounded, size: 18),
-          label: const Text('Request sent'),
+          label: Text(context.l10n.profileRequestSent),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.textSecondary,
             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -737,7 +763,7 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
               child: FilledButton.icon(
                 onPressed: _acceptRequest,
                 icon: const Icon(Icons.check_rounded, size: 18),
-                label: const Text('Accept'),
+                label: Text(context.l10n.commonAccept),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.success,
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -749,7 +775,7 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
               child: OutlinedButton.icon(
                 onPressed: _declineRequest,
                 icon: const Icon(Icons.close_rounded, size: 18),
-                label: const Text('Decline'),
+                label: Text(context.l10n.commonDecline),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -761,7 +787,7 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
         return OutlinedButton.icon(
           onPressed: _sendFriendRequest,
           icon: const Icon(Icons.person_add_outlined, size: 18),
-          label: const Text('Add Friend'),
+          label: Text(context.l10n.profileAddFriend),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.primary,
             side: const BorderSide(color: AppColors.primary),
@@ -793,7 +819,7 @@ class _PublicProfileActionsState extends ConsumerState<_PublicProfileActions> {
               size: 20,
             ),
             title: Text(
-              '$_friendsCount ${AppStrings.friends}',
+              context.l10n.profileFriendsCount(_friendsCount),
               style: AppTextStyles.bodySmall.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -874,7 +900,8 @@ class _ActivityFeed extends StatelessWidget {
           subtitle: Text(
             [
               if (item.matchOutcome != null) item.matchOutcome,
-              if (item.durationMinutes != null) '${item.durationMinutes} min',
+              if (item.durationMinutes != null)
+                context.l10n.commonMinutes(item.durationMinutes!),
               if (loggedAt != null)
                 '${loggedAt.day}/${loggedAt.month}/${loggedAt.year}',
             ].whereType<String>().join(' • '),
@@ -934,9 +961,10 @@ class _HeaderRatingRow extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.only(top: 6),
         child: Text(
-          'No ratings yet',
+          context.l10n.profileNoRatings,
           style: TextStyle(
             fontFamily: 'Inter',
+            fontFamilyFallback: const ['Heebo'],
             fontSize: 12,
             color: Colors.white.withValues(alpha: 0.75),
           ),
@@ -958,6 +986,7 @@ class _HeaderRatingRow extends StatelessWidget {
             '${rating.toStringAsFixed(1)} · $totalRatings',
             style: TextStyle(
               fontFamily: 'Inter',
+              fontFamilyFallback: const ['Heebo'],
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: Colors.white.withValues(alpha: 0.95),

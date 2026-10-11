@@ -2,6 +2,7 @@ import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/reports/data/report_repository.dart';
 import 'package:buddbull/features/reports/providers/report_provider.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
 import 'package:flutter/material.dart';
@@ -16,24 +17,23 @@ Future<void> showReportFlow(
   String? targetLabel,
 }) async {
   final targetName = targetLabel ??
-      (targetType == ReportTargetType.user ? 'this user' : 'this game');
+      (targetType == ReportTargetType.user
+          ? context.l10n.reportTargetUser
+          : context.l10n.reportTargetGame);
 
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Confirm Report'),
-      content: Text(
-        'Are you sure you want to report $targetName? '
-        'False reports may result in action against your account.',
-      ),
+      title: Text(context.l10n.reportConfirmTitle),
+      content: Text(context.l10n.reportConfirmBody(targetName)),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.commonCancel),
         ),
         TextButton(
           onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Continue', style: TextStyle(color: AppColors.error)),
+          child: Text(context.l10n.reportContinue, style: const TextStyle(color: AppColors.error)),
         ),
       ],
     ),
@@ -54,18 +54,16 @@ Future<void> showReportFlow(
   final submitConfirmed = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Submit Report?'),
-      content: Text(
-        'Your report titled "${formResult['title']}" will be sent to admins for review.',
-      ),
+      title: Text(context.l10n.reportSubmitTitle),
+      content: Text(context.l10n.reportSubmitBody(formResult['title'] ?? '')),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Go Back'),
+          child: Text(context.l10n.reportGoBack),
         ),
         TextButton(
           onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Submit', style: TextStyle(color: AppColors.error)),
+          child: Text(context.l10n.reportSubmit, style: const TextStyle(color: AppColors.error)),
         ),
       ],
     ),
@@ -85,8 +83,8 @@ Future<void> showReportFlow(
   if (!context.mounted) return;
   if (error == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Report submitted. Admins will review it shortly.'),
+      SnackBar(
+        content: Text(context.l10n.reportSubmitted),
         backgroundColor: AppColors.success,
       ),
     );
@@ -139,26 +137,26 @@ class _ReportFormSheetState extends State<_ReportFormSheet> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text('Report Details', style: AppTextStyles.titleMedium),
+            Text(context.l10n.reportDetails, style: AppTextStyles.titleMedium),
             const SizedBox(height: 16),
             BbTextField(
-              label: 'Title',
+              label: context.l10n.reportFormTitle,
               controller: _titleCtrl,
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Title is required' : null,
+                  (v == null || v.trim().isEmpty) ? context.l10n.reportFormTitleRequired : null,
             ),
             const SizedBox(height: 12),
             BbTextField(
-              label: 'Reason',
+              label: context.l10n.reportFormReason,
               controller: _reasonCtrl,
               maxLines: 4,
               minLines: 3,
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Reason is required' : null,
+                  (v == null || v.trim().isEmpty) ? context.l10n.reportFormReasonRequired : null,
             ),
             const SizedBox(height: 20),
             BbButton(
-              label: 'Continue',
+              label: context.l10n.reportContinue,
               onPressed: () {
                 if (!_formKey.currentState!.validate()) return;
                 Navigator.pop(context, {
@@ -181,13 +179,13 @@ class ReportActionButton extends ConsumerWidget {
     required this.targetType,
     required this.targetId,
     this.targetLabel,
-    this.label = 'Report User',
+    this.label,
   });
 
   final ReportTargetType targetType;
   final String targetId;
   final String? targetLabel;
-  final String label;
+  final String? label;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -206,7 +204,7 @@ class ReportActionButton extends ConsumerWidget {
       ),
       icon: const Icon(Icons.warning_amber_rounded, color: AppColors.error),
       label: Text(
-        label,
+        label ?? context.l10n.reportUser,
         style: AppTextStyles.labelLarge.copyWith(
           color: AppColors.error,
           fontWeight: FontWeight.w600,

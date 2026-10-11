@@ -4,6 +4,7 @@ import 'package:buddbull/features/auth/providers/auth_provider.dart';
 import 'package:buddbull/features/chat/presentation/widgets/chat_tile.dart';
 import 'package:buddbull/features/chat/providers/chat_provider.dart';
 import 'package:buddbull/features/home/home_scaffold.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -23,11 +24,11 @@ class ChatListScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Messages', style: AppTextStyles.titleLarge),
+        title: Text(context.l10n.navChat, style: AppTextStyles.titleLarge),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
-            tooltip: 'New message',
+            tooltip: context.l10n.chatNewMessage,
             onPressed: () => context.push('/chats/new'),
           ),
         ],
@@ -40,11 +41,11 @@ class ChatListScreen extends ConsumerWidget {
             children: [
               const Icon(Icons.chat_bubble_outline, size: 64, color: AppColors.textSecondary),
               const SizedBox(height: 12),
-              const Text('Failed to load chats', style: AppTextStyles.bodyMedium),
+              Text(context.l10n.chatLoadFailed, style: AppTextStyles.bodyMedium),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => ref.invalidate(chatListProvider),
-                child: const Text('Retry'),
+                child: Text(context.l10n.commonRetry),
               ),
             ],
           ),
@@ -96,12 +97,12 @@ class ChatListScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              'No conversations yet',
+              context.l10n.chatNoConversations,
               style: AppTextStyles.titleLarge.copyWith(color: AppColors.textPrimary),
             ),
             const SizedBox(height: 8),
             Text(
-              'Start a conversation by tapping the edit icon above or opening a game and tapping Chat.',
+              context.l10n.chatNoConversationsHint,
               style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),

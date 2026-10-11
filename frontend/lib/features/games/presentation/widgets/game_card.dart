@@ -1,7 +1,9 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/constants/skill_level_labels.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/games/presentation/widgets/game_sport_wallpaper.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 /// A rich game card used in the games list and home screen.
@@ -95,7 +97,7 @@ class _FullContent extends StatelessWidget {
                 _InfoRow(
                   icon: Icons.near_me_rounded,
                   iconColor: AppColors.teal,
-                  text: _formatDistance(game.distanceKm!),
+                  text: _formatDistance(game.distanceKm!, context.l10n),
                 ),
               ],
               const SizedBox(height: 14),
@@ -123,10 +125,11 @@ class _FullContent extends StatelessWidget {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'Join Game',
-                        style: TextStyle(
+                      child: Text(
+                        context.l10n.gamesJoinGame,
+                        style: const TextStyle(
                           fontFamily: 'Inter',
+                          fontFamilyFallback: ['Heebo'],
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
                         ),
@@ -134,7 +137,7 @@ class _FullContent extends StatelessWidget {
                     )
                   else
                     Text(
-                      '${game.approvedCount}/${game.maxPlayers} players',
+                      context.l10n.gamesPlayersOf(game.approvedCount, game.maxPlayers),
                       style: AppTextStyles.labelMedium.copyWith(
                         fontWeight: FontWeight.w600,
                         color: AppColors.textSecondary,
@@ -278,14 +281,14 @@ class _RosterProgressBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Roster',
+              context.l10n.gamesRoster,
               style: AppTextStyles.labelSmall.copyWith(
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),
             Text(
-              '$filled/$total players',
+              context.l10n.gamesPlayersOf(filled, total),
               style: AppTextStyles.labelSmall.copyWith(
                 fontWeight: FontWeight.w700,
                 color: color,
@@ -321,11 +324,11 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, label) = switch (status) {
-      'open' => (AppColors.statusOpen, 'Open'),
-      'full' => (AppColors.statusFull, 'Full'),
-      'in_progress' => (AppColors.statusInProgress, 'Live'),
-      'completed' => (AppColors.statusCompleted, 'Done'),
-      'cancelled' => (AppColors.statusCancelled, 'Cancelled'),
+      'open' => (AppColors.statusOpen, context.l10n.gamesStatusOpen), // l10n-ignore: API/search value
+      'full' => (AppColors.statusFull, context.l10n.gamesStatusFull), // l10n-ignore: API/search value
+      'in_progress' => (AppColors.statusInProgress, context.l10n.gamesStatusLive), // l10n-ignore: API/search value
+      'completed' => (AppColors.statusCompleted, context.l10n.gamesStatusDone), // l10n-ignore: API/search value
+      'cancelled' => (AppColors.statusCancelled, context.l10n.gamesStatusCancelled), // l10n-ignore: API/search value
       _ => (AppColors.grey500, status),
     };
 
@@ -369,7 +372,7 @@ class _FullBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        'FULL',
+        context.l10n.gamesFullBadge,
         style: (small ? AppTextStyles.labelSmall : AppTextStyles.labelMedium)
             .copyWith(
           color: Colors.white,
@@ -394,7 +397,7 @@ class _SkillBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        level[0].toUpperCase() + level.substring(1),
+        skillLevelDisplayName(level, context.l10n),
         style: AppTextStyles.labelSmall.copyWith(
           fontWeight: FontWeight.w600,
           color: AppColors.textSecondary,
@@ -436,9 +439,9 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-String _formatDistance(double km) {
+String _formatDistance(double km, AppLocalizations l10n) {
   if (km < 1) {
-    return '${(km * 1000).round()} m away';
+    return l10n.gamesDistanceMeters((km * 1000).round());
   }
-  return '${km.toStringAsFixed(km < 10 ? 1 : 0)} km away';
+  return l10n.gamesDistanceKm(km.toStringAsFixed(km < 10 ? 1 : 0));
 }

@@ -3,6 +3,7 @@ import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/games/data/game_repository.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
@@ -29,8 +30,8 @@ class _EditGameScreenState extends ConsumerState<EditGameScreen> {
   final _neighborhoodCtrl = TextEditingController();
   final _venueCtrl = TextEditingController();
 
-  String _sport = 'football';
-  String _skillLevel = 'any';
+  String _sport = 'football'; // l10n-ignore: API/search value
+  String _skillLevel = 'any'; // l10n-ignore: API/search value
   DateTime _date = DateTime.now().add(const Duration(days: 1));
   TimeOfDay _time = const TimeOfDay(hour: 18, minute: 0);
   int _durationMinutes = 60;
@@ -138,7 +139,7 @@ class _EditGameScreenState extends ConsumerState<EditGameScreen> {
       ref.invalidate(myGamesProvider);
       ref.invalidate(calendarGamesProvider);
       if (!mounted) return;
-      showSuccessSnackBar(context, 'Game updated.');
+      showSuccessSnackBar(context, context.l10n.gameEditUpdated);
       context.pop();
     } catch (e) {
       if (!mounted) return;
@@ -156,7 +157,7 @@ class _EditGameScreenState extends ConsumerState<EditGameScreen> {
       isLoading: _isSubmitting,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(title: const Text('Edit Game')),
+        appBar: AppBar(title: Text(context.l10n.gameEditTitle)),
         body: gameAsync.when(
           loading: () => const Center(child: BbLoadingIndicator()),
           error: (e, _) => ErrorView(message: e.toString()),
@@ -177,32 +178,32 @@ class _EditGameScreenState extends ConsumerState<EditGameScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Details', style: AppTextStyles.titleMedium),
+                    Text(context.l10n.gameFormDetails, style: AppTextStyles.titleMedium),
                     const SizedBox(height: 12),
                     BbTextField(
-                      label: 'Title *',
-                      hint: 'Game title',
+                      label: context.l10n.gameEditTitleLabel,
+                      hint: context.l10n.gameEditTitleHint,
                       controller: _titleCtrl,
-                      validator: (v) => (v?.trim().isEmpty ?? true) ? 'Title is required.' : null,
+                      validator: (v) => (v?.trim().isEmpty ?? true) ? context.l10n.gameEditTitleRequired : null,
                     ),
                     const SizedBox(height: 12),
                     BbTextField(
-                      label: 'Description',
-                      hint: 'Optional',
+                      label: context.l10n.gameFormDescriptionLabel,
+                      hint: context.l10n.commonOptional,
                       controller: _descCtrl,
                       maxLines: 3,
                       minLines: 2,
                     ),
                     const SizedBox(height: 16),
 
-                    const Text('Schedule', style: AppTextStyles.titleMedium),
+                    Text(context.l10n.gameFormSchedule, style: AppTextStyles.titleMedium),
                     const SizedBox(height: 8),
                     Row(
                       children: [
                         Expanded(
                           child: _PickerTile(
                             icon: Icons.calendar_today_rounded,
-                            label: DateFormat('EEE, d MMM y').format(_date),
+                            label: DateFormat('EEE, d MMM y', context.l10n.localeName).format(_date),
                             onTap: _pickDate,
                           ),
                         ),
@@ -218,7 +219,7 @@ class _EditGameScreenState extends ConsumerState<EditGameScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    Text('Duration: ${_durationMinutes}min', style: AppTextStyles.bodyMedium),
+                    Text(context.l10n.gameEditDuration(_durationMinutes), style: AppTextStyles.bodyMedium),
                     Slider(
                       value: _durationMinutes.toDouble(),
                       min: 15,
@@ -226,12 +227,12 @@ class _EditGameScreenState extends ConsumerState<EditGameScreen> {
                       divisions: 45,
                       activeColor: AppColors.primary,
                       inactiveColor: AppColors.grey300,
-                      label: '$_durationMinutes min',
+                      label: context.l10n.gameEditSliderMinutes(_durationMinutes),
                       onChanged: (v) => setState(() => _durationMinutes = v.round()),
                     ),
                     const SizedBox(height: 16),
 
-                    Text('Max players: $_maxPlayers', style: AppTextStyles.bodyMedium),
+                    Text(context.l10n.gameFormMaxPlayers(_maxPlayers), style: AppTextStyles.bodyMedium),
                     Slider(
                       value: _maxPlayers.toDouble(),
                       min: 2,
@@ -244,37 +245,37 @@ class _EditGameScreenState extends ConsumerState<EditGameScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    const Text('Location', style: AppTextStyles.titleMedium),
+                    Text(context.l10n.gameFormLocation, style: AppTextStyles.titleMedium),
                     const SizedBox(height: 12),
                     BbTextField(
-                      label: 'Address',
-                      hint: 'Selected address',
+                      label: context.l10n.gameEditAddressLabel,
+                      hint: context.l10n.gameEditAddressHint,
                       controller: _addressCtrl,
                       readOnly: true,
                     ),
                     const SizedBox(height: 12),
                     BbTextField(
-                      label: 'City *',
-                      hint: 'City',
+                      label: context.l10n.gameFormCityLabel,
+                      hint: context.l10n.gameEditCityHint,
                       controller: _cityCtrl,
-                      validator: (v) => (v?.trim().isEmpty ?? true) ? 'City is required.' : null,
+                      validator: (v) => (v?.trim().isEmpty ?? true) ? context.l10n.gameEditCityRequired : null,
                     ),
                     const SizedBox(height: 12),
                     BbTextField(
-                      label: 'Neighborhood',
-                      hint: 'Optional',
+                      label: context.l10n.gameEditNeighborhoodLabel,
+                      hint: context.l10n.commonOptional,
                       controller: _neighborhoodCtrl,
                     ),
                     const SizedBox(height: 12),
                     BbTextField(
-                      label: 'Venue',
-                      hint: 'Optional',
+                      label: context.l10n.gameEditVenueLabel,
+                      hint: context.l10n.commonOptional,
                       controller: _venueCtrl,
                     ),
                     const SizedBox(height: 24),
 
                     BbButton(
-                      label: 'Save Changes',
+                      label: context.l10n.commonSaveChanges,
                       onPressed: _submit,
                       isLoading: _isSubmitting,
                     ),

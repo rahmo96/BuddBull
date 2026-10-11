@@ -1,5 +1,6 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 /// Displays a 4-segment strength bar and a label beneath the password field.
@@ -9,7 +10,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final strength = _evaluate(password);
+    final strength = _evaluate(password, context.l10n);
     if (password.isEmpty) return const SizedBox.shrink();
 
     return Padding(
@@ -45,7 +46,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
     );
   }
 
-  _Strength _evaluate(String pwd) {
+  _Strength _evaluate(String pwd, AppLocalizations l10n) {
     int score = 0;
     if (pwd.length >= 8) score++;
     if (RegExp(r'[A-Z]').hasMatch(pwd)) score++;
@@ -53,10 +54,10 @@ class PasswordStrengthIndicator extends StatelessWidget {
     if (RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(pwd)) score++;
 
     return switch (score) {
-      <= 1 => const _Strength(1, AppColors.error, 'Weak'),
-      2 => const _Strength(2, AppColors.warning, 'Fair'),
-      3 => const _Strength(3, AppColors.secondary, 'Good'),
-      _ => const _Strength(4, AppColors.success, 'Strong'),
+      <= 1 => _Strength(1, AppColors.error, l10n.authPasswordWeak),
+      2 => _Strength(2, AppColors.warning, l10n.authPasswordFair),
+      3 => _Strength(3, AppColors.secondary, l10n.authPasswordGood),
+      _ => _Strength(4, AppColors.success, l10n.authPasswordStrong),
     };
   }
 }

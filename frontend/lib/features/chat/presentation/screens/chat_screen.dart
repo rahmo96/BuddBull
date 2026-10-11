@@ -10,6 +10,7 @@ import 'package:buddbull/features/chat/presentation/widgets/message_bubble.dart'
 import 'package:buddbull/features/chat/presentation/widgets/pinned_message_banner.dart';
 import 'package:buddbull/features/chat/providers/chat_provider.dart';
 import 'package:buddbull/features/games/providers/game_provider.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -65,8 +66,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ref.invalidate(gameDetailProvider(gid));
           }
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('You are no longer a participant in this chat.'),
+            SnackBar(
+              content: Text(context.l10n.chatNoLongerParticipant),
             ),
           );
           context.go(Routes.games);
@@ -163,7 +164,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       backgroundColor: AppColors.background,
       appBar: chatAsync.when(
         loading: () => AppBar(title: const Text('Loading...')),
-        error: (_, __) => AppBar(title: const Text('Chat')),
+        error: (_, __) => AppBar(title: Text(context.l10n.chatTitleFallback)),
         data: (chat) => _buildAppBar(chat, currentUserId),
       ),
       body: Column(
@@ -227,7 +228,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               child: Row(
                 children: [
                   Text(
-                    '${typingState.typingUsernames.join(', ')} ${typingState.typingUsernames.length == 1 ? 'is' : 'are'} typing...',
+                    typingState.typingUsernames.length == 1
+                        ? context.l10n.chatTypingOne(typingState.typingUsernames.first)
+                        : context.l10n.chatTypingMany(typingState.typingUsernames.join(', ')),
                     style: AppTextStyles.caption.copyWith(
                       color: AppColors.textSecondary,
                       fontStyle: FontStyle.italic,
@@ -250,7 +253,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   PreferredSizeWidget _buildAppBar(ChatModel chat, String currentUserId) {
     final title = chat.chatTitle(currentUserId);
     final participantCount = chat.participants.length;
-    final subtitle = chat.type == 'group' ? '$participantCount members' : null;
+    final subtitle = chat.type == 'group' ? context.l10n.chatMembersCount(participantCount) : null;
 
     return AppBar(
       backgroundColor: AppColors.background,
@@ -291,7 +294,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Replying to ${_replyingTo!.senderName}',
+                  context.l10n.chatReplyingTo(_replyingTo!.senderName),
                   style: AppTextStyles.caption.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,
@@ -342,7 +345,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   textCapitalization: TextCapitalization.sentences,
                   onChanged: (_) => _handleTyping(),
                   decoration: InputDecoration(
-                    hintText: 'Type a message...',
+                    hintText: context.l10n.chatMessageHint,
                     hintStyle: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     border: InputBorder.none,

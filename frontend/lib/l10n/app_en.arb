@@ -1,0 +1,886 @@
+{
+  "@@locale": "en",
+  "languageTitle": "Language",
+  "languageDeviceDefault": "Device default",
+  "languageEnglish": "English",
+  "languageHebrew": "עברית",
+  "commonCancel": "Cancel",
+  "commonRetry": "Retry",
+  "commonOops": "Oops!",
+  "validationFieldRequired": "This field is required.",
+  "validationInvalidEmail": "Enter a valid email address.",
+  "validationPasswordTooShort": "Password must be at least 8 characters.",
+  "validationPasswordsNoMatch": "Passwords do not match.",
+  "validationUsernameTooShort": "Username must be at least 3 characters.",
+  "validationAcceptTerms": "You must accept the Terms of Service.",
+  "authWelcomeBack": "Welcome back!",
+  "authLoginSubtitle": "Sign in to your BuddBull account",
+  "authEmailLabel": "Email address",
+  "authEmailHint": "you@example.com",
+  "authPasswordLabel": "Password",
+  "authPasswordHint": "Your password",
+  "authForgotPassword": "Forgot password?",
+  "authLoginButton": "Sign In",
+  "authNoAccount": "Don't have an account?",
+  "authSignUpLink": "Sign up",
+  "authRegisterTitle": "Create Account",
+  "authRegisterSubtitle": "Join BuddBull — it's free!",
+  "authFirstNameLabel": "First name",
+  "authFirstNameHint": "Alex",
+  "authLastNameLabel": "Last name",
+  "authLastNameHint": "Rivera",
+  "authUsernameLabel": "Username",
+  "authUsernameHint": "@username",
+  "authNewPasswordHint": "At least 8 characters",
+  "authConfirmPasswordLabel": "Confirm password",
+  "authConfirmPasswordHint": "Repeat your password",
+  "authTermsAgreement": "I agree to the ",
+  "authTermsOfService": "Terms of Service",
+  "authTermsAnd": " and ",
+  "authPrivacyPolicy": "Privacy Policy",
+  "authRegisterButton": "Create Account",
+  "authHaveAccount": "Already have an account?",
+  "authSignInLink": "Sign in",
+  "authResetPasswordTitle": "Reset Password",
+  "authForgotSubtitle": "Enter your email and we'll send you a reset link.",
+  "authSendResetLink": "Send Reset Link",
+  "authBackToLogin": "Back to Sign In",
+  "authResetInfo": "The reset link expires in 10 minutes. Check your spam folder if you don't see the email.",
+  "authPasswordWeak": "Weak",
+  "authPasswordFair": "Fair",
+  "authPasswordGood": "Good",
+  "authPasswordStrong": "Strong",
+  "skillBeginner": "Beginner",
+  "skillAmateur": "Amateur",
+  "skillIntermediate": "Intermediate",
+  "skillAdvanced": "Advanced",
+  "skillProfessional": "Professional",
+  "profileCityLabel": "City",
+  "profileNeighborhoodLabel": "Neighbourhood",
+  "onboardingStepOf": "Step {step} of {total}",
+  "@onboardingStepOf": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingWelcomeMessage": "Welcome to BuddBull! Let's get to know you better.",
+  "onboardingSportsSection": "What are your favourite sports? Tap to select — you can change this anytime.",
+  "onboardingSkillPerSport": "Your level in each sport",
+  "onboardingNext": "Next",
+  "onboardingBack": "Back",
+  "onboardingSkip": "Skip",
+  "onboardingLocationTitle": "Where do you live?",
+  "onboardingLocationSubtitle": "We use your area to match you with nearby games. Pick your city to continue.",
+  "onboardingLocationCityHint": "Start typing your city…",
+  "onboardingLocationNeighborhoodHint": "Optional — neighbourhood or area",
+  "onboardingProfileTitle": "Make it yours",
+  "onboardingProfileSubtitle": "Upload a photo or pick a Buddy avatar. You can always update later.",
+  "onboardingUploadPhoto": "Upload from device",
+  "onboardingOrPickAvatar": "Or choose a starter avatar",
+  "onboardingFinish": "Get started",
+  "commonSeeAll": "See all",
+  "commonBrowseAll": "Browse all",
+  "navHome": "Home",
+  "navGames": "Games",
+  "navChat": "Messages",
+  "navPerformance": "Performance",
+  "navProfile": "Profile",
+  "homeGreetingMorning": "Good morning",
+  "homeGreetingAfternoon": "Good afternoon",
+  "homeGreetingEvening": "Good evening",
+  "homeGreetingWithName": "{greeting}, {name}!",
+  "@homeGreetingWithName": {
+    "placeholders": {
+      "greeting": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homeGreetingNoName": "{greeting}!",
+  "@homeGreetingNoName": {
+    "placeholders": {
+      "greeting": {
+        "type": "String"
+      }
+    }
+  },
+  "homeStatGames": "Games",
+  "homeStatRating": "Rating",
+  "homeStatStreak": "Streak",
+  "homeStreakDaysShort": "{count}d",
+  "@homeStreakDaysShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeMyUpcomingGames": "My Upcoming Games",
+  "homeExploreNearYou": "Explore Near You",
+  "homeQuickActions": "Quick Actions",
+  "homeFindGame": "Find a Game",
+  "homeLogSession": "Log Session",
+  "homeCreateGame": "Create Game",
+  "homeRecentActivity": "Recent Activity",
+  "homeNoRecentSessions": "No recent sessions",
+  "homeLogASession": "Log a session",
+  "homeNoUpcomingGames": "No upcoming games",
+  "homeBrowseGames": "Browse games",
+  "homeNearbyLoadFailed": "Couldn't load nearby games",
+  "homeNothingNearby": "Nothing nearby right now",
+  "homeTagline": "Find your squad. Play your game.",
+  "homeNotificationsTooltip": "Notifications",
+  "homeMyCalendarTooltip": "My calendar",
+  "homeAddGame": "Add Game",
+  "homeLogTraining": "Log Training",
+  "searchHint": "Search games, players…",
+  "searchCloseTooltip": "Close search",
+  "searchMinChars": "Type at least 2 characters to search",
+  "searchNoResults": "No results found",
+  "searchNoResultsHint": "Try a different sport, city, or player name",
+  "searchSectionGames": "Games",
+  "searchSectionPlayers": "Players",
+  "searchGamesError": "Games: {error}",
+  "@searchGamesError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "searchPlayersError": "Players: {error}",
+  "@searchPlayersError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "searchChipNearby": "Nearby games",
+  "searchDiscoverTitle": "Discover your next game",
+  "searchDiscoverSubtitle": "Search by sport, city, username, or player name",
+  "sportFootball": "Football",
+  "sportBasketball": "Basketball",
+  "sportTennis": "Tennis",
+  "sportVolleyball": "Volleyball",
+  "sportRunning": "Running",
+  "sportSwimming": "Swimming",
+  "sportCycling": "Cycling",
+  "sportCricket": "Cricket",
+  "commonAll": "All",
+  "commonClear": "Clear",
+  "gamesCreateTooltip": "Create game",
+  "gamesSearchHint": "Search games, sports, locations…",
+  "gamesFilterTooltip": "Filter",
+  "gamesFiltersActive": "{count, plural, =1{1 filter active} other{{count} filters active}}",
+  "@gamesFiltersActive": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gamesNoneFound": "No games found",
+  "gamesNoneFoundHint": "Try adjusting your filters or create a new game.",
+  "gamesCreateAGame": "Create a game",
+  "skillAnyLevel": "Any level",
+  "commonClearAll": "Clear all",
+  "commonSport": "Sport",
+  "gamesFilterTitle": "Filter Games",
+  "gamesFilterNearMe": "Near me",
+  "gamesFilterNearMeHint": "Show games closest to your current location",
+  "gamesFilterCityHint": "e.g. London",
+  "gamesFilterSkillTitle": "Required skill level",
+  "gamesFilterGettingLocation": "Getting location…",
+  "gamesFilterApply": "Apply Filters",
+  "gamesPlayersOf": "{current}/{max} players",
+  "@gamesPlayersOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "gamesPendingCount": "{count} pending",
+  "@gamesPendingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gamesJoinGame": "Join Game",
+  "gamesRoster": "Roster",
+  "gamesStatusOpen": "Open",
+  "gamesStatusFull": "Full",
+  "gamesStatusLive": "Live",
+  "gamesStatusDone": "Done",
+  "gamesStatusCancelled": "Cancelled",
+  "gamesFullBadge": "FULL",
+  "gamesDistanceMeters": "{meters} m away",
+  "@gamesDistanceMeters": {
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
+  "gamesDistanceKm": "{km} km away",
+  "@gamesDistanceKm": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "calendarTitle": "My Calendar",
+  "calendarToday": "Today",
+  "calendarNoGamesOnDay": "No games on this day",
+  "calendarFormatMonth": "Month",
+  "calendarFormatTwoWeeks": "2 weeks",
+  "calendarFormatWeek": "Week",
+  "gamesCount": "{count, plural, =0{No games} =1{1 game} other{{count} games}}",
+  "@gamesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonLocationPermissionDenied": "Location access is needed to find games near you. Enable it in settings or use city search.",
+  "commonOptional": "Optional",
+  "commonSaveChanges": "Save Changes",
+  "gameCreateTitle": "Create Game",
+  "gameCreateButton": "Create Game 🎮",
+  "gameCreateSuccess": "Game created! 🎉",
+  "gameEditTitle": "Edit Game",
+  "gameEditUpdated": "Game updated.",
+  "gameFormSportLabel": "Sport *",
+  "gameFormTitleLabel": "Game title *",
+  "gameFormTitleHint": "e.g. Sunday 5-a-side",
+  "gameFormTitleRequired": "Title is required",
+  "gameFormDescriptionLabel": "Description",
+  "gameFormDescriptionHint": "Optional details, rules, what to bring…",
+  "gameFormDateTime": "Date & Time *",
+  "gameFormDuration": "Duration: {hours}h {minutes}m",
+  "@gameFormDuration": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "gameFormDurationSlider": "{minutes}min",
+  "@gameFormDurationSlider": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "gameFormLocationRequired": "Location *",
+  "gameFormAddressLabel": "Address *",
+  "gameFormAddressHint": "Start typing an address...",
+  "gameFormAddressInvalid": "Select a valid address from suggestions",
+  "gameFormAddressNotVerified": "Could not verify this address. Please choose another one.",
+  "gameFormAddressSelectFromList": "Please select a valid address from suggestions.",
+  "gameFormNeighborhoodHint": "e.g. Shoreditch",
+  "gameFormVenueLabel": "Venue name",
+  "gameFormVenueHint": "e.g. Hackney Marshes",
+  "gameFormCityLabel": "City *",
+  "gameFormCityHint": "e.g. London",
+  "gameFormMaxPlayers": "Max players: {count}",
+  "@gameFormMaxPlayers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gameFormVisibility": "Visibility",
+  "gameFormPrivateTitle": "Private Game (Requires Approval)",
+  "gameFormPrivateHint": "Hidden from public search. Every join request will require your approval.",
+  "gameFormPublicHint": "Public — anyone can find and join this game.",
+  "gameFormDetails": "Details",
+  "gameFormSchedule": "Schedule",
+  "gameFormLocation": "Location",
+  "gameEditTitleLabel": "Title *",
+  "gameEditTitleHint": "Game title",
+  "gameEditTitleRequired": "Title is required.",
+  "gameEditDuration": "Duration: {minutes}min",
+  "@gameEditDuration": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "gameEditSliderMinutes": "{minutes} min",
+  "@gameEditSliderMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "gameEditAddressLabel": "Address",
+  "gameEditAddressHint": "Selected address",
+  "gameEditCityHint": "City",
+  "gameEditCityRequired": "City is required.",
+  "gameEditNeighborhoodLabel": "Neighborhood",
+  "gameEditVenueLabel": "Venue",
+  "commonBack": "Back",
+  "commonNo": "No",
+  "gamesStatusCompleted": "Completed",
+  "gameDurationMin": "{minutes}min",
+  "gameDurationHr": "{hours}h",
+  "gameDurationHrMin": "{hours}h {minutes}min",
+  "gameDetailRequestDeclined": "Your request to join was declined. You can try again below.",
+  "gameDetailDate": "Date",
+  "gameDetailTime": "Time",
+  "gameDetailDuration": "Duration",
+  "gameDetailAbout": "About this game",
+  "gameDetailOrganiser": "Organiser",
+  "gameDetailPlayers": "Players",
+  "gameDetailResult": "Match Result",
+  "gameDetailTags": "Tags",
+  "gameDetailReport": "Report Game",
+  "gameDetailMapUnavailable": "Map preview unavailable",
+  "gameDetailApproved": "Approved",
+  "gameDetailPendingRequests": "Pending requests",
+  "gameDetailRate": "Rate",
+  "gameDetailApprove": "Approve",
+  "gameDetailKick": "Kick",
+  "gameDetailRatePrompt": "Rate participants below to share how the game went.",
+  "gameDetailChat": "Chat",
+  "gameDetailRateParticipants": "Rate Participants",
+  "gameDetailGameCompleted": "Game Completed",
+  "gameDetailManage": "Manage (Organiser)",
+  "gameDetailGameFull": "Game is Full",
+  "gameDetailRequestToJoin": "Request to Join",
+  "gameDetailLeave": "Leave Game",
+  "gameDetailInvitedBanner": "You're invited to this game",
+  "gameDetailAcceptInvite": "Accept Invitation",
+  "gameDetailDecline": "Decline",
+  "gameDetailPendingBanner": "Your request is pending approval",
+  "gameDetailWithdraw": "Withdraw",
+  "gameDetailInviteFriends": "Invite Friends",
+  "gameDetailNoFriends": "Add friends from their profile to invite them to games.",
+  "gameDetailInvitedChip": "Invited",
+  "gameDetailMergeTitle": "Merge game?",
+  "gameDetailMergeButton": "Merge",
+  "gameDetailCapacityTitle": "Increase capacity?",
+  "gameDetailCapacityBody": "The target game is too full for this merge. Expand its capacity and complete the merge?",
+  "gameDetailForceMerge": "Force merge",
+  "gameDetailMergeSuccess": "Game merged successfully.",
+  "gameDetailMergeSheetTitle": "Merge Game",
+  "gameDetailMergeNone": "No eligible open games found.",
+  "gameDetailInviteFriendsHint": "Send an invite to your approved friends",
+  "gameDetailMergeHint": "Combine this game into another open game",
+  "gameDetailViewSummary": "View Summary / Rate Players",
+  "gameDetailViewSummaryHint": "Game is finished — open the rating flow for participants.",
+  "gameDetailCompleteGame": "Complete Game",
+  "gameDetailCompleteGameHint": "Mark the game as finished and open ratings for participants.",
+  "gameDetailAlreadyCancelled": "Game already cancelled",
+  "gameDetailCancelGame": "Cancel Game",
+  "gameDetailCancelled": "Game cancelled.",
+  "gameDetailCancelConfirmTitle": "Cancel game?",
+  "gameDetailCancelConfirmBody": "This will mark the game as cancelled for all players.",
+  "gameDetailYesCancel": "Yes, cancel",
+  "gameDetailCompleteConfirmTitle": "Complete game?",
+  "gameDetailCompleteConfirmBody": "This marks the game as finished, updates player stats, and unlocks rating for all approved players. This action cannot be undone.",
+  "gameDetailNotYet": "Not yet",
+  "gameDetailMarkCompleted": "Mark completed",
+  "gameDetailPendingRatingsFailed": "Could not load pending ratings. Pull to refresh and try again.",
+  "gameDetailPlayerFallback": "Player",
+  "gameDetailAllRated": "Everyone in this game has been rated.",
+  "gameDetailRateAParticipant": "Rate a participant",
+  "gameDetailWontRatePrompt": "You will not be prompted to rate this game.",
+  "gameDetailDontRate": "Don't rate this game",
+  "gameDetailCancelReasonTitle": "Reason for cancellation",
+  "gameDetailCancelReasonHint": "e.g. Weather, venue issue, not enough players…",
+  "gameDetailCancelGameButton": "Cancel game",
+  "gameDetailPlayerYou": "{name} (You)",
+  "@gameDetailPlayerYou": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "gameDetailScore": "Score: {score}",
+  "@gameDetailScore": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "gameDetailWinner": "Winner: {winner}",
+  "@gameDetailWinner": {
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
+  },
+  "gameDetailInvitedName": "Invited {name}",
+  "@gameDetailInvitedName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "gameDetailRevokedName": "Revoked invite for {name}",
+  "@gameDetailRevokedName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "gameDetailMergeConfirmBody": "Merge '{source}' into '{target}'?\nYour game will be cancelled and players moved to the target.",
+  "@gameDetailMergeConfirmBody": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "gameDetailMergePick": "Pick an open {sport} game in {city}.",
+  "@gameDetailMergePick": {
+    "placeholders": {
+      "sport": {
+        "type": "String"
+      },
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "commonDelete": "Delete",
+  "commonAccept": "Accept",
+  "commonDecline": "Decline",
+  "commonApprove": "Approve",
+  "commonReject": "Reject",
+  "chatTitleFallback": "Chat",
+  "chatNewMessage": "New message",
+  "chatLoadFailed": "Failed to load chats",
+  "chatNoConversations": "No conversations yet",
+  "chatNoConversationsHint": "Start a conversation by tapping the edit icon above or opening a game and tapping Chat.",
+  "chatNoLongerParticipant": "You are no longer a participant in this chat.",
+  "chatMessageHint": "Type a message...",
+  "chatYesterday": "Yesterday",
+  "chatNoMessagesYet": "No messages yet",
+  "chatEdited": "• edited",
+  "chatMessageDeleted": "Message deleted",
+  "chatReply": "Reply",
+  "chatCopyText": "Copy text",
+  "chatUnpin": "Unpin",
+  "chatPinMessage": "Pin message",
+  "chatPinnedMessage": "Pinned message",
+  "notificationsTitle": "Notifications",
+  "notificationsMarkAllRead": "Mark all read",
+  "notificationsAllCaughtUp": "You're all caught up",
+  "notificationsAllCaughtUpHint": "We'll let you know when something new happens.",
+  "notificationsAlreadyRated": "You've already rated the players for this game.",
+  "notificationsFriendAccepted": "Friend request accepted",
+  "notificationsFriendDeclined": "Friend request declined",
+  "notificationsFriendUpdateFailed": "Could not update friend request",
+  "notificationsJoinedGame": "You joined the game.",
+  "notificationsInviteDeclined": "Invite declined.",
+  "notificationsActionFailed": "Action failed.",
+  "notificationsInviteInvalid": "This invitation is no longer valid.",
+  "notificationsPlayerApproved": "Player approved.",
+  "notificationsJoinRejected": "Join request rejected.",
+  "notificationsRelNow": "now",
+  "chatMembersCount": "{count} members",
+  "@chatMembersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chatReplyingTo": "Replying to {name}",
+  "@chatReplyingTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsRelMinutes": "{count}m",
+  "@notificationsRelMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationsRelHours": "{count}h",
+  "@notificationsRelHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationsRelDays": "{count}d",
+  "@notificationsRelDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationsRelWeeks": "{count}w",
+  "@notificationsRelWeeks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chatTypingOne": "{names} is typing...",
+  "@chatTypingOne": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "chatTypingMany": "{names} are typing...",
+  "@chatTypingMany": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "commonEdit": "Edit",
+  "commonAdd": "Add",
+  "commonLocation": "Location",
+  "commonMinutes": "{minutes} min",
+  "profileEditTitle": "Edit Profile",
+  "profileBioLabel": "Bio",
+  "profileBioHint": "Tell us a bit about yourself…",
+  "profileSportsInterests": "Sports & Skill Levels",
+  "profileAddSport": "+ Add sport",
+  "profileRadiusLabel": "Search radius (km)",
+  "profileUpdatePicture": "Update Profile Picture",
+  "profileUploadGallery": "Upload from gallery",
+  "profileChoosePreset": "Choose preset avatar",
+  "profileChangePhoto": "Change photo or avatar",
+  "profilePersonalInfo": "Personal Info",
+  "profileCityHint": "Start typing a city…",
+  "profileAreaHint": "Start typing an area or street…",
+  "profileAddSportTitle": "Add Sport",
+  "profileSkillLevel": "Skill Level",
+  "profileDangerZone": "Danger Zone",
+  "profileDeleteWarning": "Deleting your account is permanent and cannot be undone.",
+  "profileDeleteAccount": "Delete Account",
+  "profileDeleteConfirmTitle": "Delete account?",
+  "profileDeleteConfirmBody": "All your data will be permanently deleted. This action cannot be undone.",
+  "profileDeletePermanently": "Delete permanently",
+  "profileFriends": "Friends",
+  "friendsUnfriendTitle": "Unfriend?",
+  "friendsUnfriend": "Unfriend",
+  "friendsEmpty": "No friends yet.\nVisit someone's profile and tap Add Friend.",
+  "profileAdminDashboard": "Admin Dashboard",
+  "profileEditTooltip": "Edit profile",
+  "profileSignOutTooltip": "Sign out",
+  "profileAbout": "About",
+  "profileSports": "Sports",
+  "profileRecentActivity": "Recent Activity",
+  "profileSignOutTitle": "Sign out?",
+  "profileSignOutBody": "You will need to sign in again.",
+  "profileSignOut": "Sign out",
+  "profileWinRate": "Win Rate %",
+  "profileRatingsSummary": "Ratings Summary",
+  "profileRatingOverall": "Overall",
+  "profileRatingReliability": "Reliability",
+  "profileRatingBehavior": "Behavior",
+  "profileUpcomingGames": "Upcoming Games",
+  "profileNoRatings": "No ratings yet",
+  "profileFriendRequestSent": "Friend request sent",
+  "profileNowFriends": "You are now friends",
+  "profileSignInToMessage": "Please sign in to send a message.",
+  "profileCannotMessageSelf": "You cannot message yourself.",
+  "profileMessage": "Message",
+  "profileRequestSent": "Request sent",
+  "profileAddFriend": "Add Friend",
+  "profilePlaceResolveFailed": "Could not resolve this place. Try another.",
+  "profileSelectCityFirst": "Please select a city first",
+  "friendsUnfriendBody": "Remove {name} from your friends? You can send a new request later.",
+  "@friendsUnfriendBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "friendsRemoved": "Removed {name} from friends",
+  "@friendsRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileMutualConnections": "{count, plural, =0{No mutual connections} =1{1 mutual connection} other{{count} mutual connections}}",
+  "@profileMutualConnections": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileRadiusKmBadge": "{km} km radius",
+  "@profileRadiusKmBadge": {
+    "placeholders": {
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "profileRadiusKmValue": "{km} km",
+  "@profileRadiusKmValue": {
+    "placeholders": {
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "profileCommunityAverageOne": "Community average {avg} from 1 peer rating",
+  "@profileCommunityAverageOne": {
+    "placeholders": {
+      "avg": {
+        "type": "String"
+      }
+    }
+  },
+  "profileCommunityAverageMany": "Community average {avg} from {count} peer ratings",
+  "@profileCommunityAverageMany": {
+    "placeholders": {
+      "avg": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileFriendsCount": "{count} Friends",
+  "@profileFriendsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileRatingWithCount": "Rating ({count})",
+  "@profileRatingWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "logTypeMatch": "Match",
+  "logTypeTraining": "Training",
+  "logTypeFitness": "Fitness",
+  "outcomeWin": "Win",
+  "outcomeLoss": "Loss",
+  "outcomeDraw": "Draw",
+  "moodGreat": "Great",
+  "moodGood": "Good",
+  "moodOk": "OK",
+  "moodTired": "Tired",
+  "moodInjured": "Injured",
+  "logFormSessionLogged": "Session logged! 💪",
+  "logFormPersonalBestTitle": "🏅 New Personal Best!",
+  "logFormPersonalBestBody": "You beat your previous record! Keep it up! 🎉",
+  "logFormAwesome": "Awesome!",
+  "logFormTitle": "Log a Session",
+  "logFormSessionType": "Session type *",
+  "logFormOutcome": "Outcome",
+  "logFormDuration": "Duration",
+  "logFormFeel": "How did you feel?",
+  "logFormNotes": "Notes",
+  "logFormNotesHint": "What went well? What to improve?",
+  "logFormPublic": "Make this log public",
+  "logFormSave": "Save Session 💪",
+  "performanceTotalSessions": "Total sessions",
+  "performanceTotalTime": "Total time",
+  "performanceNoSessions": "No sessions yet",
+  "performanceNoSessionsHint": "Start logging your training and matches.",
+  "performancePersonalBests": "Personal Bests",
+  "performanceBySport": "By sport",
+  "performanceBuildStats": "Log sessions to build your stats",
+  "performanceTabOverview": "Overview",
+  "performanceTabLogs": "Logs",
+  "performanceTabStats": "Stats",
+  "heatmapActivity": "Activity",
+  "heatmapNoActivity": "No activity",
+  "heatmapOneSession": "1 session",
+  "heatmapLess": "Less",
+  "heatmapMore": "More",
+  "logCardOnePersonalBest": "1 new personal best!",
+  "progressSessionsPerWeek": "Sessions per week",
+  "progressWinRateTrend": "Win rate trend",
+  "progressPreview": "Your stats preview — log sessions to unlock",
+  "streakWarmingUp": "Warming up",
+  "streakActive": "Active streak",
+  "streakPersonalBest": "Personal best",
+  "streakDaySingular": "day",
+  "streakDayPlural": "days",
+  "streakStartToday": "Log a session today to start your streak",
+  "rateTitle": "Rate Player",
+  "rateSportsmanship": "Sportsmanship",
+  "rateSportsmanshipHint": "Were they fair, respectful, and fun to play with?",
+  "rateReliabilityHint": "Did they show up on time and follow through?",
+  "rateCommentHint": "Leave a comment (optional)...",
+  "rateAnonymous": "Submit anonymously",
+  "rateAnonymousHint": "Your name will not be shown to this player",
+  "rateSubmit": "Submit Rating",
+  "rateSubmitted": "Rating submitted!",
+  "reportTargetUser": "this user",
+  "reportTargetGame": "this game",
+  "reportConfirmTitle": "Confirm Report",
+  "reportContinue": "Continue",
+  "reportSubmitTitle": "Submit Report?",
+  "reportGoBack": "Go Back",
+  "reportSubmit": "Submit",
+  "reportSubmitted": "Report submitted. Admins will review it shortly.",
+  "reportDetails": "Report Details",
+  "reportFormTitle": "Title",
+  "reportFormTitleRequired": "Title is required",
+  "reportFormReason": "Reason",
+  "reportFormReasonRequired": "Reason is required",
+  "reportUser": "Report User",
+  "settingsTitle": "Settings",
+  "settingsNotificationsSection": "Notifications",
+  "settingsPush": "Push Notifications",
+  "settingsPushHint": "Receive notifications about activities",
+  "settingsReminders": "Activity Reminders",
+  "settingsRemindersHint": "Remind me before scheduled activities",
+  "settingsAppearance": "Appearance",
+  "settingsDarkMode": "Dark Mode",
+  "settingsDarkModeHint": "Use dark theme",
+  "settingsAbout": "About",
+  "settingsAppVersion": "App Version",
+  "settingsNotificationsOn": "Notifications enabled",
+  "settingsNotificationsOff": "Notifications disabled",
+  "settingsDarkOn": "Dark mode on",
+  "settingsDarkOff": "Dark mode off",
+  "settingsRemindersOn": "Activity reminders on",
+  "settingsRemindersOff": "Activity reminders off",
+  "logFormDurationWithValue": "Duration: {minutes}min",
+  "@logFormDurationWithValue": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "logFormSelfRating": "How did you perform? {rating}/5",
+  "@logFormSelfRating": {
+    "placeholders": {
+      "rating": {
+        "type": "int"
+      }
+    }
+  },
+  "performanceTotalTimeHrMin": "{hours}h {minutes}m",
+  "@performanceTotalTimeHrMin": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "heatmapSessions": "{count} sessions",
+  "@heatmapSessions": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "logCardPersonalBests": "{count} new personal bests!",
+  "@logCardPersonalBests": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "progressTooltip": "{sessions} sessions\n{minutes} min",
+  "@progressTooltip": {
+    "placeholders": {
+      "sessions": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "streakGoalProgress": "{current} of {goal}-day goal · Keep it going!",
+  "@streakGoalProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "goal": {
+        "type": "int"
+      }
+    }
+  },
+  "streakLongestDays": "{count} d",
+  "@streakLongestDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reportConfirmBody": "Are you sure you want to report {target}? False reports may result in action against your account.",
+  "@reportConfirmBody": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "reportSubmitBody": "Your report titled \"{title}\" will be sent to admins for review.",
+  "@reportSubmitBody": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  }
+}

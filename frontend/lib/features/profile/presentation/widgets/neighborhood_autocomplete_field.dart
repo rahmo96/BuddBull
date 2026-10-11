@@ -5,6 +5,7 @@ import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/games/data/game_repository.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/profile/presentation/widgets/location_selected_row.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:flutter/material.dart';
@@ -18,15 +19,15 @@ class NeighborhoodAutocompleteField extends ConsumerStatefulWidget {
     required this.selectedCity,
     required this.selectedNeighborhood,
     required this.onNeighborhoodSelected,
-    this.label = 'Neighbourhood',
-    this.hint = 'Start typing an area or street…',
+    this.label,
+    this.hint,
   });
 
   final String? selectedCity;
   final String? selectedNeighborhood;
   final ValueChanged<String> onNeighborhoodSelected;
-  final String label;
-  final String hint;
+  final String? label;
+  final String? hint;
 
   @override
   ConsumerState<NeighborhoodAutocompleteField> createState() =>
@@ -126,7 +127,7 @@ class _NeighborhoodAutocompleteFieldState
       try {
         final suggestions = await ref.read(gameRepositoryProvider).autocompleteAddress(
               scopedQuery,
-              types: 'address',
+              types: 'address', // l10n-ignore: API/search value
             );
         if (!mounted || id != _requestId) return;
         setState(() => _suggestions = suggestions);
@@ -176,7 +177,7 @@ class _NeighborhoodAutocompleteFieldState
       widget.onNeighborhoodSelected(_resolveNeighborhoodName(location, suggestion));
     } catch (e) {
       if (!mounted) return;
-      showErrorSnackBar(context, 'Could not resolve this place. Try another.');
+      showErrorSnackBar(context, context.l10n.profilePlaceResolveFailed);
     } finally {
       if (mounted) setState(() => _isResolving = false);
     }
@@ -189,15 +190,15 @@ class _NeighborhoodAutocompleteFieldState
       children: [
         if (_hasValue)
           Align(
-            alignment: Alignment.centerRight,
+            alignment: AlignmentDirectional.centerEnd,
             child: TextButton(
               onPressed: _exitEditing,
-              child: const Text('Cancel'),
+              child: Text(context.l10n.commonCancel),
             ),
           ),
         BbTextField(
-          label: widget.label,
-          hint: widget.hint,
+          label: (widget.label ?? context.l10n.profileNeighborhoodLabel),
+          hint: (widget.hint ?? context.l10n.profileAreaHint),
           controller: _searchCtrl,
           prefixIcon: Icons.search_rounded,
           autofocus: _isEditing,
@@ -223,7 +224,7 @@ class _NeighborhoodAutocompleteFieldState
       key: const ValueKey('neighborhood-view'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label, style: AppTextStyles.labelLarge),
+        Text((widget.label ?? context.l10n.profileNeighborhoodLabel), style: AppTextStyles.labelLarge),
         const SizedBox(height: 6),
         LocationSelectedRow(
           icon: Icons.map_rounded,
@@ -238,8 +239,8 @@ class _NeighborhoodAutocompleteFieldState
   Widget build(BuildContext context) {
     if (!_hasCity) {
       return LocationDisabledHint(
-        label: widget.label,
-        message: 'Please select a city first',
+        label: (widget.label ?? context.l10n.profileNeighborhoodLabel),
+        message: context.l10n.profileSelectCityFirst,
         icon: Icons.map_rounded,
       );
     }

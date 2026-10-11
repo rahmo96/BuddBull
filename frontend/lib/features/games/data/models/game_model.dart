@@ -22,6 +22,9 @@ class GameModel {
     this.isPrivate = false,
     this.requiresApproval = false,
     this.distanceKm,
+    this.isMerged = false,
+    this.mergedWith = const [],
+    this.mergedInto = '',
   });
 
   final String id;
@@ -43,6 +46,9 @@ class GameModel {
   final bool isPrivate;
   final bool requiresApproval;
   final double? distanceKm;
+  final bool isMerged;
+  final List<String> mergedWith;
+  final String mergedInto;
 
   // ── Computed ──────────────────────────────────────────────
   int get approvedCount => players.where((p) => p.status == 'approved').length;
@@ -115,6 +121,9 @@ class GameModel {
       isPrivate: json['isPrivate'] as bool? ?? false,
       requiresApproval: json['requiresApproval'] as bool? ?? false,
       distanceKm: (json['distanceKm'] as num?)?.toDouble(),
+      isMerged: json['isMerged'] as bool? ?? false,
+      mergedWith: mergedWith,
+      mergedInto: json['mergedInto']?.toString() ?? '',
     );
   }
 
@@ -161,6 +170,7 @@ class GameModel {
       createdAt: createdAt,
       isPrivate: isPrivate,
       requiresApproval: requiresApproval,
+      distanceKm: distanceKm,
       isMerged: isMerged,
       mergedWith: mergedWith,
       mergedInto: mergedInto,

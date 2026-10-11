@@ -1,5 +1,7 @@
 import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
+import 'package:buddbull/core/constants/skill_level_labels.dart';
+import 'package:buddbull/core/constants/sport_labels.dart';
 import 'package:buddbull/core/error/app_exception.dart';
 import 'package:buddbull/core/network/api_endpoints.dart';
 import 'package:buddbull/core/router/app_router.dart';
@@ -17,6 +19,7 @@ import 'package:buddbull/features/rating/presentation/widgets/rating_stars.dart'
 import 'package:buddbull/features/rating/providers/rating_provider.dart';
 import 'package:buddbull/features/reports/data/report_repository.dart';
 import 'package:buddbull/features/reports/presentation/widgets/report_flow.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
 import 'package:buddbull/shared/widgets/loading_overlay.dart';
@@ -56,7 +59,7 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
     final currentUser = ref.watch(currentUserProvider);
 
     // Refresh the pending-rating queue the first time we observe this game as
-    // completed. Without this, the bottom bar would stay on "Leave Game" /
+    // completed. Without this, the bottom bar would stay on context.l10n.gameDetailLeave /
     // empty until the user pulled to refresh, because the queue may have been
     // cached before the game's status flipped.
     final loadedGame = gameAsync.valueOrNull;
@@ -84,7 +87,7 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
 
     // ── Auto-return home when this game's rating queue drains ────────────────
     // Fires when the user finishes the last pending rating for this game *or*
-    // chooses "Don't rate this game" (which dismisses the queue server-side).
+    // chooses context.l10n.gameDetailDontRate (which dismisses the queue server-side).
     // A 500ms delay lets the rate sheet animate out and the success snackbar
     // register before we leave the screen.
     ref.listen<AsyncValue<List<PendingRatingItem>>>(pendingRatingsProvider,
@@ -141,9 +144,9 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Your request to join was declined. You can try again below.',
+              context.l10n.gameDetailRequestDeclined,
             ),
           ),
         );
@@ -196,22 +199,22 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
                           Expanded(
                             child: _InfoCard(
                               icon: Icons.calendar_today_rounded,
-                              label: 'Date',
+                              label: context.l10n.gameDetailDate,
                               value: game.formattedDate,
                             ),
                           ),
                           Expanded(
                             child: _InfoCard(
                               icon: Icons.access_time_rounded,
-                              label: 'Time',
+                              label: context.l10n.gameDetailTime,
                               value: game.formattedTime,
                             ),
                           ),
                           Expanded(
                             child: _InfoCard(
                               icon: Icons.timer_outlined,
-                              label: 'Duration',
-                              value: game.formattedDuration,
+                              label: context.l10n.gameDetailDuration,
+                              value: _formatDuration(game.durationMinutes, context.l10n),
                             ),
                           ),
                         ],
@@ -221,7 +224,7 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
 
                       // ── Location ───────────────────────────
                       _Section(
-                        title: 'Location',
+                        title: context.l10n.gameFormLocation,
                         child: Row(
                           children: [
                             const Icon(Icons.location_on_rounded,
@@ -241,7 +244,7 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
                       if (game.description != null &&
                           game.description!.isNotEmpty)
                         _Section(
-                          title: 'About this game',
+                          title: context.l10n.gameDetailAbout,
                           child: Text(
                             game.description!,
                             style: AppTextStyles.bodyMedium,
@@ -250,7 +253,7 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
 
                       // ── Organiser ──────────────────────────
                       _Section(
-                        title: 'Organiser',
+                        title: context.l10n.gameDetailOrganiser,
                         child: Row(
                           children: [
                             GestureDetector(
@@ -292,7 +295,7 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
 
                       // ── Players ────────────────────────────
                       _Section(
-                        title: 'Players',
+                        title: context.l10n.gameDetailPlayers,
                         trailing: Text(
                           '${game.approvedCount}/${game.maxPlayers}',
                           style: AppTextStyles.labelMedium.copyWith(
@@ -332,14 +335,14 @@ class _GameDetailScreenState extends ConsumerState<GameDetailScreen> {
                       // ── Result (if completed) ──────────────
                       if (game.isCompleted && game.result != null)
                         _Section(
-                          title: 'Match Result',
+                          title: context.l10n.gameDetailResult,
                           child: _ResultCard(result: game.result!),
                         ),
 
                       // ── Tags ───────────────────────────────
                       if (game.tags.isNotEmpty)
                         _Section(
-                          title: 'Tags',
+                          title: context.l10n.gameDetailTags,
                           child: Wrap(
                             spacing: 8,
                             runSpacing: 8,
@@ -396,10 +399,10 @@ class _GameDetailAppBar extends ConsumerWidget {
   final String gameId;
 
   Color get _sportColor => switch (game.sport.toLowerCase()) {
-        'football' || 'soccer' => AppColors.footballBadge,
-        'basketball' => AppColors.basketballBadge,
-        'tennis' => AppColors.tennisBadge,
-        'running' => AppColors.runningBadge,
+        'football' || 'soccer' => AppColors.footballBadge, // l10n-ignore: API/search value
+        'basketball' => AppColors.basketballBadge, // l10n-ignore: API/search value
+        'tennis' => AppColors.tennisBadge, // l10n-ignore: API/search value
+        'running' => AppColors.runningBadge, // l10n-ignore: API/search value
         _ => AppColors.defaultBadge,
       };
 
@@ -428,14 +431,14 @@ class _GameDetailAppBar extends ConsumerWidget {
               );
             }
           },
-          itemBuilder: (_) => const [
+          itemBuilder: (_) => [
             PopupMenuItem(
-              value: 'report',
+              value: 'report', // l10n-ignore: API/search value
               child: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 20),
-                  SizedBox(width: 8),
-                  Text('Report Game', style: TextStyle(color: AppColors.error)),
+                  const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 20),
+                  const SizedBox(width: 8),
+                  Text(context.l10n.gameDetailReport, style: const TextStyle(color: AppColors.error)),
                 ],
               ),
             ),
@@ -456,6 +459,7 @@ class _GameDetailAppBar extends ConsumerWidget {
                   game.title,
                   style: const TextStyle(
                     fontFamily: 'Inter',
+                    fontFamilyFallback: ['Heebo'],
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
@@ -468,12 +472,12 @@ class _GameDetailAppBar extends ConsumerWidget {
                   spacing: 8,
                   children: [
                     _HeaderBadge(
-                      label: game.sport,
+                      label: sportDisplayName(game.sport, context.l10n),
                       color: Colors.white24,
                     ),
                     _HeaderBadge(
-                      label: game.requiredSkillLevel[0].toUpperCase() +
-                          game.requiredSkillLevel.substring(1),
+                      label: skillLevelDisplayName(
+                          game.requiredSkillLevel, context.l10n),
                       color: Colors.white24,
                     ),
                     _StatusBadge(status: game.status),
@@ -508,6 +512,7 @@ class _HeaderBadge extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.w600,
           fontFamily: 'Inter',
+          fontFamilyFallback: ['Heebo'],
         ),
       ),
     );
@@ -521,11 +526,11 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (bgColor, label) = switch (status) {
-      'open' => (AppColors.success, 'Open'),
-      'full' => (AppColors.warning, 'Full'),
-      'in_progress' => (AppColors.info, 'Live'),
-      'completed' => (AppColors.grey500, 'Completed'),
-      'cancelled' => (AppColors.error, 'Cancelled'),
+      'open' => (AppColors.success, context.l10n.gamesStatusOpen), // l10n-ignore: API/search value
+      'full' => (AppColors.warning, context.l10n.gamesStatusFull), // l10n-ignore: API/search value
+      'in_progress' => (AppColors.info, context.l10n.gamesStatusLive), // l10n-ignore: API/search value
+      'completed' => (AppColors.grey500, context.l10n.gamesStatusCompleted), // l10n-ignore: API/search value
+      'cancelled' => (AppColors.error, context.l10n.gamesStatusCancelled), // l10n-ignore: API/search value
       _ => (AppColors.grey500, status),
     };
 
@@ -542,6 +547,7 @@ class _StatusBadge extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.w700,
           fontFamily: 'Inter',
+          fontFamilyFallback: ['Heebo'],
         ),
       ),
     );
@@ -650,8 +656,8 @@ class _StaticLocationMap extends StatelessWidget {
           errorBuilder: (context, _, __) => Container(
             color: AppColors.grey100,
             alignment: Alignment.center,
-            child: const Text(
-              'Map preview unavailable',
+            child: Text(
+              context.l10n.gameDetailMapUnavailable,
               style: AppTextStyles.bodySmall,
             ),
           ),
@@ -699,7 +705,7 @@ class _PlayerList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (approved.isNotEmpty) ...[
-          Text('Approved',
+          Text(context.l10n.gameDetailApproved,
               style: AppTextStyles.labelMedium
                   .copyWith(color: AppColors.success)),
           const SizedBox(height: 6),
@@ -715,7 +721,7 @@ class _PlayerList extends StatelessWidget {
         ],
         if (isOrganizer && pending.isNotEmpty) ...[
           const SizedBox(height: 10),
-          Text('Pending requests',
+          Text(context.l10n.gameDetailPendingRequests,
               style: AppTextStyles.labelMedium
                   .copyWith(color: AppColors.warning)),
           const SizedBox(height: 6),
@@ -791,7 +797,9 @@ class _PlayerTile extends StatelessWidget {
           children: [
             Flexible(
               child: Text(
-                player.displayName + (isCurrentUser ? ' (You)' : ''),
+                isCurrentUser
+                    ? context.l10n.gameDetailPlayerYou(player.displayName)
+                    : player.displayName,
                 style: AppTextStyles.bodyMedium,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -811,12 +819,12 @@ class _PlayerTile extends StatelessWidget {
         ),
         subtitle: Text('@${player.username}',
             style: AppTextStyles.bodySmall),
-        trailing: _buildTrailing(showRateButton),
+        trailing: _buildTrailing(context, showRateButton),
       ),
     );
   }
 
-  Widget? _buildTrailing(bool showRateButton) {
+  Widget? _buildTrailing(BuildContext context, bool showRateButton) {
     final hasOrganizerControls = isOrganizer && !isCurrentUser;
     if (!hasOrganizerControls && !showRateButton) return null;
 
@@ -827,7 +835,7 @@ class _PlayerTile extends StatelessWidget {
           TextButton.icon(
             onPressed: onRate,
             icon: const Icon(Icons.star_outline_rounded, size: 18),
-            label: const Text('Rate'),
+            label: Text(context.l10n.gameDetailRate),
             style: TextButton.styleFrom(
               foregroundColor: AppColors.secondary,
               visualDensity: VisualDensity.compact,
@@ -840,13 +848,13 @@ class _PlayerTile extends StatelessWidget {
               icon: const Icon(Icons.check_circle_outline_rounded,
                   color: AppColors.success, size: 20),
               onPressed: onApprove,
-              tooltip: 'Approve',
+              tooltip: context.l10n.gameDetailApprove,
             ),
           IconButton(
             icon: const Icon(Icons.remove_circle_outline_rounded,
                 color: AppColors.error, size: 20),
             onPressed: onKick,
-            tooltip: 'Kick',
+            tooltip: context.l10n.gameDetailKick,
           ),
         ],
       ],
@@ -875,7 +883,7 @@ class _RatePromptBanner extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Rate participants below to share how the game went.',
+              context.l10n.gameDetailRatePrompt,
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textPrimary,
               ),
@@ -921,10 +929,10 @@ class _ResultCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (result.score != null)
-          Text('Score: ${result.score}',
+          Text(context.l10n.gameDetailScore('${result.score}'),
               style: AppTextStyles.titleMedium),
         if (result.winner != null)
-          Text('Winner: ${result.winner}',
+          Text(context.l10n.gameDetailWinner('${result.winner}'),
               style: AppTextStyles.bodyMedium),
         if (result.notes != null)
           Text(result.notes!, style: AppTextStyles.bodyMedium),
@@ -933,11 +941,19 @@ class _ResultCard extends StatelessWidget {
   }
 }
 
+String _formatDuration(int totalMinutes, AppLocalizations l10n) {
+  final h = totalMinutes ~/ 60;
+  final m = totalMinutes % 60;
+  if (h == 0) return l10n.gameDurationMin(m);
+  if (m == 0) return l10n.gameDurationHr(h);
+  return l10n.gameDurationHrMin(h, m);
+}
+
 bool _gameDetailBarShowsChat(GameModel game, GamePlayer? myPlayer) =>
     game.groupChatId != null && myPlayer?.isApproved == true;
 
 /// While [pendingRatings] is still loading, assume there may be pending
-/// opponents so the "Rate Participants" affordance stays visible until the
+/// opponents so the context.l10n.gameDetailRateParticipants affordance stays visible until the
 /// network round-trip settles (avoids a one-frame flash to "all done").
 bool _hasPendingRatingsForGame(
   AsyncValue<List<PendingRatingItem>> pendingRatings,
@@ -975,7 +991,7 @@ bool _gameDetailBottomBarHasContent({
   if (myPlayer.canJoinAgain) return true;
   if (myPlayer.isApproved && !game.isCompleted) return true;
   // Approved player on a completed game: always render the bar so the
-  // "Rate Participants" affordance is visible immediately. The picker handles
+  // context.l10n.gameDetailRateParticipants affordance is visible immediately. The picker handles
   // the edge case where the queue is empty (it shows a friendly snackbar).
   if (myPlayer.isApproved && game.isCompleted) return true;
   return false;
@@ -1035,7 +1051,7 @@ class _BottomActionBar extends ConsumerWidget {
             Expanded(
               flex: 1,
               child: BbButton(
-                label: 'Chat',
+                label: context.l10n.gameDetailChat,
                 onPressed: onOpenChat,
                 variant: BbButtonVariant.outlined,
                 icon: Icons.chat_outlined,
@@ -1065,7 +1081,7 @@ class _BottomActionBar extends ConsumerWidget {
         // the queue itself and falls back to `game.players` if needed.
         if (myPlayer?.isApproved == true) {
           return BbButton(
-            label: 'Rate Participants',
+            label: context.l10n.gameDetailRateParticipants,
             onPressed: () => _openRateParticipantsPicker(
               context,
               ref,
@@ -1077,15 +1093,15 @@ class _BottomActionBar extends ConsumerWidget {
             icon: Icons.star_rate_rounded,
           );
         }
-        return const BbButton(
-          label: 'Game Completed',
+        return BbButton(
+          label: context.l10n.gameDetailGameCompleted,
           onPressed: null,
           variant: BbButtonVariant.outlined,
           icon: Icons.check_circle_outline_rounded,
         );
       }
       return BbButton(
-        label: 'Manage (Organiser)',
+        label: context.l10n.gameDetailManage,
         onPressed: onManage,
         variant: BbButtonVariant.outlined,
         icon: Icons.military_tech_rounded,
@@ -1094,15 +1110,15 @@ class _BottomActionBar extends ConsumerWidget {
 
     if (myPlayer == null) {
       if (game.isFull) {
-        return const BbButton(
-          label: 'Game is Full',
+        return BbButton(
+          label: context.l10n.gameDetailGameFull,
           onPressed: null,
           variant: BbButtonVariant.outlined,
         );
       }
       final isPrivate = game.isPrivate || game.requiresApproval;
       return BbButton(
-        label: isPrivate ? 'Request to Join' : 'Join Game',
+        label: isPrivate ? context.l10n.gameDetailRequestToJoin : context.l10n.gamesJoinGame,
         onPressed: game.isUpcoming ? onJoin : null,
         isLoading: actionsState.isJoining,
       );
@@ -1129,15 +1145,15 @@ class _BottomActionBar extends ConsumerWidget {
 
     if (myPlayer!.canJoinAgain) {
       if (game.isFull) {
-        return const BbButton(
-          label: 'Game is Full',
+        return BbButton(
+          label: context.l10n.gameDetailGameFull,
           onPressed: null,
           variant: BbButtonVariant.outlined,
         );
       }
       final isPrivate = game.isPrivate || game.requiresApproval;
       return BbButton(
-        label: isPrivate ? 'Request to Join' : 'Join Game',
+        label: isPrivate ? context.l10n.gameDetailRequestToJoin : context.l10n.gamesJoinGame,
         onPressed: game.isUpcoming ? onJoin : null,
         isLoading: actionsState.isJoining,
       );
@@ -1145,12 +1161,12 @@ class _BottomActionBar extends ConsumerWidget {
 
     if (myPlayer!.isApproved) {
       if (game.isCompleted) {
-        // The moment the game flips to completed, "Leave Game" must swap to
-        // "Rate Participants" for every approved player — regardless of the
+        // The moment the game flips to completed, context.l10n.gameDetailLeave must swap to
+        // context.l10n.gameDetailRateParticipants for every approved player — regardless of the
         // pending-rating provider's current state. The picker handles the
         // (rare) case where the queue is genuinely empty.
         return BbButton(
-          label: 'Rate Participants',
+          label: context.l10n.gameDetailRateParticipants,
           onPressed: () => _openRateParticipantsPicker(
             context,
             ref,
@@ -1163,7 +1179,7 @@ class _BottomActionBar extends ConsumerWidget {
         );
       }
       return BbButton(
-        label: 'Leave Game',
+        label: context.l10n.gameDetailLeave,
         onPressed: game.isUpcoming ? onLeave : null,
         variant: BbButtonVariant.danger,
         isLoading: actionsState.isLeaving,
@@ -1208,7 +1224,7 @@ class _GameInvitePanel extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'You\'re invited to this game',
+                  context.l10n.gameDetailInvitedBanner,
                   style: AppTextStyles.bodySmall.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
@@ -1224,7 +1240,7 @@ class _GameInvitePanel extends StatelessWidget {
             Expanded(
               flex: 2,
               child: BbButton(
-                label: 'Accept Invitation',
+                label: context.l10n.gameDetailAcceptInvite,
                 onPressed: (isAccepting || isDeclining) ? null : onAccept,
                 isLoading: isAccepting,
                 icon: Icons.check_rounded,
@@ -1233,7 +1249,7 @@ class _GameInvitePanel extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: BbButton(
-                label: 'Decline',
+                label: context.l10n.gameDetailDecline,
                 onPressed: (isAccepting || isDeclining) ? null : onDecline,
                 isLoading: isDeclining,
                 variant: BbButtonVariant.outlined,
@@ -1273,11 +1289,12 @@ class _PendingRequestPanel extends StatelessWidget {
           const Icon(Icons.hourglass_top_rounded,
               size: 18, color: AppColors.warning),
           const SizedBox(width: 10),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Your request is pending approval',
-              style: TextStyle(
+              context.l10n.gameDetailPendingBanner,
+              style: const TextStyle(
                 fontFamily: 'Inter',
+                fontFamilyFallback: ['Heebo'],
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
@@ -1298,7 +1315,7 @@ class _PendingRequestPanel extends StatelessWidget {
                     height: 14,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Withdraw'),
+                : Text(context.l10n.gameDetailWithdraw),
           ),
         ],
       ),
@@ -1343,7 +1360,7 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
       if (!mounted) return;
       if (ok) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Invited $friendName')),
+          SnackBar(content: Text(context.l10n.gameDetailInvitedName(friendName))),
         );
       }
     } finally {
@@ -1361,7 +1378,7 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
       if (!mounted) return;
       if (ok) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Revoked invite for $friendName')),
+          SnackBar(content: Text(context.l10n.gameDetailRevokedName(friendName))),
         );
       } else {
         final err = ref.read(gameActionsProvider(widget.gameId)).error;
@@ -1396,7 +1413,7 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
     // ignore: avoid_print
     print(
       '[InviteFriendsSheet] gameId=${widget.gameId} invitedIds=${invitedIds.length} '
-      'players=${game?.players.length ?? 0} source=${actionsState.game != null ? 'actions' : 'detail'}',
+      'players=${game?.players.length ?? 0} source=${actionsState.game != null ? 'actions' : 'detail'}', // l10n-ignore: API/search value
     );
     final sheetBusy = actionsState.isProcessing;
 
@@ -1409,7 +1426,7 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: Text(
-                'Invite Friends',
+                context.l10n.gameDetailInviteFriends,
                 style: AppTextStyles.titleMedium.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -1422,11 +1439,11 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
                 error: (e, _) => Center(child: Text(e.toString())),
                 data: (friends) {
                   if (friends.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Padding(
-                        padding: EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(24),
                         child: Text(
-                          'Add friends from their profile to invite them to games.',
+                          context.l10n.gameDetailNoFriends,
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -1467,7 +1484,7 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
                                               friend.fullName,
                                             ),
                                     child: Text(
-                                      'Invited',
+                                      context.l10n.gameDetailInvitedChip,
                                       style:
                                           AppTextStyles.labelMedium.copyWith(
                                         color: disabled
@@ -1542,7 +1559,7 @@ class _GameMergeSelectorSheetState extends ConsumerState<_GameMergeSelectorSheet
     final params = GameSearchParams(
       sport: widget.sourceGame.sport,
       city: widget.sourceGame.location.city,
-      status: 'open',
+      status: 'open', // l10n-ignore: API/search value
       limit: 20,
     );
     final games = await repo.searchGames(params);
@@ -1553,19 +1570,21 @@ class _GameMergeSelectorSheetState extends ConsumerState<_GameMergeSelectorSheet
     final res = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Merge game?'),
+        title: Text(context.l10n.gameDetailMergeTitle),
         content: Text(
-          "Merge '${widget.sourceGame.title}' into '${target.title}'?\n"
-          'Your game will be cancelled and players moved to the target.',
+          context.l10n.gameDetailMergeConfirmBody(
+            widget.sourceGame.title,
+            target.title,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Merge'),
+            child: Text(context.l10n.gameDetailMergeButton),
           ),
         ],
       ),
@@ -1577,19 +1596,16 @@ class _GameMergeSelectorSheetState extends ConsumerState<_GameMergeSelectorSheet
     final res = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Increase capacity?'),
-        content: const Text(
-          'The target game is too full for this merge. Expand its capacity '
-          'and complete the merge?',
-        ),
+        title: Text(context.l10n.gameDetailCapacityTitle),
+        content: Text(context.l10n.gameDetailCapacityBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Force merge'),
+            child: Text(context.l10n.gameDetailForceMerge),
           ),
         ],
       ),
@@ -1615,7 +1631,7 @@ class _GameMergeSelectorSheetState extends ConsumerState<_GameMergeSelectorSheet
       final parent = widget.parentContext;
       if (!parent.mounted) return;
 
-      showSuccessSnackBar(parent, 'Game merged successfully.');
+      showSuccessSnackBar(parent, context.l10n.gameDetailMergeSuccess);
 
       // 2) Replace only the source GameDetailScreen — keep Home beneath.
       parent.pushReplacement(Routes.gameDetail(targetGame.id));
@@ -1651,11 +1667,13 @@ class _GameMergeSelectorSheetState extends ConsumerState<_GameMergeSelectorSheet
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Merge Game', style: AppTextStyles.headlineSmall),
+              Text(context.l10n.gameDetailMergeSheetTitle, style: AppTextStyles.headlineSmall),
               const SizedBox(height: 8),
               Text(
-                'Pick an open ${widget.sourceGame.sport} game in '
-                '${widget.sourceGame.location.city}.',
+                context.l10n.gameDetailMergePick(
+                  sportDisplayName(widget.sourceGame.sport, context.l10n),
+                  widget.sourceGame.location.city,
+                ),
                 style: AppTextStyles.bodySmall.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -1682,9 +1700,9 @@ class _GameMergeSelectorSheetState extends ConsumerState<_GameMergeSelectorSheet
 
                     final targets = snap.data ?? const <GameModel>[];
                     if (targets.isEmpty) {
-                      return const Center(
+                      return Center(
                         child: Text(
-                          'No eligible open games found.',
+                          context.l10n.gameDetailMergeNone,
                           textAlign: TextAlign.center,
                         ),
                       );
@@ -1761,8 +1779,8 @@ Future<void> _showManageSheet(
           if (canEdit)
             ListTile(
               leading: const Icon(Icons.group_add_outlined),
-              title: const Text('Invite Friends'),
-              subtitle: const Text('Send an invite to your approved friends'),
+              title: Text(context.l10n.gameDetailInviteFriends),
+              subtitle: Text(context.l10n.gameDetailInviteFriendsHint),
               onTap: () {
                 Navigator.pop(sheetCtx);
                 if (!context.mounted) return;
@@ -1772,8 +1790,8 @@ Future<void> _showManageSheet(
           if (game.status == 'open')
             ListTile(
               leading: const Icon(Icons.merge_type_outlined),
-              title: const Text('Merge Game'),
-              subtitle: const Text('Combine this game into another open game'),
+              title: Text(context.l10n.gameDetailMergeSheetTitle),
+              subtitle: Text(context.l10n.gameDetailMergeHint),
               onTap: () {
                 Navigator.pop(sheetCtx);
                 if (!context.mounted) return;
@@ -1782,7 +1800,7 @@ Future<void> _showManageSheet(
             ),
           ListTile(
             leading: const Icon(Icons.edit_outlined),
-            title: const Text('Edit Game'),
+            title: Text(context.l10n.gameEditTitle),
             enabled: canEdit,
             onTap: !canEdit
                 ? null
@@ -1793,16 +1811,14 @@ Future<void> _showManageSheet(
                   },
           ),
           if (game.isCompleted)
-            // Already completed — replace "Complete Game" with a clear
+            // Already completed — replace context.l10n.gameDetailCompleteGame with a clear
             // CTA back to the rating flow. Tapping closes the sheet and
             // hands off to the same picker the bottom action bar uses.
             ListTile(
               leading: const Icon(Icons.star_rate_rounded,
                   color: AppColors.primary),
-              title: const Text('View Summary / Rate Players'),
-              subtitle: const Text(
-                'Game is finished — open the rating flow for participants.',
-              ),
+              title: Text(context.l10n.gameDetailViewSummary),
+              subtitle: Text(context.l10n.gameDetailViewSummaryHint),
               onTap: () {
                 Navigator.pop(sheetCtx);
                 if (!context.mounted) return;
@@ -1821,10 +1837,8 @@ Future<void> _showManageSheet(
             ListTile(
               leading: const Icon(Icons.emoji_events_outlined,
                   color: AppColors.success),
-              title: const Text('Complete Game'),
-              subtitle: const Text(
-                'Mark the game as finished and open ratings for participants.',
-              ),
+              title: Text(context.l10n.gameDetailCompleteGame),
+              subtitle: Text(context.l10n.gameDetailCompleteGameHint),
               enabled: canComplete,
               onTap: !canComplete
                   ? null
@@ -1848,7 +1862,7 @@ Future<void> _showManageSheet(
                   : AppColors.grey400,
             ),
             title: Text(
-              game.isCancelled ? 'Game already cancelled' : 'Cancel Game',
+              game.isCancelled ? context.l10n.gameDetailAlreadyCancelled : context.l10n.gameDetailCancelGame,
             ),
             enabled: canCancel,
             onTap: !canCancel
@@ -1877,7 +1891,7 @@ Future<void> _showManageSheet(
                       ref.invalidate(calendarGamesProvider);
                       if (!context.mounted) return;
 
-                      showSuccessSnackBar(context, 'Game cancelled.');
+                      showSuccessSnackBar(context, context.l10n.gameDetailCancelled);
 
                       await Future<void>.delayed(
                           const Duration(milliseconds: 80));
@@ -1900,17 +1914,17 @@ Future<bool> _confirmCancel(BuildContext context) async {
   final res = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Cancel game?'),
-      content: const Text('This will mark the game as cancelled for all players.'),
+      title: Text(context.l10n.gameDetailCancelConfirmTitle),
+      content: Text(context.l10n.gameDetailCancelConfirmBody),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('No'),
+          child: Text(context.l10n.commonNo),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
           style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-          child: const Text('Yes, cancel'),
+          child: Text(context.l10n.gameDetailYesCancel),
         ),
       ],
     ),
@@ -1922,20 +1936,17 @@ Future<bool> _confirmComplete(BuildContext context) async {
   final res = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Complete game?'),
-      content: const Text(
-        'This marks the game as finished, updates player stats, and unlocks '
-        'rating for all approved players. This action cannot be undone.',
-      ),
+      title: Text(context.l10n.gameDetailCompleteConfirmTitle),
+      content: Text(context.l10n.gameDetailCompleteConfirmBody),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Not yet'),
+          child: Text(context.l10n.gameDetailNotYet),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
           style: FilledButton.styleFrom(backgroundColor: AppColors.success),
-          child: const Text('Mark completed'),
+          child: Text(context.l10n.gameDetailMarkCompleted),
         ),
       ],
     ),
@@ -1958,6 +1969,7 @@ Future<void> _openRateParticipantsPicker(
   String gameId,
   String currentUserId,
 ) async {
+  final playerFallback = context.l10n.gameDetailPlayerFallback;
   ref.invalidate(pendingRatingsProvider);
   List<PendingRatingItem> list;
   try {
@@ -1965,8 +1977,8 @@ Future<void> _openRateParticipantsPicker(
   } catch (_) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not load pending ratings. Pull to refresh and try again.'),
+        SnackBar(
+          content: Text(context.l10n.gameDetailPendingRatingsFailed),
         ),
       );
     }
@@ -1991,7 +2003,7 @@ Future<void> _openRateParticipantsPicker(
       final un = raw['username']?.toString() ?? '';
       final display = (fn.isNotEmpty && ln.isNotEmpty)
           ? '$fn $ln'
-          : (un.isNotEmpty ? un : 'Player');
+          : (un.isNotEmpty ? un : playerFallback);
       entries.add(_RatePickerEntry(rateeId: id, displayName: display));
     }
   }
@@ -2009,8 +2021,8 @@ Future<void> _openRateParticipantsPicker(
   if (entries.isEmpty) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Everyone in this game has been rated.'),
+        SnackBar(
+          content: Text(context.l10n.gameDetailAllRated),
           backgroundColor: AppColors.success,
         ),
       );
@@ -2043,10 +2055,10 @@ Future<void> _openRateParticipantsPicker(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 12, 20, 4),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
             child: Text(
-              'Rate a participant',
+              context.l10n.gameDetailRateAParticipant,
               style: AppTextStyles.titleSmall,
             ),
           ),
@@ -2099,9 +2111,9 @@ Future<void> _openRateParticipantsPicker(
                   await dismissGameRatingQueue(ref, gameId);
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content: Text(
-                        'You will not be prompted to rate this game.',
+                        context.l10n.gameDetailWontRatePrompt,
                       ),
                     ),
                   );
@@ -2114,7 +2126,7 @@ Future<void> _openRateParticipantsPicker(
                 }
               },
               child: Text(
-                "Don't rate this game",
+                context.l10n.gameDetailDontRate,
                 style: AppTextStyles.bodySmall
                     .copyWith(color: AppColors.textSecondary),
               ),
@@ -2150,19 +2162,19 @@ Future<String?> _askCancelReason(BuildContext context) async {
   final res = await showDialog<String>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Reason for cancellation'),
+      title: Text(context.l10n.gameDetailCancelReasonTitle),
       content: TextField(
         controller: ctrl,
         autofocus: true,
         maxLength: 300,
-        decoration: const InputDecoration(
-          hintText: 'e.g. Weather, venue issue, not enough players…',
+        decoration: InputDecoration(
+          hintText: context.l10n.gameDetailCancelReasonHint,
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx),
-          child: const Text('Back'),
+          child: Text(context.l10n.commonBack),
         ),
         FilledButton(
           onPressed: () {
@@ -2170,7 +2182,7 @@ Future<String?> _askCancelReason(BuildContext context) async {
             Navigator.pop(ctx, ctrl.text);
           },
           style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-          child: const Text('Cancel game'),
+          child: Text(context.l10n.gameDetailCancelGameButton),
         ),
       ],
     ),

@@ -1,7 +1,7 @@
 import 'package:buddbull/core/constants/app_colors.dart';
-import 'package:buddbull/core/constants/app_strings.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/auth/providers/auth_provider.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:buddbull/shared/widgets/bb_button.dart';
 import 'package:buddbull/shared/widgets/bb_text_field.dart';
 import 'package:buddbull/shared/widgets/error_view.dart';
@@ -85,11 +85,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               const SizedBox(height: 24),
 
               // ── Title ──────────────────────────────────────────
-              const Text(AppStrings.resetPassword,
+              Text(context.l10n.authResetPasswordTitle,
                   style: AppTextStyles.headlineMedium),
               const SizedBox(height: 8),
               Text(
-                AppStrings.forgotSubtitle,
+                context.l10n.authForgotSubtitle,
                 style: AppTextStyles.bodyMedium.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -100,8 +100,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               Form(
                 key: _formKey,
                 child: BbTextField(
-                  label: AppStrings.emailLabel,
-                  hint: AppStrings.emailHint,
+                  label: context.l10n.authEmailLabel,
+                  hint: context.l10n.authEmailHint,
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icons.email_outlined,
@@ -109,11 +109,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   onSubmitted: (_) => _submit(),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) {
-                      return AppStrings.fieldRequired;
+                      return context.l10n.validationFieldRequired;
                     }
                     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$')
                         .hasMatch(v.trim())) {
-                      return AppStrings.invalidEmail;
+                      return context.l10n.validationInvalidEmail;
                     }
                     return null;
                   },
@@ -123,7 +123,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
               // ── Submit ─────────────────────────────────────────
               BbButton(
-                label: AppStrings.sendResetLink,
+                label: context.l10n.authSendResetLink,
                 onPressed: _submit,
                 isLoading: authState.isSubmitting,
               ),
@@ -131,7 +131,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
               // ── Back ───────────────────────────────────────────
               BbButton(
-                label: AppStrings.backToLogin,
+                label: context.l10n.authBackToLogin,
                 onPressed: () => context.pop(),
                 variant: BbButtonVariant.ghost,
               ),
@@ -154,8 +154,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'The reset link expires in 10 minutes. '
-                        'Check your spam folder if you don\'t see the email.',
+                        context.l10n.authResetInfo,
                         style: AppTextStyles.bodySmall.copyWith(
                           color: AppColors.info,
                         ),

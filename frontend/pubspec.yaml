@@ -10,6 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # ── State management ──────────────────────────────────────
   flutter_riverpod: ^2.6.1
@@ -71,6 +73,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
 
   assets:
     - assets/images/
@@ -79,6 +82,19 @@ flutter:
     - assets/lottie/
     - assets/avatars/
     - assets/wallpapers/
+  fonts:
+    - family: Heebo
+      fonts:
+        - asset: assets/fonts/Heebo-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Heebo-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Heebo-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Heebo-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Heebo-ExtraBold.ttf
+          weight: 800
 
 flutter_launcher_icons:
   android: true

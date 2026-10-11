@@ -2,6 +2,7 @@ import 'package:buddbull/core/constants/app_colors.dart';
 import 'package:buddbull/core/constants/app_text_styles.dart';
 import 'package:buddbull/features/games/data/models/game_model.dart';
 import 'package:buddbull/features/profile/presentation/widgets/bb_profile_avatar.dart';
+import 'package:buddbull/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 /// Displays approved players as stacked avatars + pending count.
@@ -37,8 +38,8 @@ class PlayerAvatarRow extends StatelessWidget {
           child: Stack(
             children: [
               for (int i = 0; i < displayCount; i++)
-                Positioned(
-                  left: i * (avatarSize - overlap),
+                PositionedDirectional(
+                  start: i * (avatarSize - overlap),
                   child: Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -64,7 +65,7 @@ class PlayerAvatarRow extends StatelessWidget {
 
         // ── Slot indicator ────────────────────────────────────
         Text(
-          '${approved.length}/$maxPlayers players',
+          context.l10n.gamesPlayersOf(approved.length, maxPlayers),
           style: AppTextStyles.bodySmall,
         ),
 
@@ -78,7 +79,7 @@ class PlayerAvatarRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              '${pending.length} pending',
+              context.l10n.gamesPendingCount(pending.length),
               style: AppTextStyles.labelSmall.copyWith(
                 color: AppColors.warning,
               ),
