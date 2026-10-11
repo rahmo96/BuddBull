@@ -147,7 +147,7 @@ class _CityAutocompleteFieldState extends ConsumerState<CityAutocompleteField> {
       children: [
         if (_hasValue)
           Align(
-            alignment: Alignment.centerRight,
+            alignment: AlignmentDirectional.centerEnd,
             child: TextButton(
               onPressed: _exitEditing,
               child: Text(context.l10n.commonCancel),

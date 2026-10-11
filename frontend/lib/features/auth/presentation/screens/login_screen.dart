@@ -136,7 +136,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                         // Forgot password
                         Align(
-                          alignment: Alignment.centerRight,
+                          alignment: AlignmentDirectional.centerEnd,
                           child: TextButton(
                             onPressed: () =>
                                 context.push(Routes.forgotPassword),
@@ -165,8 +165,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             // ── Sign up link ───────────────────────────────────
             Padding(
               padding: const EdgeInsets.only(bottom: 24),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(
                     context.l10n.authNoAccount,

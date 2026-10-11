@@ -246,9 +246,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             '${user.firstName[0]}${user.lastName[0]}',
                         radius: 52,
                       ),
-                      Positioned(
+                      PositionedDirectional(
                         bottom: 0,
-                        right: 0,
+                        end: 0,
                         child: GestureDetector(
                           onTap: _pickImage,
                           child: Container(

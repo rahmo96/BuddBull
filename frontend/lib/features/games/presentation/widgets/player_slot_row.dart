@@ -38,8 +38,8 @@ class PlayerAvatarRow extends StatelessWidget {
           child: Stack(
             children: [
               for (int i = 0; i < displayCount; i++)
-                Positioned(
-                  left: i * (avatarSize - overlap),
+                PositionedDirectional(
+                  start: i * (avatarSize - overlap),
                   child: Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,

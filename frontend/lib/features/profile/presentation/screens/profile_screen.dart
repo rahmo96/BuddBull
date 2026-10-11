@@ -71,8 +71,11 @@ class ProfileScreen extends ConsumerWidget {
                   tooltip: context.l10n.profileEditTooltip,
                 ),
                 IconButton(
-                  icon:
-                      const Icon(Icons.logout_rounded, color: Colors.white),
+                  // logout_rounded has no matchTextDirection; mirror it manually.
+                  icon: Transform.flip(
+                    flipX: Directionality.of(context) == TextDirection.rtl,
+                    child: const Icon(Icons.logout_rounded, color: Colors.white),
+                  ),
                   onPressed: () => _confirmLogout(context, ref),
                   tooltip: context.l10n.profileSignOutTooltip,
                 ),

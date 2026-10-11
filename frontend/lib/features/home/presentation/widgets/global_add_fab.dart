@@ -82,8 +82,8 @@ class _GlobalAddFabState extends State<GlobalAddFab>
               ),
             ),
           ),
-          Positioned(
-            right: 16,
+          PositionedDirectional(
+            end: 16,
             bottom: bottom + 64,
             child: FadeTransition(
               opacity: _menuFade,
@@ -113,8 +113,8 @@ class _GlobalAddFabState extends State<GlobalAddFab>
             ),
           ),
         ],
-        Positioned(
-          right: 16,
+        PositionedDirectional(
+          end: 16,
           bottom: bottom,
           child: RotationTransition(
             turns: _rotation,

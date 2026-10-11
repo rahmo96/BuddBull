@@ -706,16 +706,16 @@ class _HomeHeaderFlexibleSpace extends StatelessWidget {
                 child: Stack(
                   children: [
                     if (showExpandedActions)
-                      Positioned(
+                      PositionedDirectional(
                         top: 0,
-                        right: 0,
+                        end: 0,
                         child: HomeHeaderActions(
                           onCalendarTap: onCalendarTap,
                           notificationBell: notificationBell,
                         ),
                       ),
                     Padding(
-                      padding: EdgeInsets.fromLTRB(
+                      padding: EdgeInsetsDirectional.fromSTEB(
                         20,
                         8,
                         showExpandedActions ? 88 : 20,
@@ -726,7 +726,7 @@ class _HomeHeaderFlexibleSpace extends StatelessWidget {
                           Opacity(
                             opacity: expandRatio,
                             child: Align(
-                              alignment: Alignment.bottomLeft,
+                              alignment: AlignmentDirectional.bottomStart,
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -761,7 +761,7 @@ class _HomeHeaderFlexibleSpace extends StatelessWidget {
                           Opacity(
                             opacity: 1 - expandRatio,
                             child: Align(
-                              alignment: Alignment.centerLeft,
+                              alignment: AlignmentDirectional.centerStart,
                               child: Text(
                                 collapsedTitle,
                                 style: const TextStyle(

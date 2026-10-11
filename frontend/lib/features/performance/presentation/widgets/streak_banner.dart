@@ -46,7 +46,7 @@ class StreakBanner extends StatelessWidget {
                           Container(
                             width: 8,
                             height: 8,
-                            margin: const EdgeInsets.only(right: 8),
+                            margin: const EdgeInsetsDirectional.only(end: 8),
                             decoration: const BoxDecoration(
                               color: AppColors.warning,
                               shape: BoxShape.circle,
@@ -82,7 +82,7 @@ class StreakBanner extends StatelessWidget {
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.only(left: 6, bottom: 6),
+                          padding: const EdgeInsetsDirectional.only(start: 6, bottom: 6),
                           child: Text(
                             currentStreak == 1 ? context.l10n.streakDaySingular : context.l10n.streakDayPlural,
                             style: TextStyle(

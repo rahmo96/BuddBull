@@ -416,7 +416,7 @@ class _NotificationTile extends StatelessWidget {
               if (_showJoinQuickActions) ...[
                 const SizedBox(height: 10),
                 Padding(
-                  padding: const EdgeInsets.only(left: 52),
+                  padding: const EdgeInsetsDirectional.only(start: 52),
                   child: _JoinRequestQuickActions(
                     isMutating: isMutating,
                     onApprove: onApproveJoinRequest!,
@@ -427,7 +427,7 @@ class _NotificationTile extends StatelessWidget {
               if (_showFriendQuickActions) ...[
                 const SizedBox(height: 10),
                 Padding(
-                  padding: const EdgeInsets.only(left: 52),
+                  padding: const EdgeInsetsDirectional.only(start: 52),
                   child: _JoinRequestQuickActions(
                     isMutating: isMutating,
                     onApprove: onAcceptFriendRequest!,
@@ -440,7 +440,7 @@ class _NotificationTile extends StatelessWidget {
               if (_showGameInviteQuickActions) ...[
                 const SizedBox(height: 10),
                 Padding(
-                  padding: const EdgeInsets.only(left: 52),
+                  padding: const EdgeInsetsDirectional.only(start: 52),
                   child: _JoinRequestQuickActions(
                     isMutating: isMutating,
                     onApprove: onAcceptGameInvite!,

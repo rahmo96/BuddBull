@@ -86,7 +86,7 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 8, 16, 16),
+                padding: const EdgeInsetsDirectional.fromSTEB(4, 8, 16, 16),
                 child: Row(
                   children: [
                     IconButton(
@@ -504,7 +504,7 @@ class _SearchShimmer extends StatelessWidget {
                 3,
                 (_) => Container(
                   width: 180,
-                  margin: const EdgeInsets.only(right: 12),
+                  margin: const EdgeInsetsDirectional.only(end: 12),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(16),

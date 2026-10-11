@@ -190,7 +190,7 @@ class _NeighborhoodAutocompleteFieldState
       children: [
         if (_hasValue)
           Align(
-            alignment: Alignment.centerRight,
+            alignment: AlignmentDirectional.centerEnd,
             child: TextButton(
               onPressed: _exitEditing,
               child: Text(context.l10n.commonCancel),

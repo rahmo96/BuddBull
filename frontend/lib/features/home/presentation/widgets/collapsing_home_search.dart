@@ -40,7 +40,7 @@ class CollapsingHomeSearch extends StatelessWidget {
 
     if (isExpandedLayout) {
       return Align(
-        alignment: Alignment.bottomLeft,
+        alignment: AlignmentDirectional.bottomStart,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
           child: _SearchGlassPill(
@@ -55,11 +55,11 @@ class CollapsingHomeSearch extends StatelessWidget {
     }
 
     return Align(
-      alignment: Alignment.topRight,
+      alignment: AlignmentDirectional.topEnd,
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.only(top: 4, right: 4),
+          padding: const EdgeInsetsDirectional.only(top: 4, end: 4),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

@@ -36,9 +36,9 @@ class MessageBubble extends StatelessWidget {
     return GestureDetector(
       onLongPress: () => _showOptions(context),
       child: Padding(
-        padding: EdgeInsets.only(
-          left: isMe ? 48 : 8,
-          right: isMe ? 8 : 48,
+        padding: EdgeInsetsDirectional.only(
+          start: isMe ? 48 : 8,
+          end: isMe ? 8 : 48,
           bottom: 4,
         ),
         child: Row(
@@ -60,7 +60,7 @@ class MessageBubble extends StatelessWidget {
                 children: [
                   if (!isMe && showSenderName)
                     Padding(
-                      padding: const EdgeInsets.only(left: 4, bottom: 2),
+                      padding: const EdgeInsetsDirectional.only(start: 4, bottom: 2),
                       child: Text(
                         message.senderName,
                         style: AppTextStyles.caption.copyWith(
@@ -156,7 +156,7 @@ class MessageBubble extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
-        border: const Border(left: BorderSide(color: AppColors.primary, width: 3)),
+        border: const BorderDirectional(start: BorderSide(color: AppColors.primary, width: 3)),
       ),
       child: Text(
         reply.content,
@@ -172,11 +172,11 @@ class MessageBubble extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: isMe ? AppColors.primary : AppColors.surface,
-        borderRadius: BorderRadius.only(
-          topLeft: const Radius.circular(16),
-          topRight: const Radius.circular(16),
-          bottomLeft: Radius.circular(isMe ? 16 : 4),
-          bottomRight: Radius.circular(isMe ? 4 : 16),
+        borderRadius: BorderRadiusDirectional.only(
+          topStart: const Radius.circular(16),
+          topEnd: const Radius.circular(16),
+          bottomStart: Radius.circular(isMe ? 16 : 4),
+          bottomEnd: Radius.circular(isMe ? 4 : 16),
         ),
         boxShadow: [
           BoxShadow(

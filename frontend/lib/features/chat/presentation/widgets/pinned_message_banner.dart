@@ -26,8 +26,8 @@ class PinnedMessageBanner extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: AppColors.primary.withValues(alpha: 0.08),
-          border: const Border(
-            left: BorderSide(color: AppColors.primary, width: 3),
+          border: const BorderDirectional(
+            start: BorderSide(color: AppColors.primary, width: 3),
           ),
         ),
         child: Row(

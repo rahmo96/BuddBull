@@ -243,8 +243,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             // ── Sign in link ───────────────────────────────────
             Padding(
               padding: const EdgeInsets.only(bottom: 32),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(
                     context.l10n.authHaveAccount,
